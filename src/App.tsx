@@ -48,7 +48,11 @@ export default function App() {
   const saveNow = useCallback(() => {
     const run = async () => {
       const { session: s, persisted, durable, submissionLocked, setSaveState, markPersisted } = useStore.getState();
-      if (submissionLocked) { setSaveState('saved'); return; } // The durable attempted revision is immutable until reconciliation.
+      if (submissionLocked) {
+        // A failed status read must not turn a failed draft save into permission to exit.
+        if (useStore.getState().saveState === 'error') throw new Error(useStore.getState().saveError || 'The draft has not been saved.');
+        setSaveState('saved'); return; // The durable attempted revision is immutable until reconciliation.
+      }
       if (!durable && !saveAttempts.current.has(s.id) && !s.images.length && !s.title.trim() && !s.description.trim()) { setSaveState('idle'); return; }
       saveAttempts.current.add(s.id); // A failed save can have committed metadata before cleanup failed.
       setSaveState('saving');

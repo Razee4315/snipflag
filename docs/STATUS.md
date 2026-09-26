@@ -1,5 +1,9 @@
 # Current state / handoff
 
+### Fix-first defensive save follow-up — 2026-09-26
+
+`2de9867` [Checks 36241384370](https://github.com/Razee4315/snipflag/actions/runs/36241384370) passed frontend including expanded privacy regressions; native jobs were still running at this checkpoint. Final two defensive changes: an uncertain status must not convert an existing draft-save error into successful Quit, and failed orphan cleanup during autosave is retained in native cleanup status. These changes require their own final remote check. No test failures observed so far in this workstream. Version and release assets unchanged.
+
 ### Fix-first final hardening — 2026-09-26
 
 Recovery commit `776cc31`: [Checks 36240959516](https://github.com/Razee4315/snipflag/actions/runs/36240959516) passed all jobs. Final refinements pending CI: keep mutations frozen after quit acknowledgment, mark capture busy through completion so Quit cannot discard an in-flight capture, serialize thumbnail rendering to limit concurrent full-size canvases, preserve saving state for emptied drafts, surface retention cleanup failures, and cover fractional/transparent/legacy privacy boundaries. Updated SECURITY, TESTING and ARCHITECTURE to match the new behavior. Next: verify the final refinement on all remote checks and record exact evidence. Version 1.1.0 and published release remain unchanged.

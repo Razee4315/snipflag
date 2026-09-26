@@ -173,7 +173,7 @@ impl Storage {
             .execute("INSERT INTO sessions(id,updated,data) VALUES(?1,?2,?3) ON CONFLICT(id) DO UPDATE SET updated=excluded.updated,data=excluded.data", params![session_id, now(), text])
             .map_err(|_| "Could not save draft.")?;
         // Remove only this session's orphaned images after the new metadata is durable.
-        self.remove_images(&session_id, |image_id| !unique.contains(image_id))?;
+        self.record_cleanup(self.remove_images(&session_id, |image_id| !unique.contains(image_id)))?;
         Ok(())
     }
     fn deleting(&self, session_id: &str) -> Result<bool, String> {
