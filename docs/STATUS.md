@@ -1,5 +1,9 @@
 # Current state / handoff
 
+### Fix-first persistence checkpoint — 2026-09-26
+
+Privacy commit `466bdc0`: [Checks 36240353339](https://github.com/Razee4315/snipflag/actions/runs/36240353339) passed frontend and all three native platforms. Implemented next (verification pending): intentional empty sessions persist, bounded per-image undo/redo survives restart, startup selects the first eligible unsent session, deletion failures keep a retryable History entry, deletion tombstones reject stale saves, and clear-history includes orphan files from failed saves. Save/delete operations are serialized in Rust, and frontend deletion drains pending saves. Retention excludes uploading/uncertain submissions. Added browser restart regressions and Rust deletion/orphan/history tests. Next: CI verification, immutable submission reconciliation and save-before-quit handshake. Version remains 1.1.0; no release workflow invoked.
+
 ## Fix-first implementation — privacy checkpoint, 2026-09-26
 
 Owner authorized all six fix-first items, focused commits, remote checks, and no new release/version. Baseline now `c028dd1`; another workstream published 1.1.0 before this task. This task keeps 1.1.0 and will not publish or replace release assets.

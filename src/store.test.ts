@@ -56,4 +56,25 @@ describe('session store', () => {
     expect(state().session.title).toBe('');
     expect(() => state().addImages([image()])).toThrow();
   });
+  it('restores independent undo and redo from durable JSON, including old drafts', () => {
+    const a = image(), b = image(); state().addImages([a, b]);
+    state().select(a.id); state().edit([mark()]);
+    state().select(b.id); state().edit([mark()]); state().undo();
+    const saved = JSON.parse(JSON.stringify(state().session));
+    state().reset(); state().hydrate(saved);
+    state().select(a.id); state().undo();
+    expect(state().session.images[0].annotations).toHaveLength(0);
+    state().select(b.id); state().redo();
+    expect(state().session.images[1].annotations).toHaveLength(1);
+    delete saved.annotationHistories; state().hydrate(saved);
+    expect(state().histories[a.id].past).toHaveLength(0);
+  });
+  it('bounds persisted history and clears histories belonging to removed images', () => {
+    const a = image(); state().addImages([a]);
+    for (let i = 0; i < 110; i++) state().edit([mark()]);
+    expect(state().session.annotationHistories?.[a.id].past).toHaveLength(100);
+    state().markPersisted(state().session.id, [a.id]); state().removeImage(a.id);
+    expect(state().durable).toBe(true);
+    expect(state().session.annotationHistories?.[a.id]).toBeUndefined();
+  });
 });

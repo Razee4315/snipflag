@@ -13,7 +13,7 @@ pub const MAX_PIXELS: u64 = 40_000_000;
 const MAX_ANNOTATIONS: usize = 2000;
 const MAX_TEXT: usize = 100_000;
 
-pub struct Storage { pub root: PathBuf, pub db: Mutex<Connection> }
+pub struct Storage { pub root: PathBuf, pub db: Mutex<Connection>, mutations: Mutex<()> }
 
 pub fn main_only(window: &WebviewWindow) -> Result<(), String> {
     if window.label() != "main" { return Err("This action is restricted to the editor.".into()); }
@@ -105,9 +105,10 @@ impl Storage {
         db.execute_batch("PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL;
             CREATE TABLE IF NOT EXISTS sessions(id TEXT PRIMARY KEY, updated INTEGER NOT NULL, data TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, data TEXT NOT NULL);
-            CREATE TABLE IF NOT EXISTS submissions(id TEXT PRIMARY KEY, workspace TEXT NOT NULL, state TEXT NOT NULL, result TEXT);")
+            CREATE TABLE IF NOT EXISTS submissions(id TEXT PRIMARY KEY, workspace TEXT NOT NULL, state TEXT NOT NULL, result TEXT);
+            CREATE TABLE IF NOT EXISTS deletions(id TEXT PRIMARY KEY);")
             .map_err(|_| "Cannot initialize draft database.")?;
-        Ok(Self { root, db: Mutex::new(db) })
+        Ok(Self { root, db: Mutex::new(db), mutations: Mutex::new(()) })
     }
     fn image_path(&self, session_id: &str, image_id: &str) -> PathBuf { self.root.join("images").join(format!("{session_id}-{image_id}.png")) }
     fn stored_issue(&self, session_id: &str) -> Result<Option<Value>, String> {
@@ -117,12 +118,27 @@ impl Storage {
     }
     /// Persists session metadata. Image pixels are immutable per image ID, so data is only required for new images.
     pub fn save(&self, session: &Value) -> Result<(), String> {
+        let _guard = self.mutations.lock().map_err(|_| "Draft storage unavailable.")?;
         let session_id = id(session["id"].as_str().ok_or("Missing session ID.")?)?;
+        if self.deleting(&session_id)? { return Err("This draft is being deleted. Retry deletion in History.".into()); }
         if session["schemaVersion"] != 1 { return Err("Unsupported draft format.".into()); }
         let images = session["images"].as_array().ok_or("Missing image list.")?;
         if images.len() > MAX_IMAGES { return Err("A session can contain up to 10 images.".into()); }
         for field in ["title", "description"] { if session[field].as_str().unwrap_or("").len() > MAX_TEXT { return Err("Draft text is too long.".into()); } }
         if session["issue"].is_null() && self.stored_issue(&session_id)?.is_some() { return Err("This session was already sent to Linear and cannot be changed.".into()); }
+        if let Some(histories) = session.get("annotationHistories") {
+            let histories = histories.as_object().ok_or("Invalid annotation history.")?;
+            if histories.len() > MAX_IMAGES { return Err("Too many image histories.".into()); }
+            for (key, history) in histories {
+                id(key)?;
+                let past = history["past"].as_array().ok_or("Invalid undo history.")?;
+                let future = history["future"].as_array().ok_or("Invalid redo history.")?;
+                if past.len() + future.len() > 100 || history.to_string().len() > 2 * 1024 * 1024 { return Err("Annotation history exceeds its limit.".into()); }
+                for snapshot in past.iter().chain(future) {
+                    if snapshot.as_array().map_or(true, |s| s.len() > MAX_ANNOTATIONS) { return Err("Invalid history snapshot.".into()); }
+                }
+            }
+        }
         let mut data = session.clone(); let mut total = 0usize; let mut unique = HashSet::new();
         for (index, img) in images.iter().enumerate() {
             let image_id = id(img["id"].as_str().ok_or("Missing image ID.")?)?;
@@ -145,21 +161,31 @@ impl Storage {
             .execute("INSERT INTO sessions(id,updated,data) VALUES(?1,?2,?3) ON CONFLICT(id) DO UPDATE SET updated=excluded.updated,data=excluded.data", params![session_id, now(), text])
             .map_err(|_| "Could not save draft.")?;
         // Remove only this session's orphaned images after the new metadata is durable.
-        self.remove_images(&session_id, |image_id| !unique.contains(image_id));
+        self.remove_images(&session_id, |image_id| !unique.contains(image_id))?;
         Ok(())
     }
-    fn remove_images(&self, session_id: &str, remove: impl Fn(&str) -> bool) {
-        let Ok(entries) = std::fs::read_dir(self.root.join("images")) else { return };
+    fn deleting(&self, session_id: &str) -> Result<bool, String> {
+        self.db.lock().map_err(|_| "Database unavailable.")?.query_row("SELECT EXISTS(SELECT 1 FROM deletions WHERE id=?1)", [session_id], |r| r.get(0)).map_err(|_| "Cannot inspect deletion status.".into())
+    }
+    fn remove_images(&self, session_id: &str, remove: impl Fn(&str) -> bool) -> Result<(), String> {
+        let entries = std::fs::read_dir(self.root.join("images")).map_err(|_| "Cannot inspect local screenshots for deletion.")?;
         let prefix = format!("{session_id}-");
-        for entry in entries.flatten() {
+        let mut failed = false;
+        for entry in entries {
+            let entry = entry.map_err(|_| "Cannot inspect local screenshots for deletion.")?;
             let name = entry.file_name().to_string_lossy().into_owned();
             if let Some(image_id) = name.strip_prefix(&prefix).and_then(|s| s.strip_suffix(".png").or_else(|| s.strip_suffix(".tmp"))) {
-                if remove(image_id) { let _ = std::fs::remove_file(entry.path()); }
+                if id(image_id).is_ok() && remove(image_id) {
+                    if let Err(error) = std::fs::remove_file(entry.path()) { if error.kind() != std::io::ErrorKind::NotFound { failed = true; } }
+                }
             }
         }
+        if failed { Err("Some local screenshots could not be deleted. Close apps using them and retry; deletion is not complete.".into()) } else { Ok(()) }
     }
     pub fn load(&self, session_id: &str) -> Result<Value, String> {
+        let _guard = self.mutations.lock().map_err(|_| "Draft storage unavailable.")?;
         let session_id = id(session_id)?;
+        if self.deleting(&session_id)? { return Err("Deletion is incomplete. Retry Delete in History.".into()); }
         let data: String = self.db.lock().map_err(|_| "Database unavailable.")?.query_row("SELECT data FROM sessions WHERE id=?1", [&session_id], |r| r.get(0)).map_err(|_| "Draft was not found.")?;
         let mut session: Value = serde_json::from_str(&data).map_err(|_| "Draft is damaged.")?;
         for img in session["images"].as_array_mut().ok_or("Draft is damaged.")? {
@@ -171,9 +197,11 @@ impl Storage {
     }
     pub fn list(&self) -> Result<Vec<Value>, String> {
         let db = self.db.lock().map_err(|_| "Database unavailable.")?;
-        let mut stmt = db.prepare("SELECT data FROM sessions ORDER BY updated DESC LIMIT 200").map_err(|_| "Cannot list drafts.")?;
-        let raw: Vec<String> = stmt.query_map([], |r| r.get::<_, String>(0)).map_err(|_| "Cannot list drafts.")?.flatten().collect();
-        let sessions = raw.iter().filter_map(|r| serde_json::from_str::<Value>(r).ok()).map(|mut v| {
+        let mut stmt = db.prepare("SELECT data, EXISTS(SELECT 1 FROM deletions WHERE deletions.id=sessions.id) FROM sessions ORDER BY updated DESC LIMIT 200").map_err(|_| "Cannot list drafts.")?;
+        let raw: Vec<(String, bool)> = stmt.query_map([], |r| Ok((r.get(0)?, r.get(1)?))).map_err(|_| "Cannot list drafts.")?.collect::<Result<_, _>>().map_err(|_| "Cannot read history.")?;
+        let sessions = raw.iter().filter_map(|(r, deleting)| serde_json::from_str::<Value>(r).ok().map(|v| (v, deleting))).map(|(mut v, deleting)| {
+            v["deletionPending"] = json!(deleting);
+            v.as_object_mut().map(|o| o.remove("annotationHistories"));
             // History only needs a summary; annotations stay on disk until a draft is opened.
             if let Some(images) = v["images"].as_array_mut() { for img in images { img["annotations"] = json!([]); } }
             v
@@ -181,10 +209,13 @@ impl Storage {
         Ok(sessions)
     }
     pub fn delete(&self, session_id: &str) -> Result<(), String> {
+        let _guard = self.mutations.lock().map_err(|_| "Draft storage unavailable.")?;
         let session_id = id(session_id)?;
-        self.db.lock().map_err(|_| "Database unavailable.")?.execute("DELETE FROM sessions WHERE id=?1", [&session_id]).map_err(|_| "Could not delete draft.")?;
-        // Keep submission receipts so deleting a draft cannot make an uncertain send replayable.
-        self.remove_images(&session_id, |_| true);
+        self.db.lock().map_err(|_| "Database unavailable.")?.execute("INSERT OR IGNORE INTO deletions(id) VALUES(?1)", [&session_id]).map_err(|_| "Could not begin draft deletion.")?;
+        // Keep the history entry until all files are removed so a failed cleanup can be retried.
+        self.remove_images(&session_id, |_| true)?;
+        self.db.lock().map_err(|_| "Database unavailable.")?.execute("DELETE FROM sessions WHERE id=?1", [&session_id]).map_err(|_| "Could not finish draft deletion.")?;
+        // Receipts and tombstones prevent uncertain sends or stale autosaves from being replayed.
         Ok(())
     }
     /// Deletes drafts not updated within `days` days (0 keeps everything). Returns the number removed.
@@ -193,7 +224,7 @@ impl Storage {
         let cutoff = now().saturating_sub(days * 86_400_000);
         let ids: Vec<String> = {
             let db = self.db.lock().map_err(|_| "Database unavailable.")?;
-            let mut stmt = db.prepare("SELECT id FROM sessions WHERE updated < ?1").map_err(|_| "Cannot read history.")?;
+            let mut stmt = db.prepare("SELECT id FROM sessions WHERE updated < ?1 AND id NOT IN (SELECT id FROM submissions WHERE state IN ('creating','uploading'))").map_err(|_| "Cannot read history.")?;
             let ids: Vec<String> = stmt.query_map([cutoff as i64], |r| r.get(0)).map_err(|_| "Cannot read history.")?.flatten().collect();
             ids
         };
@@ -201,14 +232,24 @@ impl Storage {
         Ok(ids.len())
     }
     pub fn clear(&self) -> Result<(), String> {
-        let ids: Vec<String> = {
+        let mut ids: HashSet<String> = {
             let db = self.db.lock().map_err(|_| "Database unavailable.")?;
             let mut stmt = db.prepare("SELECT id FROM sessions").map_err(|_| "Cannot read history.")?;
-            let ids: Vec<String> = stmt.query_map([], |r| r.get(0)).map_err(|_| "Cannot read history.")?.flatten().collect();
+            let ids: HashSet<String> = stmt.query_map([], |r| r.get(0)).map_err(|_| "Cannot read history.")?.collect::<Result<_, _>>().map_err(|_| "Cannot read history.")?;
             ids
         };
-        for session_id in &ids { self.delete(session_id)?; }
-        Ok(())
+        // Include files left by a save that failed before its metadata could be committed.
+        for entry in std::fs::read_dir(self.root.join("images")).map_err(|_| "Cannot inspect local screenshots.")? {
+            let name = entry.map_err(|_| "Cannot inspect local screenshots.")?.file_name().to_string_lossy().into_owned();
+            if let Some((sid, tail)) = name.get(..36).zip(name.get(37..)).filter(|_| name.as_bytes().get(36) == Some(&b'-')) {
+                if let Some(iid) = tail.strip_suffix(".png").or_else(|| tail.strip_suffix(".tmp")) {
+                    if let (Ok(sid), Ok(_)) = (id(sid), id(iid)) { ids.insert(sid); }
+                }
+            }
+        }
+        let mut failure = None;
+        for session_id in &ids { if let Err(error) = self.delete(session_id) { failure = Some(error); } }
+        failure.map_or(Ok(()), Err)
     }
     pub fn settings(&self) -> Result<Value, String> {
         let db = self.db.lock().map_err(|_| "Database unavailable.")?;
@@ -303,6 +344,39 @@ mod tests {
         store.delete(sid).unwrap();
         assert!(store.load(sid).is_err());
         assert_eq!(store.submission(sid).unwrap().unwrap().1, "creating");
+    }
+    #[test] fn empty_session_removes_pixels_and_stays_empty_after_restart() {
+        let store = temp(); let mut s = session(vec![image(2, 2)]); let sid = s["id"].as_str().unwrap().to_string();
+        store.save(&s).unwrap(); s["images"] = json!([]); s["title"] = json!(""); store.save(&s).unwrap();
+        let root = store.root.clone(); drop(store);
+        let reopened = Storage::open_at(root).unwrap();
+        assert_eq!(reopened.load(&sid).unwrap()["images"], json!([]));
+        assert_eq!(std::fs::read_dir(reopened.root.join("images")).unwrap().count(), 0);
+    }
+    #[test] fn failed_deletion_is_visible_retryable_and_blocks_stale_saves() {
+        let store = temp(); let s = session(vec![image(2, 2)]); let sid = s["id"].as_str().unwrap();
+        store.save(&s).unwrap();
+        // A directory at a managed image path deterministically makes remove_file fail on every OS.
+        let blocked = store.image_path(sid, &Uuid::new_v4().to_string()); std::fs::create_dir(&blocked).unwrap();
+        assert!(store.delete(sid).is_err());
+        assert_eq!(store.list().unwrap()[0]["deletionPending"], true);
+        assert!(store.save(&s).is_err()); assert!(store.load(sid).is_err());
+        std::fs::remove_dir(blocked).unwrap(); store.delete(sid).unwrap();
+        assert!(store.list().unwrap().is_empty()); assert!(store.save(&s).is_err());
+    }
+    #[test] fn clear_also_removes_orphaned_images_from_failed_saves() {
+        let store = temp(); let s = session(vec![image(2, 2)]);
+        let path = store.image_path(s["id"].as_str().unwrap(), s["images"][0]["id"].as_str().unwrap());
+        std::fs::write(&path, b"orphan").unwrap();
+        store.clear().unwrap(); assert!(!path.exists());
+    }
+    #[test] fn undo_history_round_trips_without_appearing_in_history_summaries() {
+        let store = temp(); let mut s = session(vec![image(2, 2)]);
+        let iid = s["images"][0]["id"].as_str().unwrap().to_string();
+        s["annotationHistories"] = json!({iid: {"past":[[]],"future":[]}});
+        store.save(&s).unwrap();
+        assert_eq!(store.load(s["id"].as_str().unwrap()).unwrap()["annotationHistories"], s["annotationHistories"]);
+        assert!(store.list().unwrap()[0].get("annotationHistories").is_none());
     }
     #[test] fn settings_are_validated() {
         assert!(normalize_settings(&json!({"clientId":"abc 123"})).is_err());

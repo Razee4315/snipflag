@@ -1,6 +1,6 @@
 import { useState, type CSSProperties } from 'react';
 import { acceleratorFromEvent, REDIRECT_URI, shortcutLabel, type Connection, type Settings } from '../model';
-import { clearHistory, copyText, desktop, errorText, openAboutLink, openLinearSetup, type AboutLink, type AppStatus } from '../native';
+import { copyText, desktop, errorText, openAboutLink, openLinearSetup, type AboutLink, type AppStatus } from '../native';
 import Dialog from './Dialog';
 import { Icon, Mark, type IconName } from './icons';
 import { play } from '../sound';
@@ -9,7 +9,7 @@ import type { ConnectionState } from './IssuePanel';
 interface Props {
   settings: Settings; status: AppStatus | null; connection: Connection | null; connectionState: ConnectionState; connectionError: string;
   onSave: (settings: Settings) => Promise<void>; onConnect: () => void; onCancelConnect: () => void; onDisconnect: () => Promise<void>;
-  onHistoryCleared: () => void; onClose: () => void;
+  onClearHistory: () => Promise<void>; onClose: () => void;
 }
 const SECTIONS = ['Connection', 'Capture', 'Appearance', 'Privacy', 'Shortcuts', 'About'] as const;
 const CREATOR: { target: AboutLink; label: string; detail: string; icon: IconName }[] = [
@@ -131,7 +131,7 @@ export default function SettingsDialog(p: Props) {
         {confirmClear ? (
           <div className="row">
             <span className="small">Delete every local draft and screenshot?</span>
-            <button type="button" className="button danger" onClick={() => clearHistory().then(() => { setConfirmClear(false); p.onHistoryCleared(); setSaved('Local history deleted.'); }).catch(e => setError(errorText(e)))}>Delete all</button>
+            <button type="button" className="button danger" onClick={() => { setSaved(''); setError(''); void p.onClearHistory().then(() => { setConfirmClear(false); setSaved('Local history deleted.'); }).catch(e => setError(errorText(e))); }}>Delete all</button>
             <button type="button" className="button" onClick={() => setConfirmClear(false)}>Keep</button>
           </div>
         ) : <button type="button" className="button danger-outline" onClick={() => setConfirmClear(true)}>Delete local history…</button>}

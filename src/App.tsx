@@ -9,7 +9,7 @@ import SettingsDialog from './components/SettingsDialog';
 import Toolbar, { TOOLS } from './components/Toolbar';
 import { defaults, imageLabel, shortcutLabel, validateSession, type CaptureImage, type Connection, type Settings } from './model';
 import {
-  appStatus, cancelLogin, connectLinear, desktop, disconnectLinear, editorWindow, errorText, exportPng, linearConnection, listSessions, loadSession,
+  appStatus, cancelLogin, clearHistory, connectLinear, deleteSession, desktop, disconnectLinear, editorWindow, errorText, exportPng, linearConnection, listSessions, loadSession,
   loadSettings, on, PREVIEW_MESSAGE, readClipboardImage, saveSession, saveSettings, startCapture, submissionStatus, submitIssue, type AppStatus, type RawImage,
 } from './native';
 import { fileBaseName, flatten, importImage } from './render';
@@ -45,11 +45,13 @@ export default function App() {
   // Durable drafts: every change is saved shortly after it happens, and immediately before capture or network work.
   const saveNow = useCallback(() => {
     const run = async () => {
-      const { session: s, persisted, setSaveState, markPersisted } = useStore.getState();
-      if (!s.images.length && !s.title.trim() && !s.description.trim()) { setSaveState('idle'); return; }
+      const { session: s, persisted, durable, setSaveState, markPersisted } = useStore.getState();
+      if (!durable && !s.images.length && !s.title.trim() && !s.description.trim()) { setSaveState('idle'); return; }
       setSaveState('saving');
-      try { await saveSession(s, persisted); markPersisted(s.id, s.images.map(i => i.id)); setSaveState('saved'); }
-      catch (e) { setSaveState('error', errorText(e)); throw e; }
+      try {
+        await saveSession(s, persisted); markPersisted(s.id, s.images.map(i => i.id));
+        if (useStore.getState().session.id === s.id) setSaveState(useStore.getState().session === s ? 'saved' : 'saving');
+      } catch (e) { if (useStore.getState().session.id === s.id) setSaveState('error', errorText(e)); throw e; }
     };
     const next = saveChain.current.then(run, run); saveChain.current = next.catch(() => undefined); return next;
   }, []);
@@ -88,7 +90,8 @@ export default function App() {
         // Independent startup reads run together.
         const [loaded, appState, sessions] = await Promise.all([loadSettings(), appStatus(), listSessions()]);
         setSettings(loaded); setStatus(appState);
-        if (sessions[0] && !sessions[0].issue) useStore.getState().hydrate(await loadSession(sessions[0].id));
+        const draft = sessions.find(s => !s.issue && !s.deletionPending);
+        if (draft) useStore.getState().hydrate(await loadSession(draft.id));
       } catch (e) { notify(`Could not restore your last draft: ${errorText(e)}`, 'error'); }
       setReady(true);
       void refreshConnection();
@@ -166,6 +169,20 @@ export default function App() {
     await flush();
     useStore.getState().hydrate(await loadSession(id)); setZoom('fit'); setDialog(null);
   }, [flush]);
+
+  const deleteLocal = useCallback(async (id?: string) => {
+    const s = useStore.getState();
+    if (s.busy) throw new Error('Wait for the current operation to finish.');
+    s.setBusy(true); window.clearTimeout(saveTimer.current);
+    try {
+      // Drain old saves before deletion; never flush content back into a deletion tombstone.
+      await saveChain.current;
+      if (id) await deleteSession(id); else await clearHistory();
+    } finally {
+      if (!id || useStore.getState().session.id === id) useStore.getState().reset();
+      else useStore.getState().setBusy(false);
+    }
+  }, []);
 
   const submit = useCallback(async () => {
     const s = useStore.getState();
@@ -314,11 +331,10 @@ export default function App() {
         <SettingsDialog settings={settings} status={status} connection={connection} connectionState={connectionState} connectionError={connectionError}
           onSave={async next => { setSettings(await saveSettings(next)); setStatus(await appStatus()); }}
           onConnect={() => void connect()} onCancelConnect={() => void cancelLogin().catch(() => undefined)} onDisconnect={disconnect}
-          onHistoryCleared={() => useStore.getState().reset()} onClose={() => setDialog(null)} />
+          onClearHistory={() => deleteLocal()} onClose={() => setDialog(null)} />
       )}
       {dialog === 'history' && (
-        <HistoryDialog currentId={session.id} onOpen={openSession} onClose={() => setDialog(null)}
-          onDeleted={id => { if (id === useStore.getState().session.id) useStore.getState().reset(); }} />
+        <HistoryDialog currentId={session.id} onOpen={openSession} onClose={() => setDialog(null)} onDelete={deleteLocal} />
       )}
     </div>
   );

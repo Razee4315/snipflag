@@ -149,6 +149,36 @@ test('highlighter marks translucently underneath other annotations', async ({ pa
   expect(marker[3]).toBe(255);
 });
 
+test('removing the final saved image and clearing text stay cleared after restart', async ({ page }) => {
+  await addImages(page, [white]);
+  await expect(page.getByRole('status', { name: 'Saved on this computer' })).toBeVisible();
+  await page.getByRole('button', { name: 'Remove screenshot 1' }).click();
+  await expect(page.getByTestId('tile')).toHaveCount(0);
+  await expect(page.getByRole('status', { name: 'Saved on this computer' })).toBeVisible();
+  await page.reload();
+  await expect(page.getByTestId('tile')).toHaveCount(0);
+  await page.getByLabel('Title', { exact: true }).fill('Temporary title');
+  await expect(page.getByRole('status', { name: 'Saved on this computer' })).toBeVisible();
+  await page.getByLabel('Title', { exact: true }).fill('');
+  await expect(page.getByRole('status', { name: 'Saved on this computer' })).toBeVisible();
+  await page.reload();
+  await expect(page.getByLabel('Title', { exact: true })).toHaveValue('');
+});
+
+test('independent undo and redo histories survive restart', async ({ page }) => {
+  await addImages(page, [white, blue]);
+  await tile(page, 1).click(); await page.keyboard.press('r'); await drag(page, [0.2, 0.2], [0.6, 0.6]);
+  await tile(page, 2).click(); await page.keyboard.press('a'); await drag(page, [0.2, 0.2], [0.6, 0.6]);
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect(page.getByRole('status', { name: 'Saved on this computer' })).toBeVisible();
+  await page.reload();
+  await expect(tile(page, 1)).toHaveAccessibleName(/1 mark$/);
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect(tile(page, 1)).toHaveAccessibleName(/0 marks$/);
+  await tile(page, 2).click(); await page.getByRole('button', { name: 'Redo', exact: true }).click();
+  await expect(tile(page, 2)).toHaveAccessibleName(/1 mark$/);
+});
+
 test('translucent pixelation replaces original detail and protects every thumbnail', async ({ page }) => {
   const patterned = { name: 'private-pattern.png', mimeType: 'image/png', buffer: patternPng(400, 300, x => x % 2 ? [240, 0, 0, 128] : [0, 0, 240, 128]) };
   await addImages(page, [patterned]);
