@@ -1,5 +1,11 @@
 name: Bootstrap dependency locks
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      minimal:
+        description: Only add entries for new dependencies and keep every existing locked version
+        type: boolean
+        default: true
 permissions:
   contents: read
 jobs:
@@ -12,7 +18,16 @@ jobs:
           node-version: 24
       - uses: dtolnay/rust-toolchain@stable
       - run: npm install --package-lock-only --ignore-scripts
-      - run: cargo generate-lockfile --manifest-path src-tauri/Cargo.toml
+      - name: Update Cargo.lock
+        env:
+          MINIMAL: ${{ inputs.minimal }}
+        run: |
+          if [ "$MINIMAL" = "true" ]; then
+            cargo metadata --format-version 1 --manifest-path src-tauri/Cargo.toml > /dev/null
+            git diff --stat -- src-tauri/Cargo.lock
+          else
+            cargo generate-lockfile --manifest-path src-tauri/Cargo.toml
+          fi
       - uses: actions/upload-artifact@v4
         with:
           name: dependency-locks
