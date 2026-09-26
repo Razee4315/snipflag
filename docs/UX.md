@@ -2,11 +2,11 @@
 
 ## Main workspace
 
-Frameless draggable app header → compact screenshot canvas + nearby issue composer → small image filmstrip. The first image sizes the editor to a bounded compact window; expand/compact is explicit. Save-and-hide flushes the draft before returning to the tray. Keep the screenshot dominant. Header: session name, local save state, New session, History, Settings. Canvas toolbar: select, arrow, rectangle, pen, text, pixelate, redact, color, thickness, undo/redo. Image controls: fit/zoom, copy, save.
+Frameless draggable app header → compact screenshot canvas + nearby issue composer → small image filmstrip. The first image sizes the editor to a bounded compact window; expand/compact is explicit. Save-and-hide flushes the draft before returning to the tray. Keep the screenshot dominant. Slim utility strip: accessible save-state indicator, New session, History, Settings, and custom window controls. No repeated title, logo or slogans. Canvas toolbar: select, arrow, rectangle, pen, text, pixelate, redact, color, thickness, undo/redo. Image controls: fit/zoom, copy, save.
 
-Empty state: “A clearer issue starts here.” Primary Capture screen; secondary Add images; paste hint. No fake sample screenshot in the working app.
+Empty state: “Capture a screenshot”. Primary Capture screen; secondary Add images; paste hint. No fake sample screenshot in the working app.
 
-Filmstrip: numbered thumbnails, captions, selected outline, add button. Each tile has accessible move earlier/later and remove actions. Header count “3 images · one issue”. Selection does not mutate any other image.
+Filmstrip: numbered thumbnails, captions, selected outline, add button. Each tile has accessible move earlier/later and remove actions. The filmstrip exposes its image count and one-issue grouping to assistive technology. Selection does not mutate any other image.
 
 Issue panel: connection/workspace, title, description, team, optional reproduction-steps scaffold and collapsed project/assignee/labels/priority, attachment count, primary “Create issue”. Keep the panel disabled only when genuinely unavailable and explain why. No redirect to Linear to fill the issue form.
 
@@ -26,7 +26,7 @@ Validate form → save snapshot → flatten ordered images → show upload progr
 
 ## Keyboard
 
-Default global: Ctrl/Cmd+Shift+2 (check registration failure). Editor: V select, A arrow, R rectangle, P pen, T text, B pixelate, X redact. Ctrl/Cmd+Z undo; Shift+Ctrl/Cmd+Z redo; Delete removes selected annotation; Ctrl/Cmd+Enter submits. Ignore tool shortcuts in text inputs. Escape dismisses current selection/dialog/capture without deleting a draft.
+Default global: Ctrl/Cmd+Shift+2 (check registration failure). Editor: V select, A arrow, R rectangle, P pen, T text, B pixelate, X redact. Ctrl/Cmd+Z undo; Shift+Ctrl/Cmd+Z redo; Delete removes selected annotation; Ctrl/Cmd+Enter submits. Hold Shift while drawing to snap arrows/pen segments to 15-degree increments, or constrain rectangles to squares. Pen snapping anchors at the last freehand point when Shift is pressed; releasing Shift resumes freehand. Ignore tool shortcuts in text inputs. Escape dismisses current selection/dialog/capture without deleting a draft.
 
 ## Accessibility
 

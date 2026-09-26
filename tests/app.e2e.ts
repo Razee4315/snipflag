@@ -30,7 +30,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('empty state explains the next step with accessible actions', async ({ page }) => {
-  await expect(page.getByRole('heading', { name: 'A clearer issue starts here.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Capture a screenshot' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Add images' }).first()).toBeEnabled();
   await expect(page.getByRole('button', { name: 'Capture screen' })).toBeDisabled();
   for (const name of ['New session', 'History', 'Settings', 'Create issue']) await expect(page.getByRole('button', { name })).toBeVisible();
@@ -38,7 +38,7 @@ test('empty state explains the next step with accessible actions', async ({ page
 
 test('multiple images keep independent annotations and undo histories', async ({ page }) => {
   await addImages(page, [white, blue]);
-  await expect(page.getByText('2 images · one issue')).toBeVisible();
+  await expect(page.getByRole('navigation', { name: '2 images · one issue' })).toBeVisible();
   await tile(page, 1).click();
   await page.keyboard.press('r');
   await drag(page, [0.2, 0.2], [0.6, 0.6]);
@@ -73,7 +73,7 @@ test('drafts are restored after reload', async ({ page }) => {
   await addImages(page, [white, blue]);
   await page.getByLabel('Title').fill('Checkout button overlaps footer');
   await page.getByLabel('Description').fill('Steps to reproduce');
-  await expect(page.getByText('Saved on this computer')).toBeVisible();
+  await expect(page.getByRole('status', { name: 'Saved on this computer' })).toBeVisible();
   await page.reload();
   await expect(page.getByLabel('Title')).toHaveValue('Checkout button overlaps footer');
   await expect(page.getByTestId('tile')).toHaveCount(2);
@@ -161,7 +161,8 @@ test('compact composer preserves evidence and provides a QA report scaffold', as
   await page.getByRole('button', { name: 'Compact workspace' }).click();
   await expect(page.getByTestId('tile')).toHaveCount(2);
   await expect(page.getByLabel('Title', { exact: true })).toHaveValue('Checkout total does not update');
-  await page.screenshot({ path: testInfo.outputPath('compact-daylight.png'), fullPage: true });
+  await expect(page.getByRole('status', { name: 'Saved on this computer' })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('compact-daylight.png'), fullPage: true, animations: 'disabled' });
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Settings' });
   for (const section of ['Capture', 'Privacy', 'Shortcuts', 'Appearance']) {
@@ -170,9 +171,9 @@ test('compact composer preserves evidence and provides a QA report scaffold', as
   }
   await dialog.getByLabel('Theme').selectOption('dark');
   await dialog.getByRole('button', { name: 'Save settings' }).click();
-  await page.screenshot({ path: testInfo.outputPath('settings-after-hours.png') });
+  await page.screenshot({ path: testInfo.outputPath('settings-after-hours.png'), animations: 'disabled' });
   await page.keyboard.press('Escape');
-  await page.screenshot({ path: testInfo.outputPath('compact-after-hours.png'), fullPage: true });
+  await page.screenshot({ path: testInfo.outputPath('compact-after-hours.png'), fullPage: true, animations: 'disabled' });
   await page.setViewportSize({ width: 860, height: 620 });
   await expect(page.getByRole('button', { name: 'Create issue', exact: true })).toBeInViewport();
   await expect(page.getByTestId('canvas')).toBeInViewport();
@@ -196,4 +197,43 @@ test('settings keep unsaved preferences when switching sections', async ({ page 
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
   await dialog.getByRole('button', { name: 'Privacy', exact: true }).click();
   await expect(dialog.getByLabel('Delete drafts not opened for')).toHaveValue('90');
+});
+
+test('Shift constrains arrows and pen strokes and makes rectangles square', async ({ page }) => {
+  await addImages(page, [white]);
+  const box = (await page.getByTestId('canvas').boundingBox())!;
+  const move = (x: number, y: number) => page.mouse.move(box.x + box.width * x, box.y + box.height * y, { steps: 5 });
+  await page.keyboard.press('a');
+  await move(.2, .2); await page.mouse.down(); await move(.8, .5);
+  // Modifier changes must update the preview even without another pointer move.
+  await page.keyboard.down('Shift'); await page.keyboard.up('Shift'); await page.keyboard.down('Shift');
+  await page.mouse.up(); await page.keyboard.up('Shift');
+  await page.keyboard.press('p');
+  await page.keyboard.down('Shift');
+  await move(.2, .5); await page.mouse.down(); await move(.4, .8); await move(.8, .55);
+  await page.mouse.up(); await page.keyboard.up('Shift');
+  await page.keyboard.press('r');
+  await page.keyboard.down('Shift');
+  await move(.2, .2); await page.mouse.down(); await move(.5, .4);
+  await page.mouse.up(); await page.keyboard.up('Shift');
+  await expect(tile(page, 1)).toHaveAccessibleName(/3 marks$/);
+  await expect(page.getByRole('status', { name: 'Saved on this computer' })).toBeVisible();
+  await expect.poll(async () => page.evaluate(async () => {
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const request = indexedDB.open('snipflag-preview'); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error);
+    });
+    const sessions = await new Promise<import('../src/model').Session[]>((resolve, reject) => {
+      const request = db.transaction('sessions').objectStore('sessions').getAll(); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error);
+    });
+    db.close();
+    const marks = sessions[0]?.images[0]?.annotations ?? [];
+    if (marks.length !== 3) return null;
+    const [arrow, pen, rect] = marks;
+    return {
+      arrowAngle: Math.round(Math.atan2(arrow.points[3], arrow.points[2]) * 180 / Math.PI),
+      penPoints: pen.points.length, penDy: Math.round(pen.points[3]), square: Math.abs(rect.width - rect.height) < .01,
+    };
+  })).toEqual({ arrowAngle: 15, penPoints: 4, penDy: 0, square: true });
+  await page.reload();
+  await expect(tile(page, 1)).toHaveAccessibleName(/3 marks$/);
 });

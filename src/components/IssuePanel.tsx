@@ -62,10 +62,9 @@ export default function IssuePanel(p: Props) {
   const labels = options?.labels.filter(l => l.name.toLowerCase().includes(labelFilter.toLowerCase())) ?? [];
   return (
     <aside className="panel" aria-label="Linear issue">
-      <div className="composer-heading"><span className="eyebrow">THE REPORT</span><h2>A little context.</h2></div>
       <section className="connection" aria-live="polite">
         {!desktop ? (
-          <p className="muted small">Browser preview. Connecting to Linear and creating issues work in the installed desktop app.</p>
+          <span className="muted small" title="Capture and Linear submission require the installed desktop app.">Preview</span>
         ) : p.connectionState === 'connecting' ? (
           <div className="row"><span className="spinner" aria-hidden="true" /> <span className="small">Finish signing in to Linear in your browser…</span>
             <button type="button" className="link-button" onClick={p.onCancelConnect}>Cancel</button></div>
@@ -75,12 +74,11 @@ export default function IssuePanel(p: Props) {
           <div className="row"><span className="dot ok" aria-hidden="true" /><span className="small"><strong>{p.connection.workspace}</strong> · {p.connection.name}</span>
             <button type="button" className="link-button" onClick={p.onRetryConnection} aria-label="Refresh Linear teams">Refresh</button></div>
         ) : !p.hasClientId ? (
-          <div className="stack-tight"><p className="small">Connect Linear to send this issue. Add your Linear OAuth client ID first.</p>
+          <div className="stack-tight">
             <button type="button" className="button" onClick={p.onOpenSettings}>Set up Linear</button></div>
         ) : (
           <div className="stack-tight">
             {p.connectionError && <p className="error small" role="alert">{p.connectionError}</p>}
-            <p className="small">Your screenshots stay on this computer until you choose Create issue.</p>
             <button type="button" className="button" onClick={p.onConnect}>Connect Linear</button>
           </div>
         )}
@@ -106,7 +104,7 @@ export default function IssuePanel(p: Props) {
         </label>
         {connected && p.connection?.teams.length === 0 && <p className="error small">This Linear account has no teams you can post to.</p>}
         <details className="more" open={!!(session.projectId || session.assigneeId || session.labelIds.length || session.priority)}>
-          <summary>Issue details <span className="muted">· priority, project & more</span></summary>
+          <summary>Issue details</summary>
           {optionsError && <p className="error small" role="alert">{optionsError}</p>}
           <label className="field">
             <span>Priority</span>
@@ -146,14 +144,12 @@ export default function IssuePanel(p: Props) {
         </details>
 
         <div className="submit-area">
-          <p className="small muted">{count ? `${count} ${count === 1 ? 'screenshot' : 'screenshots'} will be attached in filmstrip order.` : 'Add at least one screenshot.'}</p>
           {p.pendingState === 'creating' && !busy && <p className="small warn">A previous attempt may already have created this issue. Create issue checks Linear before sending anything new.</p>}
           {p.submitError && <p className="error small" role="alert">{p.submitError}</p>}
           <div role="status" aria-live="polite" className="small">{busy && p.progress && <><span className="spinner" aria-hidden="true" /> {p.progress}</>}</div>
-          <button type="submit" className="button primary wide" disabled={busy} aria-keyshortcuts="Control+Enter">
+          <button type="submit" className="button primary wide" disabled={busy || !count} aria-keyshortcuts="Control+Enter" title={`${count} screenshots in one issue. Uploads only when you send. Ctrl / ⌘ + Enter.`}>
             {busy ? 'Sending…' : p.pendingState ? 'Retry create issue' : 'Create issue'}<Icon name="right" size={16} />
           </button>
-          <span className="privacy-note">Local until you send · Ctrl / ⌘ + Enter</span>
         </div>
       </form>
     </aside>

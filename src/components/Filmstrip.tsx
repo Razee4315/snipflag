@@ -7,7 +7,7 @@ export default function Filmstrip({ onCapture, onAdd, canCapture }: { onCapture:
   const { select, moveImage, removeImage } = useStore.getState();
   const full = images.length >= LIMITS.images;
   return (
-    <nav className="filmstrip" aria-label="Screenshots in this issue">
+    <nav className="filmstrip" aria-label={`${images.length} ${images.length === 1 ? 'image' : 'images'} · one issue`}>
       <ol>
         {images.map((image, index) => {
           const label = imageLabel(image, index); const marks = image.annotations.length;

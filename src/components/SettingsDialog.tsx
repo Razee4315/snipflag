@@ -30,7 +30,7 @@ export default function SettingsDialog(p: Props) {
       <button type="button" className="button" onClick={p.onClose}>Close</button>
       <button type="button" className="button primary" disabled={!dirty} onClick={() => void save()}>Save settings</button>
     </>}>
-      <p className="muted settings-intro">Make Snipflag feel like part of your workflow.</p>
+
       <nav className="settings-nav" aria-label="Settings sections">
         {SECTIONS.map(name => <button key={name} type="button" className={section === name ? 'active' : ''} aria-pressed={section === name} onClick={() => setSection(name)}>{name}</button>)}
       </nav>
@@ -66,7 +66,7 @@ export default function SettingsDialog(p: Props) {
         )}
       </section>
 
-      <section className="settings-section" hidden={section !== 'Capture'}><h3>Ready when you spot something</h3><p className="small muted">Your first screenshot opens a compact editor. Expand it anytime from the header. Closing saves your draft and tucks Snipflag into the tray.</p>
+      <section className="settings-section" hidden={section !== 'Capture'}><h3>Capture</h3><p className="small muted">Your first screenshot opens a compact editor. Expand it anytime from the header. Closing saves your draft and tucks Snipflag into the tray.</p>
         <label className="field">
           <span>Global capture shortcut</span>
           <input readOnly value={recording ? 'Press the new shortcut…' : shortcutLabel(draft.shortcut)} aria-describedby="shortcut-help"
@@ -87,7 +87,7 @@ export default function SettingsDialog(p: Props) {
         </label>
       </section>
 
-      <section className="settings-section" hidden={section !== 'Appearance'}><h3>A calmer place to work</h3><div className="theme-preview" aria-hidden="true"><div className="theme-sample light-sample"><i /><span>Daylight</span></div><div className="theme-sample dark-sample"><i /><span>After hours</span></div></div>
+      <section className="settings-section" hidden={section !== 'Appearance'}><h3>Appearance</h3><div className="theme-preview" aria-hidden="true"><div className="theme-sample light-sample"><i /><span>Daylight</span></div><div className="theme-sample dark-sample"><i /><span>After hours</span></div></div>
         <label className="field">
           <span>Theme</span>
           <select value={draft.theme} onChange={e => setDraft({ ...draft, theme: e.target.value as Settings['theme'] })}>
@@ -96,7 +96,7 @@ export default function SettingsDialog(p: Props) {
         </label>
       </section>
 
-      <section className="settings-section" hidden={section !== 'Privacy'}><h3>Your screenshots. Your control.</h3><div className="privacy-card"><strong>Only shared when you choose Create issue.</strong><p className="small muted">Use solid redaction to remove private details before sending. Pixelation is cosmetic.</p></div>
+      <section className="settings-section" hidden={section !== 'Privacy'}><h3>Privacy</h3><div className="privacy-card"><strong>Only shared when you choose Create issue.</strong><p className="small muted">Use solid redaction to remove private details before sending. Pixelation is cosmetic.</p></div>
         <p className="small muted">Drafts and their screenshots are stored only on this computer, unencrypted in the app data folder.</p>
         <label className="field">
           <span>Delete drafts not opened for</span>
@@ -113,9 +113,9 @@ export default function SettingsDialog(p: Props) {
         ) : <button type="button" className="button danger-outline" onClick={() => setConfirmClear(true)}>Delete local history…</button>}
       </section>
       <section className="settings-section" hidden={section !== 'Shortcuts'}>
-        <h3>Stay in the flow</h3>
+        <h3>Keyboard shortcuts</h3>
         <dl className="shortcut-list">
-          {[['Capture from anywhere', shortcutLabel(draft.shortcut)], ['Select / Arrow / Rectangle', 'V / A / R'], ['Pen / Text', 'P / T'], ['Pixelate / Solid redaction', 'B / X'], ['Undo / Redo', 'Ctrl / ⌘ + Z / Shift + Z'], ['Delete selected mark', 'Delete'], ['Paste screenshot', 'Ctrl / ⌘ + V'], ['Create issue', 'Ctrl / ⌘ + Enter'], ['Zoom canvas', 'Ctrl / ⌘ + scroll']].map(([label, keys]) => <div key={label}><dt>{label}</dt><dd><kbd>{keys}</kbd></dd></div>)}
+          {[['Capture from anywhere', shortcutLabel(draft.shortcut)], ['Select / Arrow / Rectangle', 'V / A / R'], ['Pen / Text', 'P / T'], ['Snap arrow / pen to 15°', 'Hold Shift'], ['Draw a square', 'Shift + Rectangle'], ['Pixelate / Solid redaction', 'B / X'], ['Undo / Redo', 'Ctrl / ⌘ + Z / Shift + Z'], ['Delete selected mark', 'Delete'], ['Paste screenshot', 'Ctrl / ⌘ + V'], ['Create issue', 'Ctrl / ⌘ + Enter'], ['Zoom canvas', 'Ctrl / ⌘ + scroll']].map(([label, keys]) => <div key={label}><dt>{label}</dt><dd><kbd>{keys}</kbd></dd></div>)}
         </dl>
         <p className="small muted">Tool shortcuts pause while you type. Each screenshot keeps its own undo history.</p>
       </section>

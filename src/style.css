@@ -322,3 +322,14 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: .9; }
   .topbar .action-label { display: none; }
   .image-bar .caption-field { flex-basis: auto; }
 }
+
+/* Minimal chrome: drag space and utilities only, no repeated report content. */
+.topbar { min-height: 38px; height: 38px; padding: 2px 12px; gap: 8px; border-bottom: 0; }
+.drag-space { flex: 1; align-self: stretch; }
+.save-indicator { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); opacity: .5; flex-shrink: 0; }
+.save-indicator.saved { background: var(--success); opacity: 1; }
+.save-indicator.saving { background: var(--warn); opacity: 1; }
+.save-indicator.error { background: var(--danger); opacity: 1; }
+.save-error { color: var(--danger); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.topbar .icon-button { width: 30px; height: 30px; }
+.connection:has(> span[title]) { align-self: flex-start; padding: 2px 7px; }

@@ -3,11 +3,11 @@ import EmptyState from './components/EmptyState';
 import Editor, { type Zoom } from './components/Editor';
 import Filmstrip from './components/Filmstrip';
 import HistoryDialog from './components/HistoryDialog';
-import { Icon, Logo } from './components/icons';
+import { Icon } from './components/icons';
 import IssuePanel, { type ConnectionState } from './components/IssuePanel';
 import SettingsDialog from './components/SettingsDialog';
 import Toolbar, { TOOLS } from './components/Toolbar';
-import { defaults, imageLabel, sessionLabel, shortcutLabel, validateSession, type CaptureImage, type Connection, type Settings } from './model';
+import { defaults, imageLabel, shortcutLabel, validateSession, type CaptureImage, type Connection, type Settings } from './model';
 import {
   appStatus, cancelLogin, connectLinear, desktop, disconnectLinear, editorWindow, errorText, exportPng, linearConnection, listSessions, loadSession,
   loadSettings, on, PREVIEW_MESSAGE, readClipboardImage, saveSession, saveSettings, startCapture, submissionStatus, submitIssue, type AppStatus, type RawImage,
@@ -237,14 +237,11 @@ export default function App() {
       <header className="topbar" onMouseDown={e => {
         if (e.button === 0 && !(e.target as HTMLElement).closest('button, input, a')) void editorWindow('drag').catch(err => notify(errorText(err), 'error'));
       }}>
-        <div className="brand"><Logo size={30} /><span>snipflag<span className="brand-caption">See it. Flag it.</span></span></div>
-        <div className="session-meta">
-          <span className="session-name" title={sessionLabel(session)}>{sessionLabel(session)}</span>
-          <span className={saveState === 'error' ? 'save-state error' : 'save-state'} role="status" aria-live="polite">{saveText}</span>
-        </div>
-        <span className="count">{count ? `${count} ${count === 1 ? 'image' : 'images'} · one issue` : ''}</span>
+        <span className={`save-indicator ${saveState}`} role="status" aria-label={saveText} title={saveText} />
+        {saveState === 'error' && <span className="save-error" role="alert">{saveText}</span>}
+        <div className="drag-space" aria-hidden="true" />
         <div className="top-actions">
-          <button type="button" className="button ghost" aria-label="New session" title="New session" onClick={() => void newSession()} disabled={busy}><Icon name="plus" /><span className="action-label">New</span></button>
+          <button type="button" className="icon-button" aria-label="New session" title="New session" onClick={() => void newSession()} disabled={busy}><Icon name="plus" /></button>
           <button type="button" className="icon-button" aria-label="History" title="History" disabled={busy} onClick={() => setDialog('history')}><Icon name="history" /></button>
           <button type="button" className="icon-button" aria-label="Settings" title="Settings" disabled={busy} onClick={() => setDialog('settings')}><Icon name="settings" /></button>
         </div>
@@ -256,7 +253,6 @@ export default function App() {
       </header>
       <main className="workspace">
         <section className="stage-area" aria-label="Screenshot editor">
-          {image && <div className="stage-heading"><span className="eyebrow">THE EVIDENCE</span><span className="small muted">{index + 1} / {count} · Mark what matters</span></div>}
           {image ? (
             <>
               <Toolbar />

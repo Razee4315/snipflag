@@ -1,6 +1,20 @@
 import type { Annotation } from './model';
 
 export interface Box { x: number; y: number; width: number; height: number }
+export interface Point { x: number; y: number }
+
+/** Snap a segment to 15-degree increments, shortening at image edges without changing its angle. */
+export function snapAngle(origin: Point, pointer: Point, size: { width: number; height: number }): Point {
+  const dx = pointer.x - origin.x, dy = pointer.y - origin.y;
+  const step = Math.PI / 12;
+  const angle = Math.round(Math.atan2(dy, dx) / step) * step;
+  const length = Math.hypot(dx, dy);
+  const x = Math.cos(angle) * length, y = Math.sin(angle) * length;
+  const tx = Math.abs(x) < 1e-9 ? 1 : (x > 0 ? size.width - origin.x : -origin.x) / x;
+  const ty = Math.abs(y) < 1e-9 ? 1 : (y > 0 ? size.height - origin.y : -origin.y) / y;
+  const ratio = Math.max(0, Math.min(1, tx, ty));
+  return { x: origin.x + x * ratio, y: origin.y + y * ratio };
+}
 const HEAD = (stroke: number) => Math.max(12, stroke * 4);
 
 /** Bounding box in image pixels, padded to include strokes and arrow heads. */
@@ -32,7 +46,7 @@ export function transform(a: Annotation, box: Box, sx: number, sy: number): Anno
 /** Whether a finished drag produced something worth keeping. */
 export function isMeaningful(a: Annotation): boolean {
   if (a.kind === 'text') return a.text.trim().length > 0;
-  if (a.kind === 'pen') return a.points.length >= 4;
+  if (a.kind === 'pen') return a.points.some((x, i) => i % 2 === 0 && Math.hypot(x - a.points[0], a.points[i + 1] - a.points[1]) >= 1);
   if (a.kind === 'arrow') return Math.hypot(a.points[2] - a.points[0], a.points[3] - a.points[1]) >= 6;
   return a.width >= 3 && a.height >= 3;
 }

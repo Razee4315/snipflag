@@ -1,7 +1,7 @@
 import Konva from 'konva';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import { Image as KonvaImage, Layer, Shape, Stage, Transformer } from 'react-konva';
-import { bounds, isMeaningful, transform, translate } from '../geometry';
+import { bounds, isMeaningful, snapAngle, transform, translate, type Point } from '../geometry';
 import { clampRect, normalizeRect, type Annotation, type CaptureImage } from '../model';
 import { drawAnnotation, FONT_FAMILY, LINE_HEIGHT, paintOrder, pixelate } from '../render';
 import { isLocked, useStore } from '../store';
@@ -48,7 +48,11 @@ export default function Editor({ image, zoom, onZoom, onScale }: Props) {
   const source = useImageElement(image.dataUrl);
   const wrap = useRef<HTMLDivElement>(null); const size = useSize(wrap);
   const layer = useRef<Konva.Layer>(null); const transformer = useRef<Konva.Transformer>(null);
-  const [draft, setDraft] = useState<Annotation | null>(null);
+  const [draft, setDraftState] = useState<Annotation | null>(null);
+  const draftRef = useRef<Annotation | null>(null);
+  const setDraft = (value: Annotation | null) => { draftRef.current = value; setDraftState(value); };
+  const penSegment = useRef<{ origin: Point; prefix: number[] } | null>(null);
+  const updateDrawing = useRef<(shift: boolean) => void>(() => undefined);
   const [textEdit, setTextEditState] = useState<TextEdit | null>(null);
   // Mirrors textEdit so blur and pointer handlers commit the same edit at most once.
   const textRef = useRef<TextEdit | null>(null);
@@ -74,10 +78,13 @@ export default function Editor({ image, zoom, onZoom, onScale }: Props) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (isTyping(e.target) || textEdit) return;
+      if (e.key === 'Shift') updateDrawing.current(true);
       if ((e.key === 'Delete' || e.key === 'Backspace') && selection && !locked) { e.preventDefault(); removeAnnotation(selection); }
       if (e.key === 'Escape') { setDraft(null); start.current = null; setSelection(null); }
     };
-    window.addEventListener('keydown', onKey); return () => window.removeEventListener('keydown', onKey);
+    const onKeyUp = (e: KeyboardEvent) => { if (e.key === 'Shift') updateDrawing.current(false); };
+    window.addEventListener('keydown', onKey); window.addEventListener('keyup', onKeyUp);
+    return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('keyup', onKeyUp); };
   }, [selection, locked, textEdit, removeAnnotation, setSelection]);
 
   const pointer = () => {
@@ -114,26 +121,41 @@ export default function Editor({ image, zoom, onZoom, onScale }: Props) {
       return;
     }
     start.current = p;
-    setDraft({ ...base(), kind: tool, x: p.x, y: p.y, points: tool === 'pen' || tool === 'arrow' ? [0, 0, 0, 0] : [] });
+    penSegment.current = null;
+    setDraft({ ...base(), kind: tool, x: p.x, y: p.y, points: tool === 'pen' ? [0, 0] : tool === 'arrow' ? [0, 0, 0, 0] : [] });
   };
-  const onMove = () => {
-    const s = start.current; if (!s || !draft) return;
+  updateDrawing.current = (shift: boolean) => {
+    const s = start.current; const draft = draftRef.current; if (!s || !draft) return;
     const p = pointer(); if (!p) return;
     if (draft.kind === 'pen') {
       const n = draft.points.length; const lx = draft.points[n - 2], ly = draft.points[n - 1];
+      if (shift) {
+        penSegment.current ??= { origin: { x: s.x + lx, y: s.y + ly }, prefix: [...draft.points] };
+        const segment = penSegment.current;
+        const end = snapAngle(segment.origin, p, image);
+        setDraft({ ...draft, points: [...segment.prefix, end.x - s.x, end.y - s.y] });
+        return;
+      }
+      penSegment.current = null;
       if (Math.hypot(p.x - s.x - lx, p.y - s.y - ly) * scale < 2) return;
       setDraft({ ...draft, points: [...draft.points, p.x - s.x, p.y - s.y] });
     } else if (draft.kind === 'arrow') {
-      setDraft({ ...draft, points: [0, 0, p.x - s.x, p.y - s.y] });
+      const end = shift ? snapAngle(s, p, image) : p;
+      setDraft({ ...draft, points: [0, 0, end.x - s.x, end.y - s.y] });
     } else {
-      const r = normalizeRect(s.x, s.y, p.x, p.y);
+      let end = p;
+      if (shift && draft.kind === 'rectangle') {
+        const side = Math.min(Math.max(Math.abs(p.x - s.x), Math.abs(p.y - s.y)), p.x < s.x ? s.x : image.width - s.x, p.y < s.y ? s.y : image.height - s.y);
+        end = { x: s.x + (p.x < s.x ? -side : side), y: s.y + (p.y < s.y ? -side : side) };
+      }
+      const r = normalizeRect(s.x, s.y, end.x, end.y);
       setDraft({ ...draft, ...(draft.kind === 'rectangle' ? r : clampRect(r, image.width, image.height)) });
     }
   };
   const onUp = () => {
     const t = textStart.current; textStart.current = null;
     if (t && tool === 'text') { setTextEdit({ id: null, x: t.x, y: t.y - fontSize * LINE_HEIGHT / 2, value: '', fontSize, color }); return; }
-    const d = draft; start.current = null; setDraft(null);
+    const d = draftRef.current; start.current = null; penSegment.current = null; setDraft(null);
     if (!d || !isMeaningful(d)) return;
     edit([...image.annotations, d]);
     if (d.kind === 'redact' || d.kind === 'pixelate' || d.kind === 'rectangle') setSelection(null);
@@ -183,7 +205,7 @@ export default function Editor({ image, zoom, onZoom, onScale }: Props) {
     <div className="canvas-scroll" ref={wrap}>
       <div className="canvas-frame" style={{ width: stageWidth, height: stageHeight, cursor }} data-testid="canvas">
         <Stage width={stageWidth} height={stageHeight} scaleX={scale} scaleY={scale}
-          onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerLeave={() => { textStart.current = null; if (draft) onUp(); }} onWheel={onWheel}>
+          onPointerDown={onDown} onPointerMove={e => updateDrawing.current(e.evt.shiftKey)} onPointerUp={onUp} onPointerLeave={() => { textStart.current = null; if (draftRef.current) onUp(); }} onWheel={onWheel}>
           <Layer ref={layer}>
             {source && <KonvaImage image={source} width={image.width} height={image.height} listening={false} />}
             {ordered.map(a => renderShape(a, true))}
@@ -208,4 +230,3 @@ export default function Editor({ image, zoom, onZoom, onScale }: Props) {
     </div>
   );
 }
-

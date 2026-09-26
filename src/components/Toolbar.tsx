@@ -42,7 +42,7 @@ export default function Toolbar() {
       <div className="tool-group">
         {TOOLS.map(t => (
           <button key={t.tool} type="button" className={tool === t.tool ? 'tool active' : 'tool'} aria-pressed={tool === t.tool} disabled={locked}
-            aria-label={`${t.label} (${t.key})`} title={`${t.label} (${t.key})`} onClick={() => setTool(t.tool)}>
+            aria-label={`${t.label} (${t.key})`} title={`${t.label} (${t.key})${t.tool === 'pen' || t.tool === 'arrow' ? ' · Hold Shift to snap to 15°' : t.tool === 'rectangle' ? ' · Hold Shift for a square' : ''}`} onClick={() => setTool(t.tool)}>
             <Icon name={t.icon} />
           </button>
         ))}
