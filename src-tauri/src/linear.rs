@@ -93,6 +93,26 @@ pub fn build_description(description: &str, sections: &[(String, String)]) -> St
     out
 }
 
+/// The exact description sent to Linear: resolved prose, then one ordered section per image.
+/// Mirrored by src/report.ts for the local preview; both are checked against src/report.fixtures.json.
+pub fn compose_description(session: &Value, images: &[Value], refs: &crate::mentions::References, uploaded: &[(String, String)]) -> Result<String, String> {
+    let aliased = session["imageReferences"].is_object();
+    let mut sections = Vec::new();
+    for image in images {
+        let image_id = image["id"].as_str().unwrap_or_default();
+        let url = uploaded.iter().find(|(id, _)| id == image_id).map(|(_, url)| url.clone()).ok_or("A screenshot was not uploaded.")?;
+        let caption = image["name"].as_str().unwrap_or("");
+        let alias = refs.iter().find(|(_, id)| id.as_str() == image_id).map(|(key, _)| key.as_str());
+        let caption = match alias {
+            Some(key) if aliased => if caption.is_empty() { format!("@{key}") } else { format!("@{key} · {caption}") },
+            _ => caption.to_string(),
+        };
+        sections.push((caption, url));
+    }
+    let prose = crate::mentions::resolve(session["description"].as_str().unwrap_or(""), refs, uploaded)?;
+    Ok(build_description(&prose, &sections))
+}
+
 #[derive(Debug, PartialEq)]
 pub enum Plan { Fresh, Receipt(String), Reconcile, WrongWorkspace }
 /// Decides what a submit attempt may do based on the durable receipt from earlier attempts.
@@ -212,22 +232,13 @@ pub async fn submit_issue(window: WebviewWindow, app: AppHandle, session: Value,
         Plan::Fresh => {}
     }
     storage.set_submission(&session_id, &workspace, "uploading", None)?;
-    let count = decoded.len(); let mut sections = Vec::new(); let mut uploaded = Vec::new();
+    let count = decoded.len(); let mut uploaded = Vec::new();
     for (i, bytes) in decoded.into_iter().enumerate() {
         progress(&app, &format!("Uploading screenshot {} of {}…", i + 1, count));
         let url = upload(&token, bytes, i).await?;
-        let image_id = images[i]["id"].as_str().unwrap_or_default();
-        uploaded.push((image_id.to_string(), url.clone()));
-        let caption = images[i]["name"].as_str().unwrap_or("");
-        let alias = image_references.iter().find(|(_, id)| id.as_str() == image_id).map(|(key, _)| key.as_str());
-        let caption = match alias {
-            Some(key) if session["imageReferences"].is_object() => if caption.is_empty() { format!("@{key}") } else { format!("@{key} · {caption}") },
-            _ => caption.to_string(),
-        };
-        sections.push((caption, url));
+        uploaded.push((images[i]["id"].as_str().unwrap_or_default().to_string(), url));
     }
-    let prose = crate::mentions::resolve(session["description"].as_str().unwrap_or(""), &image_references, &uploaded)?;
-    let description = build_description(&prose, &sections);
+    let description = compose_description(&session, &images, &image_references, &uploaded)?;
     let mut input = json!({"id": session_id, "teamId": team_id, "title": title, "description": description, "priority": priority});
     if !labels.is_empty() { input["labelIds"] = json!(labels); }
     for field in ["projectId", "assigneeId"] { if let Some(value) = session[field].as_str().filter(|s| !s.is_empty()) { input[field] = json!(id(value)?); } }
@@ -286,6 +297,17 @@ mod tests {
         assert!(first < second);
         assert!(text.starts_with("Steps\n\n### 1. Login"));
         assert!(text.contains("### 2. Screenshot 2"));
+    }
+    #[test] fn composed_description_matches_the_shared_preview_fixtures() {
+        let cases: Value = serde_json::from_str(include_str!("../../src/report.fixtures.json")).unwrap();
+        for case in cases.as_array().unwrap() {
+            let session = &case["session"];
+            let images = session["images"].as_array().unwrap().clone();
+            let refs = crate::mentions::references(session, &images).unwrap();
+            crate::mentions::validate(session["description"].as_str().unwrap_or(""), &refs, &images).unwrap();
+            let uploaded: Vec<(String, String)> = images.iter().map(|i| { let id = i["id"].as_str().unwrap().to_string(); let url = case["urls"][&id].as_str().unwrap().to_string(); (id, url) }).collect();
+            assert_eq!(compose_description(session, &images, &refs, &uploaded).unwrap(), case["expected"].as_str().unwrap(), "{}", case["name"]);
+        }
     }
     #[test] fn submission_plans_never_duplicate() {
         assert_eq!(plan(None, "w"), Plan::Fresh);

@@ -574,3 +574,46 @@ test('about section credits the creator', async ({ page }, testInfo) => {
   await expect(dialog.getByRole('button', { name: /LinkedIn\s*saqlainrazee/ })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath('settings-about.png'), animations: 'disabled' });
 });
+
+test('report preview shows the exact outgoing report with protected images', async ({ page }, testInfo) => {
+  await addImages(page, [white, blue]);
+  await tile(page, 1).click();
+  await page.keyboard.press('r');
+  await drag(page, [0.2, 0.2], [0.8, 0.8]);
+  await page.keyboard.press('b');
+  await drag(page, [0.1, 0.1], [0.5, 0.5]);
+  await page.getByLabel('Title', { exact: true }).fill('Checkout total is wrong');
+  await page.getByLabel('Description', { exact: true }).fill('Compare @image2 with `@image1`.\n\n');
+  await page.getByRole('button', { name: 'Move screenshot 2 earlier' }).click();
+  await page.getByRole('button', { name: 'Preview report' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Report preview' });
+  const report = dialog.getByRole('article', { name: 'Outgoing report' });
+  await expect(dialog.getByText('Nothing has been uploaded.', { exact: false })).toBeVisible();
+  await expect(report.getByRole('heading', { name: 'Checkout total is wrong' })).toBeVisible();
+  await expect(report.locator('.mention-chip')).toHaveText(['@image2']);
+  await expect(report.getByRole('heading', { level: 4 })).toHaveText(['1. @image2 · blue', '2. @image1 · white']);
+  await expect(dialog.locator('[data-preview-image]')).toHaveCount(2);
+  await dialog.getByText('Markdown description', { exact: true }).click();
+  expect(await dialog.locator('pre').textContent()).toBe('Compare [@image2](<linear-upload:screenshot-1.png>) with `@image1`.\n\n### 1. @image2 · blue\n\n![Screenshot 1](linear-upload:screenshot-1.png)\n\n### 2. @image1 · white\n\n![Screenshot 2](linear-upload:screenshot-2.png)');
+  // The preview shows flattened pixels at original size: pixelation replaces the source under the mark.
+  const shown = await dialog.locator('[data-preview-image="2"]').evaluate(async (img: HTMLImageElement) => {
+    await img.decode();
+    const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight;
+    const ctx = c.getContext('2d')!; ctx.drawImage(img, 0, 0);
+    return { width: c.width, height: c.height, pixels: [[140, 60], [260, 60], [390, 290]].map(([x, y]) => [...ctx.getImageData(x, y, 1, 1).data]) };
+  });
+  expect(shown).toEqual({ width: 400, height: 300, pixels: [[255, 255, 255, 255], [239, 68, 68, 255], [255, 255, 255, 255]] });
+  // Nothing can be sent from the browser preview, and the reason is stated.
+  await expect(dialog.getByRole('button', { name: 'Create issue' })).toBeDisabled();
+  await expect(dialog.getByRole('alert')).toHaveText('Choose a Linear team.');
+  await page.screenshot({ path: testInfo.outputPath('report-preview.png'), animations: 'disabled' });
+  // Tool shortcuts do not reach the editor behind the dialog.
+  await page.keyboard.press('e');
+  await dialog.getByRole('button', { name: 'Keep editing' }).click();
+  await expect(dialog).toBeHidden();
+  await expect(page.getByRole('button', { name: /^Pixelate/ })).toHaveAttribute('aria-pressed', 'true');
+  // A changed revision is previewed afresh.
+  await page.getByLabel('Caption for screenshot 2').fill('Checkout');
+  await page.getByRole('button', { name: 'Preview report' }).click();
+  await expect(report.getByRole('heading', { level: 4 })).toHaveText(['1. @image2 · blue', '2. @image1 · Checkout']);
+});

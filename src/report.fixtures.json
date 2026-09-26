@@ -1,0 +1,83 @@
+[
+  {
+    "name": "aliases, reordered images, literal code and Unicode prose",
+    "session": {
+      "description": "یہ total is wrong in @image2, compare @image1.  \n\n`@image1` stays literal.\n\n",
+      "imageReferences": {
+        "image1": "00000000-0000-4000-8000-00000000000a",
+        "image2": "00000000-0000-4000-8000-00000000000b"
+      },
+      "images": [
+        {
+          "id": "00000000-0000-4000-8000-00000000000b",
+          "name": "Cart * total"
+        },
+        {
+          "id": "00000000-0000-4000-8000-00000000000a",
+          "name": ""
+        }
+      ]
+    },
+    "urls": {
+      "00000000-0000-4000-8000-00000000000a": "https://uploads.linear.app/a",
+      "00000000-0000-4000-8000-00000000000b": "https://uploads.linear.app/b"
+    },
+    "expected": "یہ total is wrong in [@image2](<https://uploads.linear.app/b>), compare [@image1](<https://uploads.linear.app/a>).  \n\n`@image1` stays literal.\n\n### 1. @image2 · Cart \\* total\n\n![Screenshot 1](https://uploads.linear.app/b)\n\n### 2. @image1\n\n![Screenshot 2](https://uploads.linear.app/a)"
+  },
+  {
+    "name": "legacy drafts without aliases use order and plain captions",
+    "session": {
+      "description": "See @image2",
+      "images": [
+        {
+          "id": "00000000-0000-4000-8000-00000000000a",
+          "name": "Login\nform"
+        },
+        {
+          "id": "00000000-0000-4000-8000-00000000000b",
+          "name": "  "
+        }
+      ]
+    },
+    "urls": {
+      "00000000-0000-4000-8000-00000000000a": "https://uploads.linear.app/a",
+      "00000000-0000-4000-8000-00000000000b": "https://uploads.linear.app/b"
+    },
+    "expected": "See [@image2](<https://uploads.linear.app/b>)\n\n### 1. Login form\n\n![Screenshot 1](https://uploads.linear.app/a)\n\n### 2. Screenshot 2\n\n![Screenshot 2](https://uploads.linear.app/b)"
+  },
+  {
+    "name": "blank description and escaped caption markup",
+    "session": {
+      "description": "   \n",
+      "imageReferences": {
+        "image3": "00000000-0000-4000-8000-00000000000a"
+      },
+      "images": [
+        {
+          "id": "00000000-0000-4000-8000-00000000000a",
+          "name": " [x](y) <b>#1| "
+        }
+      ]
+    },
+    "urls": {
+      "00000000-0000-4000-8000-00000000000a": "https://uploads.linear.app/a"
+    },
+    "expected": "### 1. @image3 ·  \\[x\\](y) \\<b\\>\\#1\\|\n\n![Screenshot 1](https://uploads.linear.app/a)"
+  },
+  {
+    "name": "captions are limited to 200 characters, not UTF-16 units",
+    "session": {
+      "description": "",
+      "images": [
+        {
+          "id": "00000000-0000-4000-8000-00000000000a",
+          "name": "🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂"
+        }
+      ]
+    },
+    "urls": {
+      "00000000-0000-4000-8000-00000000000a": "https://uploads.linear.app/a"
+    },
+    "expected": "### 1. 🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂🙂\n\n![Screenshot 1](https://uploads.linear.app/a)"
+  }
+]

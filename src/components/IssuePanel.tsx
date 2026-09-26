@@ -4,13 +4,14 @@ import { copyText, desktop, errorText, openIssue, teamOptions } from '../native'
 import { isLocked, useStore } from '../store';
 import { Icon } from './icons';
 import DescriptionEditor from './DescriptionEditor';
+import ReportPreview, { type PreparedReport } from './ReportPreview';
 
 export type ConnectionState = 'idle' | 'loading' | 'connecting' | 'error';
 interface Props {
   connection: Connection | null; connectionState: ConnectionState; connectionError: string; hasClientId: boolean;
   progress: string; submitError: string; pendingState: string | null;
   onConnect: () => void; onCancelConnect: () => void; onRetryConnection: () => void; onOpenSettings: () => void;
-  onSubmit: () => void; onNewSession: () => void; onTeamChosen: (teamId: string) => void; notify: (text: string) => void;
+  onSubmit: (report?: PreparedReport) => void; onNewSession: () => void; onTeamChosen: (teamId: string) => void; notify: (text: string) => void;
 }
 const TEMPLATE = '## Steps to reproduce\n1. \n\n## Expected result\n\n## Actual result\n\n## Environment\n';
 
@@ -21,6 +22,7 @@ export default function IssuePanel(p: Props) {
   const [options, setOptions] = useState<TeamOptions | null>(null);
   const [optionsError, setOptionsError] = useState('');
   const [labelFilter, setLabelFilter] = useState('');
+  const [previewing, setPreviewing] = useState(false);
   const teamId = session.teamId; const connected = !!p.connection;
 
   useEffect(() => {
@@ -167,11 +169,14 @@ export default function IssuePanel(p: Props) {
         {busy && p.progress && <div role="status" aria-live="polite" className="small progress"><span className="spinner" aria-hidden="true" /> {p.progress}</div>}
         <div className="foot-actions">
           <button type="button" className="button" onClick={p.onNewSession} disabled={busy}><Icon name="plus" size={16} /> New session</button>
+          <button type="button" className="button square" onClick={() => setPreviewing(true)} disabled={busy || !count} aria-label="Preview report" title="Preview report"><Icon name="eye" size={16} /></button>
           <button type="submit" form="issue-form" className={busy ? 'button primary busy' : 'button primary'} disabled={busy || !count} aria-keyshortcuts="Control+Enter">
             {busy ? 'Working…' : submissionLocked ? 'Check previous attempt' : p.pendingState && p.pendingState !== 'retryable' ? 'Retry create issue' : 'Create issue'}<Icon name="right" size={16} />
           </button>
         </div>
       </footer>
+      {previewing && <ReportPreview connection={p.connection} options={options} onClose={() => setPreviewing(false)}
+        onCreate={report => { setPreviewing(false); p.onSubmit(report); }} />}
     </aside>
   );
 }

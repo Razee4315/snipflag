@@ -6,6 +6,7 @@ import HistoryDialog from './components/HistoryDialog';
 import { Icon, Mark } from './components/icons';
 import IssuePanel, { type ConnectionState } from './components/IssuePanel';
 import SettingsDialog from './components/SettingsDialog';
+import type { PreparedReport } from './components/ReportPreview';
 import Toolbar, { TOOLS } from './components/Toolbar';
 import { defaults, imageLabel, shortcutLabel, validateSession, type CaptureImage, type Connection, type Settings } from './model';
 import {
@@ -211,7 +212,7 @@ export default function App() {
     }
   }, []);
 
-  const submit = useCallback(async () => {
+  const submit = useCallback(async (prepared?: PreparedReport) => {
     const s = useStore.getState();
     if (s.busy) return;
     const fail = (message: string) => { setSubmitError(message); play('error'); };
@@ -239,8 +240,9 @@ export default function App() {
     try {
       await flush();
       const { session: snapshot, persisted } = useStore.getState();
-      const exports: { id: string; dataUrl: string }[] = [];
-      for (const [i, img] of snapshot.images.entries()) {
+      // A reviewed preview supplies the exact pixels shown, valid only for the unchanged revision.
+      const exports: { id: string; dataUrl: string }[] = prepared && prepared.session === snapshot ? prepared.exports : [];
+      if (!exports.length) for (const [i, img] of snapshot.images.entries()) {
         setProgress(`Preparing screenshot ${i + 1} of ${snapshot.images.length}…`);
         exports.push({ id: img.id, dataUrl: await flatten(img) });
       }
@@ -284,7 +286,7 @@ export default function App() {
   // Keyboard: tool keys, undo/redo, submit, paste.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (dialog) return;
+      if (dialog || document.querySelector('dialog[open]')) return;
       const mod = e.ctrlKey || e.metaKey; const key = e.key.toLowerCase();
       if (mod && key === 'enter') { e.preventDefault(); void submit(); return; }
       if (isTyping(e.target)) return;
@@ -296,7 +298,7 @@ export default function App() {
       if (tool && !isLocked(useStore.getState())) { e.preventDefault(); setTool(tool.tool); }
     };
     const onPaste = (e: ClipboardEvent) => {
-      if (dialog || isTyping(e.target)) return;
+      if (dialog || document.querySelector('dialog[open]') || isTyping(e.target)) return;
       const files = [...(e.clipboardData?.files ?? [])].filter(f => f.type.startsWith('image/'));
       if (files.length) { e.preventDefault(); void importFiles(files); }
       else if (desktop) { e.preventDefault(); void pasteImage(); }
@@ -363,7 +365,7 @@ export default function App() {
       <IssuePanel connection={connection} connectionState={connectionState} connectionError={connectionError} hasClientId={!!settings.clientId || !!status?.builtinLinearClient}
         progress={progress} submitError={submitError} pendingState={pendingState}
         onConnect={() => void connect()} onCancelConnect={() => void cancelLogin().catch(() => undefined)} onRetryConnection={() => void refreshConnection()}
-        onOpenSettings={() => setDialog('settings')} onSubmit={() => void submit()} onNewSession={() => void newSession()} onTeamChosen={rememberTeam} notify={notify} />
+        onOpenSettings={() => setDialog('settings')} onSubmit={report => void submit(report)} onNewSession={() => void newSession()} onTeamChosen={rememberTeam} notify={notify} />
       <input ref={fileInput} type="file" accept="image/png,image/jpeg,image/webp" multiple hidden aria-label="Add images"
         onChange={e => { const files = [...(e.target.files ?? [])]; e.target.value = ''; if (files.length) void importFiles(files); }} />
       <div className="toast-region" role={notice?.kind === 'error' ? 'alert' : 'status'} aria-live="polite">
