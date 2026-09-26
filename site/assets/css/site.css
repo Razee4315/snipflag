@@ -100,13 +100,13 @@ p { margin: 0; }
 .menu-btn[aria-expanded="true"] span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
 /* Hero */
-.hero { padding-top: clamp(8rem, 16vw, 10.5rem); text-align: center; overflow: clip; }
+.hero { padding-top: clamp(7rem, 12vw, 9rem); text-align: center; overflow: clip; }
 .hero h1 { max-width: 14ch; margin-inline: auto; }
 .hero .lede { margin: 1.5rem auto 0; }
 .hero-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: .75rem; margin-top: 2.25rem; }
 .hero-meta { margin-top: 1.25rem; font-size: .9375rem; color: var(--faint); }
 .hero-meta a { color: var(--muted); text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; }
-.hero-shot { margin: clamp(3.5rem, 7vw, 5rem) auto 0; max-width: 1080px; position: relative; }
+.hero-shot { margin: clamp(2.5rem, 5vw, 3.5rem) auto 0; max-width: 1080px; position: relative; }
 .hero-shot::before { content: ""; position: absolute; inset: 12% 10% -4%; z-index: -1; background: radial-gradient(closest-side, rgba(255,178,91,.2), transparent 75%); filter: blur(30px); }
 .hero-shot img { width: 100%; border-radius: var(--radius); box-shadow: 0 0 0 1px var(--line), 0 40px 80px -40px rgba(0,0,0,.75); }
 
@@ -247,3 +247,15 @@ details.qa .a a { color: var(--text); text-decoration: underline; text-decoratio
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
+
+/* Hero demo video */
+.hero-video { max-width: 1120px; }
+.hero-video video { width: 100%; height: auto; display: block; border-radius: var(--radius); background: #111; box-shadow: 0 0 0 1px var(--line), 0 40px 80px -40px rgba(0,0,0,.75); }
+.hero-video figcaption { margin-top: 1rem; font-size: .9375rem; color: var(--faint); }
+.video-toggle { position: absolute; right: 14px; top: 14px; width: 40px; height: 40px; display: grid; place-items: center; border: 0; border-radius: 50%; background: rgba(12,31,27,.78); color: var(--text); cursor: pointer; opacity: .8; transition: opacity var(--dur), transform var(--dur) var(--ease-out); backdrop-filter: blur(6px); }
+.video-toggle:hover, .video-toggle:focus-visible { opacity: 1; transform: scale(1.06); }
+.video-toggle svg { width: 16px; height: 16px; }
+.video-toggle .i-play { display: none; }
+.video-toggle.paused .i-play { display: block; }
+.video-toggle.paused .i-pause { display: none; }
+@media (max-width: 520px) { .video-toggle { right: 8px; top: 8px; width: 34px; height: 34px; } }

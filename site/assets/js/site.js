@@ -38,6 +38,31 @@
     if (card) { card.classList.add('is-you'); card.parentNode.prepend(card); }
   })();
 
+  /* ---------- Demo video: autoplay unless reduced motion; always pausable ---------- */
+  (function demo() {
+    var v = $('[data-demo]'), btn = $('[data-demo-toggle]');
+    if (!v || !btn) return;
+    var sync = function () {
+      var paused = v.paused;
+      btn.classList.toggle('paused', paused);
+      btn.setAttribute('aria-label', paused ? 'Play video' : 'Pause video');
+    };
+    btn.addEventListener('click', function () { v.paused ? v.play() : v.pause(); });
+    v.addEventListener('play', sync); v.addEventListener('pause', sync);
+    if (reduce) { v.removeAttribute('autoplay'); v.pause(); }
+    else {
+      // Start when visible, pause when scrolled away to save battery.
+      if ('IntersectionObserver' in window) {
+        new IntersectionObserver(function (e) {
+          if (e[0].isIntersecting) { if (!v.__userPaused) { var p = v.play(); if (p && p.catch) p.catch(sync); } }
+          else if (!v.paused) v.pause();
+        }, { threshold: 0.25 }).observe(v);
+      } else { v.play(); }
+      btn.addEventListener('click', function () { v.__userPaused = !v.paused ? false : true; });
+    }
+    sync();
+  })();
+
   /* ---------- Header ---------- */
   var header = $('.site-header');
   var menuBtn = $('.menu-btn');
