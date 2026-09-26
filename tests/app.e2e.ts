@@ -29,8 +29,11 @@ test.beforeEach(async ({ page }) => {
   await page.reload();
 });
 
-test('empty state explains the next step with accessible actions', async ({ page }) => {
+test('empty state explains the next step with accessible actions', async ({ page }, testInfo) => {
   await expect(page.getByRole('heading', { name: 'Capture a screenshot' })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('empty-daylight.png'), animations: 'disabled' });
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.screenshot({ path: testInfo.outputPath('empty-after-hours.png'), animations: 'disabled' });
   await expect(page.getByRole('button', { name: 'Add images' }).first()).toBeEnabled();
   await expect(page.getByRole('button', { name: 'Capture screen' })).toBeDisabled();
   for (const name of ['New session', 'History', 'Settings', 'Create issue']) await expect(page.getByRole('button', { name })).toBeVisible();

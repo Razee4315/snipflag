@@ -46,7 +46,7 @@ export default function App() {
   const saveNow = useCallback(() => {
     const run = async () => {
       const { session: s, persisted, setSaveState, markPersisted } = useStore.getState();
-      if (!s.images.length && !s.title.trim() && !s.description.trim()) return;
+      if (!s.images.length && !s.title.trim() && !s.description.trim()) { setSaveState('idle'); return; }
       setSaveState('saving');
       try { await saveSession(s, persisted); markPersisted(s.id, s.images.map(i => i.id)); setSaveState('saved'); }
       catch (e) { setSaveState('error', errorText(e)); throw e; }
@@ -56,6 +56,9 @@ export default function App() {
   const flush = useCallback(() => { window.clearTimeout(saveTimer.current); return saveNow(); }, [saveNow]);
   useEffect(() => {
     if (!ready) return;
+    // Pending edits are never reported as saved: the status only returns to "saved" after this change is durable.
+    const { session: s, saveState: current, setSaveState } = useStore.getState();
+    if (current === 'saved' && (s.images.length || s.title.trim() || s.description.trim())) setSaveState('saving');
     window.clearTimeout(saveTimer.current);
     saveTimer.current = window.setTimeout(() => { saveNow().catch(() => undefined); }, 400);
     return () => window.clearTimeout(saveTimer.current);
