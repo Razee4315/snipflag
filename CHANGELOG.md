@@ -2,6 +2,23 @@
 
 All notable changes to Snipflag are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-09-26
+
+### Added
+
+- Report preview showing the destination, fields, title, description, image references, flattened screenshots in upload order and the exact Markdown before anything is uploaded. Rust and the preview share one description format, tested against the same fixtures.
+- Editable description templates (Bug report, Visual defect, Regression, Design feedback), offered only under an empty description.
+- Per-team remembered project, assignee, labels and priority, filling only empty fields with values the team still offers.
+- Signed automatic updates through the Tauri updater, with background checks, a manual check, and installs only after the draft is saved.
+- Built-in public Linear OAuth client; custom client IDs moved to Advanced settings.
+
+### Changed
+
+- The remembered team applies to new sessions; long pickers are searchable; team metadata failures can be retried.
+- Durability: emptied drafts persist, Quit waits for a saved draft, undo history survives restart, failed deletions are retryable.
+- Uncertain submissions lock to an immutable report snapshot and reconcile before any new send.
+- Pixelation replaces covered pixels; thumbnails and mention previews use protected flattened images.
+
 ## [1.1.0] - 2026-09-26
 
 ### Changed
