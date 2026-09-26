@@ -1,5 +1,11 @@
 # Current state / handoff
 
+## Fix-first implementation — privacy checkpoint, 2026-09-26
+
+Owner authorized all six fix-first items, focused commits, remote checks, and no new release/version. Baseline now `c028dd1`; another workstream published 1.1.0 before this task. This task keeps 1.1.0 and will not publish or replace release assets.
+
+Implemented in this checkpoint (verification pending): pixelation clears the original covered pixels before drawing averaged pixels, uses outward-rounded coverage, and is rendered after ordinary marks; legacy redactions remain last. Filmstrip and mention previews now use bounded flattened thumbnails with no original-image fallback. Added a patterned translucent export/thumbnail/reload browser regression. Audit document retained as the historical assessment. Next: remote CI, then durable empty-draft/undo, deletion, quit, and uncertain-submit fixes. No local builds or installs.
+
 ## Product and engineering audit — 2026-09-26
 
 Owner requested a detailed audit and roadmap. Audited checkout `9f4dd38`; findings and proposed work are recorded in [AUDIT-2026-09-26.md](AUDIT-2026-09-26.md). Application code was not changed; no new implementation, commit, publication, native runtime test, or local build/install was performed. Audit documents are local and uncommitted.

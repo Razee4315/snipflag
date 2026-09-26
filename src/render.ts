@@ -4,11 +4,12 @@ export const FONT_FAMILY = '"Segoe UI", system-ui, -apple-system, "Helvetica Neu
 export const LINE_HEIGHT = 1.2;
 /** Arrow head length in image pixels, shared by editor and export. */
 export const arrowHead = (stroke: number) => Math.max(12, stroke * 4);
-/** Paint order: highlights sit under every other mark; legacy solid redactions stay last so nothing can expose their pixels. */
+/** Privacy regions cover all ordinary marks; legacy solid redactions always stay last. */
 export function paintOrder(annotations: Annotation[]) {
   return [
     ...annotations.filter(a => a.kind === 'highlight'),
-    ...annotations.filter(a => a.kind !== 'highlight' && a.kind !== 'redact'),
+    ...annotations.filter(a => a.kind !== 'highlight' && a.kind !== 'pixelate' && a.kind !== 'redact'),
+    ...annotations.filter(a => a.kind === 'pixelate'),
     ...annotations.filter(a => a.kind === 'redact'),
   ];
 }
@@ -43,7 +44,7 @@ export function fromDrawable(source: CanvasImageSource, width: number, height: n
 }
 export function fileBaseName(name: string) { return name.replace(/\.[^.]+$/, '').slice(0, 120); }
 
-/** Pixel block size for a pixelation area: large enough that text and faces are unreadable, even on small areas. */
+/** Minimum privacy block size. Pixelation is not a guarantee of anonymization. */
 export const pixelBlock = (width: number, height: number) => Math.max(12, Math.round(Math.min(width, height) / 6));
 
 /**
@@ -51,9 +52,12 @@ export const pixelBlock = (width: number, height: number) => Math.max(12, Math.r
  * keep recoverable detail). Blocks are aligned to the image grid so neighboring areas match. The result is burned
  * into exports.
  */
+export function pixelRect(a: Pick<Annotation, 'x' | 'y' | 'width' | 'height'>) {
+  const x = Math.floor(a.x), y = Math.floor(a.y);
+  return { x, y, width: Math.max(1, Math.ceil(a.x + a.width) - x), height: Math.max(1, Math.ceil(a.y + a.height) - y) };
+}
 export function pixelate(source: CanvasImageSource, a: Pick<Annotation, 'x' | 'y' | 'width' | 'height'>) {
-  const x0 = Math.round(a.x); const y0 = Math.round(a.y);
-  const w = Math.max(1, Math.round(a.width)); const h = Math.max(1, Math.round(a.height));
+  const { x: x0, y: y0, width: w, height: h } = pixelRect(a);
   const block = pixelBlock(w, h);
   // Expand to whole grid blocks, read them once, then paint each block's average color.
   const gx = Math.floor(x0 / block) * block; const gy = Math.floor(y0 / block) * block;
@@ -80,6 +84,12 @@ export function pixelate(source: CanvasImageSource, a: Pick<Annotation, 'x' | 'y
     }
   }
   return out;
+}
+/** Replace, never alpha-blend with the sensitive original underneath. Shared by editor and all exports. */
+export function paintPixelation(ctx: CanvasRenderingContext2D, pixels: HTMLCanvasElement, a: Annotation) {
+  const rect = pixelRect(a);
+  ctx.clearRect(rect.x, rect.y, rect.width, rect.height);
+  ctx.drawImage(pixels, rect.x, rect.y);
 }
 /** Black or white, whichever reads better on a badge color. */
 export function contrastText(hex: string) {
@@ -112,7 +122,7 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, source: CanvasImag
     ctx.fillText(a.text, cx, cy + r * 0.04);
   }
   if (a.kind === 'redact') { ctx.globalAlpha = 1; ctx.fillStyle = '#000000'; ctx.fillRect(Math.floor(a.x), Math.floor(a.y), Math.ceil(a.width) + 1, Math.ceil(a.height) + 1); }
-  if (a.kind === 'pixelate' && a.width >= 1 && a.height >= 1) ctx.drawImage(pixelate(source, a), Math.round(a.x), Math.round(a.y));
+  if (a.kind === 'pixelate' && a.width >= 1 && a.height >= 1) paintPixelation(ctx, pixelate(source, a), a);
   if (a.kind === 'text') {
     ctx.font = `bold ${a.fontSize}px ${FONT_FAMILY}`; ctx.textBaseline = 'middle';
     a.text.split('\n').forEach((line, i) => ctx.fillText(line, a.x, a.y + (i + 0.5) * a.fontSize * LINE_HEIGHT));
@@ -139,10 +149,27 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, source: CanvasImag
   ctx.restore();
 }
 /** Authoritative export: original dimensions, flattened pixels, pixelation burned in. */
-export async function flatten(image: CaptureImage): Promise<string> {
+export async function flattenedCanvas(image: CaptureImage): Promise<HTMLCanvasElement> {
   const source = await loadImage(image.dataUrl);
   const c = canvas(image.width, image.height); const ctx = c.getContext('2d')!;
   ctx.drawImage(source, 0, 0);
   for (const a of paintOrder(image.annotations)) drawAnnotation(ctx, source, a);
-  return c.toDataURL('image/png');
+  return c;
+}
+export async function flatten(image: CaptureImage): Promise<string> { return (await flattenedCanvas(image)).toDataURL('image/png'); }
+
+const thumbnails = new WeakMap<Annotation[], { source: string; result: Promise<string> }>();
+/** Bounded previews of exactly the exported revision. Never fall back to the original. */
+export function thumbnail(image: CaptureImage): Promise<string> {
+  const cached = thumbnails.get(image.annotations);
+  if (cached?.source === image.dataUrl) return cached.result;
+  const result = flattenedCanvas(image).then(source => {
+    const scale = Math.min(1, 160 / Math.max(image.width, image.height));
+    const out = canvas(Math.max(1, Math.round(image.width * scale)), Math.max(1, Math.round(image.height * scale)));
+    out.getContext('2d')!.drawImage(source, 0, 0, out.width, out.height);
+    const url = out.toDataURL('image/png'); source.width = 0; source.height = 0;
+    return url;
+  });
+  thumbnails.set(image.annotations, { source: image.dataUrl, result });
+  return result;
 }

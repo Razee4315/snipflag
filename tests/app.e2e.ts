@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
-import { solidPng } from './png';
+import { solidPng, patternPng } from './png';
 
 const white = { name: 'white.png', mimeType: 'image/png', buffer: solidPng(400, 300, [255, 255, 255, 255]) };
 const blue = { name: 'blue.png', mimeType: 'image/png', buffer: solidPng(320, 200, [40, 80, 220, 255]) };
@@ -147,6 +147,42 @@ test('highlighter marks translucently underneath other annotations', async ({ pa
   expect(marker[0]).toBeGreaterThan(240);
   expect(marker[2]).toBeLessThan(170);
   expect(marker[3]).toBe(255);
+});
+
+test('translucent pixelation replaces original detail and protects every thumbnail', async ({ page }) => {
+  const patterned = { name: 'private-pattern.png', mimeType: 'image/png', buffer: patternPng(400, 300, x => x % 2 ? [240, 0, 0, 128] : [0, 0, 240, 128]) };
+  await addImages(page, [patterned]);
+  await page.keyboard.press('b');
+  await drag(page, [0.1, 0.1], [0.8, 0.8]);
+  // Marks added later must not expose or replace the protected pixels.
+  await page.keyboard.press('r');
+  await drag(page, [0.2, 0.2], [0.6, 0.6]);
+  const result = await exportPixels(page, [[140, 60], [141, 60], [142, 61], [390, 290], [391, 290]]);
+  expect([result.width, result.height]).toEqual([400, 300]);
+  expect(result.pixels[0]).toEqual(result.pixels[1]);
+  expect(result.pixels[1]).toEqual(result.pixels[2]);
+  expect(result.pixels[0][3]).toBe(128);
+  expect(result.pixels[0][0]).toBeGreaterThan(110);
+  expect(result.pixels[0][0]).toBeLessThan(130);
+  expect(result.pixels[3]).not.toEqual(result.pixels[4]);
+  const thumb = tile(page, 1).locator('img');
+  await expect(thumb).toHaveAttribute('data-protected-thumbnail', 'ready');
+  const protectedUrl = await thumb.getAttribute('src');
+  const pixels = await thumb.evaluate(async (el: HTMLImageElement) => {
+    await el.decode();
+    const c = document.createElement('canvas'); c.width = el.naturalWidth; c.height = el.naturalHeight;
+    const ctx = c.getContext('2d')!; ctx.drawImage(el, 0, 0);
+    return { width: c.width, pixel: [...ctx.getImageData(56, 24, 1, 1).data] };
+  });
+  expect(pixels.width).toBe(160);
+  expect(pixels.pixel).toEqual(result.pixels[0]);
+  await page.getByLabel('Description', { exact: true }).fill('@');
+  const mention = page.getByRole('listbox', { name: 'Mention an image' }).locator('img');
+  await expect(mention).toHaveAttribute('src', protectedUrl!);
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('status', { name: 'Saved on this computer' })).toBeVisible();
+  await page.reload();
+  await expect(tile(page, 1).locator('img')).toHaveAttribute('src', protectedUrl!);
 });
 
 test('tools are reachable by keyboard and named', async ({ page }) => {

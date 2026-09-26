@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperti
 import { Image as KonvaImage, Layer, Shape, Stage, Transformer } from 'react-konva';
 import { bounds, isMeaningful, snapAngle, transform, translate, type Point } from '../geometry';
 import { clampRect, isFreehand, isOutline, nextStep, normalizeRect, stepSize, type Annotation, type CaptureImage } from '../model';
-import { drawAnnotation, FONT_FAMILY, LINE_HEIGHT, paintOrder, pixelate } from '../render';
+import { drawAnnotation, FONT_FAMILY, LINE_HEIGHT, paintOrder, paintPixelation, pixelate } from '../render';
 import { isLocked, useStore } from '../store';
 
 export type Zoom = number | 'fit';
@@ -198,7 +198,7 @@ export default function Editor({ image, zoom, onZoom, onScale }: Props) {
               if (pixelCache.current.size > 40) pixelCache.current.clear();
               cached = pixelate(source, a); pixelCache.current.set(key, cached);
             }
-            native.drawImage(cached, Math.round(a.x), Math.round(a.y));
+            paintPixelation(native, cached, a);
           } else if (source) drawAnnotation(native, source, a);
           native.restore();
         }}
