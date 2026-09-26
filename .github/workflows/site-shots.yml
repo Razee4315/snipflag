@@ -1,0 +1,22 @@
+name: Website screenshots
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test -c site/tools/playwright.hero.config.ts
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: site-hero-shots
+          path: site-shots/
+          retention-days: 7
