@@ -10,7 +10,7 @@ function connectionMarkup(builtin: boolean, clientId = '') {
   return renderToStaticMarkup(createElement(SettingsDialog, {
     settings: { ...defaults, clientId }, status: { version: 'test', platform: 'windows', shortcutError: null, builtinLinearClient: builtin },
     connection: null, connectionState: 'idle', connectionError: '',
-    onSave: async () => {}, onConnect: () => {}, onCancelConnect: () => {}, onDisconnect: async () => {}, onClearHistory: async () => {}, onClose: () => {},
+    onSave: async () => {}, onConnect: () => {}, onCancelConnect: () => {}, onDisconnect: async () => {}, onClearHistory: async () => {}, onCheckUpdate: async () => null, onInstallUpdate: () => {}, onClose: () => {},
   }));
 }
 
