@@ -225,9 +225,31 @@ pub fn open_linear_setup(window: WebviewWindow, app: AppHandle) -> Result<(), St
     app.opener().open_url("https://linear.app/settings/api/applications/new", None::<&str>).map_err(|_| "Could not open your browser.".into())
 }
 
+/// Creator and project pages shown in Settings → About. Only these fixed destinations can be opened.
+pub fn about_url(target: &str) -> Option<&'static str> {
+    match target {
+        "github" => Some("https://github.com/Razee4315"),
+        "linkedin" => Some("https://www.linkedin.com/in/saqlainrazee/"),
+        "repository" => Some("https://github.com/Razee4315/snipflag"),
+        "license" => Some("https://github.com/Razee4315/snipflag/blob/main/LICENSE"),
+        _ => None,
+    }
+}
+#[tauri::command]
+pub fn open_about_link(window: WebviewWindow, app: AppHandle, target: String) -> Result<(), String> {
+    main_only(&window)?;
+    let url = about_url(&target).ok_or("Unknown link.")?;
+    app.opener().open_url(url, None::<&str>).map_err(|_| "Could not open your browser.".into())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test] fn about_links_are_a_fixed_allowlist() {
+        assert_eq!(about_url("github"), Some("https://github.com/Razee4315"));
+        assert_eq!(about_url("linkedin"), Some("https://www.linkedin.com/in/saqlainrazee/"));
+        assert!(about_url("https://evil.example").is_none());
+    }
     #[test] fn captions_cannot_inject_markdown_images() { assert_eq!(markdown_caption("a\n![x](y)"), "a \\!\\[x\\](y)"); }
     #[test] fn description_keeps_filmstrip_order() {
         let text = build_description("Steps", &[("Login".into(), "https://uploads.linear.app/1".into()), ("".into(), "https://uploads.linear.app/2".into())]);

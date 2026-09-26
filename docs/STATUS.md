@@ -165,3 +165,11 @@ Verification: `6b96365` failed the strict typecheck (`isFreehand` called with a 
 Owner follow-up in the same round: screenshots too large for the workspace maximize the editor. Rust `needs_full_screen` (image logical size + 400 × 250 chrome vs. workspace) with a unit test; `editor_window` `workspace` accepts optional image dimensions and the frontend sends the largest added image. Verification for this follow-up is recorded below.
 
 Follow-up verification at `b965c54`: [Checks 36232390614](https://github.com/Razee4315/snipflag/actions/runs/36232390614) all green (15/15 browser tests, no retries; 21 Rust tests on Windows, macOS and Linux including the full-screen sizing test). [Development installers 36232401808](https://github.com/Razee4315/snipflag/actions/runs/36232401808) green on all four targets (unsigned, 7-day retention). Native gates still open: maximize behavior for large captures at each DPI, desktop guards in WebView2 (Ctrl+J, context menu, F5), brush cursor and highlighter feel with a real pointer, and the earlier window/sound/picker checks.
+
+## Final polish for 1.1.0 — 2026-09-26
+
+Owner confirmed round two works and requested: better sounds, custom colors with a themed picker, creator credit (GitHub Razee4315, LinkedIn saqlainrazee), improved tool icons, any genuinely useful new tools, a transparent text entry box, and no hover movement.
+
+Implemented: Web Audio bus with compressor and synthesized convolver room; layered shutter/pop/bell/knock cues. `src/color.ts` (hex/HSV, per-device custom colors, unit tests) and `ColorPicker` popover. Tools added: ellipse (E) and numbered steps (N); both render through the shared exporter. Redrawn tool icons with filled accents. Settings → About with creator links; Rust `open_about_link` only opens four fixed URLs (unit test). Text entry box transparent and content-sized. All hover transforms removed. Version 1.1.0 in package, lockfiles, Tauri and Cargo.
+
+Verification: pending on Actions. Release publication needs explicit owner approval.

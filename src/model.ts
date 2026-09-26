@@ -1,8 +1,16 @@
-export type Tool = 'select' | 'arrow' | 'rectangle' | 'pen' | 'highlight' | 'text' | 'pixelate';
+export type Tool = 'select' | 'arrow' | 'rectangle' | 'ellipse' | 'pen' | 'highlight' | 'text' | 'step' | 'pixelate';
 /** 'redact' is no longer a tool but older drafts may still contain solid redactions; they keep rendering. */
 export type Shape = Exclude<Tool, 'select'> | 'redact';
 /** Freehand kinds share points, Shift snapping and smoothing. */
 export const isFreehand = (kind: Tool | Shape) => kind === 'pen' || kind === 'highlight';
+/** Outlined box kinds drawn by dragging; Shift makes them square or round. */
+export const isOutline = (kind: Tool | Shape) => kind === 'rectangle' || kind === 'ellipse';
+/** Numbered step badges scale with the stroke width. */
+export const stepSize = (stroke: number) => Math.round(26 + stroke * 2.5);
+/** Next step number on an image: one more than the highest badge already placed. */
+export function nextStep(annotations: Annotation[]) {
+  return annotations.reduce((max, a) => a.kind === 'step' ? Math.max(max, Number(a.text) || 0) : max, 0) + 1;
+}
 /** Geometry is always in IMAGE pixels. Pen and arrow points are relative to (x, y). */
 export interface Annotation {
   id: string; kind: Shape; x: number; y: number;

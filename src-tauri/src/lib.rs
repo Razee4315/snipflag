@@ -236,7 +236,7 @@ pub fn run() {
             storage::clear_history, storage::load_settings, storage::submission_status,
             save_settings, app_status, editor_window,
             auth::connect_linear, auth::cancel_login, auth::disconnect_linear,
-            linear::linear_connection, linear::linear_team_options, linear::submit_issue, linear::open_issue, linear::open_linear_setup,
+            linear::linear_connection, linear::linear_team_options, linear::submit_issue, linear::open_issue, linear::open_linear_setup, linear::open_about_link,
             capture::start_capture, capture::capture_frame, capture::capture_ready, capture::capture_select, capture::capture_cancel,
             files::export_png, files::read_clipboard_image, files::copy_text,
         ])

@@ -2,9 +2,14 @@
 
 All notable changes to Snipflag are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.1.0] - 2026-09-26
 
 ### Changed
+
+- Richer synthesized sounds: a soft shared room reverb, a layered mechanical shutter, a bell arpeggio for created issues, a rounder pop and gentler error knocks.
+- Redrawn annotation tool icons on one grid with small filled accents.
+- Transparent, content-sized text entry box with a dashed border.
+- Nothing moves on hover anymore; buttons respond with color and a subtle press instead.
 
 - Brand: restored the original capture mark (corner brackets and arrow) in black and white across the app, tray, taskbar and installers. The Windows installer now uses the Snipflag icon.
 - The editor opens at the full workspace size at launch and after every capture; the expand/compact control is gone. It reveals after its first paint instead of flashing an empty window.
@@ -21,6 +26,10 @@ All notable changes to Snipflag are documented here. The format follows [Keep a 
 
 ### Added
 
+- Ellipse tool (E); Shift draws a circle.
+- Numbered step badges (N) that count up per screenshot, sized by the width setting and readable on any color.
+- Custom color picker (field, hue slider, hex entry) for pens and highlighter inks, with the last five custom colors remembered.
+- Settings → About with the creator's GitHub and LinkedIn, the source code and the license (links open through a fixed allowlist).
 - Highlighter tool (H) with marker inks and sizes, painted beneath other marks.
 - Synthesized sound effects for captures, added images, created issues and failures, with a Play sound effects switch and preview.
 

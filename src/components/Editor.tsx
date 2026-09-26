@@ -2,7 +2,7 @@ import Konva from 'konva';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import { Image as KonvaImage, Layer, Shape, Stage, Transformer } from 'react-konva';
 import { bounds, isMeaningful, snapAngle, transform, translate, type Point } from '../geometry';
-import { clampRect, isFreehand, normalizeRect, type Annotation, type CaptureImage } from '../model';
+import { clampRect, isFreehand, isOutline, nextStep, normalizeRect, stepSize, type Annotation, type CaptureImage } from '../model';
 import { drawAnnotation, FONT_FAMILY, LINE_HEIGHT, paintOrder, pixelate } from '../render';
 import { isLocked, useStore } from '../store';
 
@@ -122,6 +122,13 @@ export default function Editor({ image, zoom, onZoom, onScale }: Props) {
       if (textRef.current) commitText(); else textStart.current = p;
       return;
     }
+    if (tool === 'step') {
+      // A click places the next numbered badge centered on the pointer.
+      const side = stepSize(stroke);
+      const x = Math.max(0, Math.min(image.width - side, p.x - side / 2)); const y = Math.max(0, Math.min(image.height - side, p.y - side / 2));
+      edit([...image.annotations, { ...base(), kind: 'step', x, y, width: side, height: side, text: String(nextStep(image.annotations)) }]);
+      return;
+    }
     start.current = p;
     penSegment.current = null;
     setDraft({
@@ -154,12 +161,12 @@ export default function Editor({ image, zoom, onZoom, onScale }: Props) {
       setDraft({ ...draft, points: [0, 0, end.x - s.x, end.y - s.y] });
     } else {
       let end = p;
-      if (shift && draft.kind === 'rectangle') {
+      if (shift && isOutline(draft.kind)) {
         const side = Math.min(Math.max(Math.abs(p.x - s.x), Math.abs(p.y - s.y)), p.x < s.x ? s.x : image.width - s.x, p.y < s.y ? s.y : image.height - s.y);
         end = { x: s.x + (p.x < s.x ? -side : side), y: s.y + (p.y < s.y ? -side : side) };
       }
       const r = normalizeRect(s.x, s.y, end.x, end.y);
-      setDraft({ ...draft, ...(draft.kind === 'rectangle' ? r : clampRect(r, image.width, image.height)) });
+      setDraft({ ...draft, ...(isOutline(draft.kind) ? r : clampRect(r, image.width, image.height)) });
     }
   };
   const onUp = () => {
@@ -168,7 +175,7 @@ export default function Editor({ image, zoom, onZoom, onScale }: Props) {
     const d = draftRef.current; start.current = null; penSegment.current = null; setDraft(null);
     if (!d || !isMeaningful(d)) return;
     edit([...image.annotations, d]);
-    if (d.kind === 'redact' || d.kind === 'pixelate' || d.kind === 'rectangle') setSelection(null);
+    if (d.kind === 'redact' || d.kind === 'pixelate' || isOutline(d.kind)) setSelection(null);
   };
   const onWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
     if (!e.evt.ctrlKey && !e.evt.metaKey) return;
@@ -240,8 +247,8 @@ export default function Editor({ image, zoom, onZoom, onScale }: Props) {
             {source && <KonvaImage image={source} width={image.width} height={image.height} listening={false} />}
             {ordered.map(a => renderShape(a, true))}
             {draft && renderShape(draft, false)}
-            <Transformer ref={transformer} rotateEnabled={false} flipEnabled={false} ignoreStroke keepRatio={selected?.kind === 'text'}
-              enabledAnchors={selected?.kind === 'text' ? ['top-left', 'top-right', 'bottom-left', 'bottom-right'] : undefined}
+            <Transformer ref={transformer} rotateEnabled={false} flipEnabled={false} ignoreStroke keepRatio={selected?.kind === 'text' || selected?.kind === 'step'}
+              enabledAnchors={selected?.kind === 'text' || selected?.kind === 'step' ? ['top-left', 'top-right', 'bottom-left', 'bottom-right'] : undefined}
               anchorSize={9} anchorCornerRadius={3} borderStroke="#14B8A6" anchorStroke="#0F766E" anchorFill="#FFFFFF"
               boundBoxFunc={(oldBox, newBox) => (Math.abs(newBox.width) < 4 || Math.abs(newBox.height) < 4 ? oldBox : newBox)} />
           </Layer>

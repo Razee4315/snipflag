@@ -48,8 +48,9 @@ CI-rendered UI previews using synthetic sample images. Native window controls an
 - Also add images from files (PNG, JPEG, WebP), paste from the clipboard, or drag and drop.
 
 **Annotate**
-- Arrow, rectangle, pen, highlighter, text, and pixelate.
-- Hold Shift for 15° arrow/pen snapping or square rectangles.
+- Arrow, rectangle, ellipse, pen, highlighter, text, numbered steps, and pixelate.
+- Built-in palettes plus a custom color picker for pens and highlighter inks; your custom colors are remembered.
+- Hold Shift for 15° arrow/pen snapping, square rectangles or round ellipses.
 - Select, move, and resize marks; change color, width, and text size; zoom, fit, and 100%.
 - Each screenshot keeps its own annotations and undo history, so you can move between them freely.
 - Exports keep the original pixel dimensions, and pixelation is burned into the pixels.
@@ -69,12 +70,17 @@ CI-rendered UI previews using synthetic sample images. Native window controls an
 | Action | Shortcut |
 |---|---|
 | Capture (global) | `Ctrl/Cmd + Shift + 2` (configurable) |
-| Select, Arrow, Rectangle, Pen, Text | `V`, `A`, `R`, `P`, `T` |
-| Highlighter, Pixelate | `H`, `B` |
+| Select, Arrow, Rectangle, Ellipse | `V`, `A`, `R`, `E` |
+| Pen, Highlighter, Text | `P`, `H`, `T` |
+| Numbered step, Pixelate | `N`, `B` |
 | Undo, Redo | `Ctrl/Cmd + Z`, `Ctrl/Cmd + Shift + Z` |
 | Delete selected mark | `Delete` |
 | Create issue | `Ctrl/Cmd + Enter` |
 | Zoom | `Ctrl/Cmd + mouse wheel` |
+
+## Creator
+
+Snipflag is designed and built by **Saqlain Razee** ([GitHub](https://github.com/Razee4315) · [LinkedIn](https://www.linkedin.com/in/saqlainrazee/)).
 
 ## Getting started
 

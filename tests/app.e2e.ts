@@ -151,7 +151,7 @@ test('highlighter marks translucently underneath other annotations', async ({ pa
 
 test('tools are reachable by keyboard and named', async ({ page }) => {
   await addImages(page, [white]);
-  for (const [key, name] of [['v', 'Select'], ['a', 'Arrow'], ['r', 'Rectangle'], ['p', 'Pen'], ['h', 'Highlighter'], ['t', 'Text'], ['b', 'Pixelate']]) {
+  for (const [key, name] of [['v', 'Select'], ['a', 'Arrow'], ['r', 'Rectangle'], ['e', 'Ellipse'], ['p', 'Pen'], ['h', 'Highlighter'], ['t', 'Text'], ['n', 'Numbered step'], ['b', 'Pixelate']]) {
     await page.keyboard.press(key);
     await expect(page.getByRole('button', { name: new RegExp(`^${name}`) })).toHaveAttribute('aria-pressed', 'true');
   }
@@ -344,7 +344,7 @@ test('settings dialog keeps a fixed size and scrolls long sections inside', asyn
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Settings' });
   const heights: number[] = [];
-  for (const section of ['Connection', 'Capture', 'Appearance', 'Privacy', 'Shortcuts']) {
+  for (const section of ['Connection', 'Capture', 'Appearance', 'Privacy', 'Shortcuts', 'About']) {
     await dialog.getByRole('button', { name: section, exact: true }).click();
     heights.push(Math.round((await dialog.boundingBox())!.height));
   }
@@ -369,4 +369,58 @@ test('the interface behaves like a desktop app, not a web page', async ({ page }
   });
   expect(blocked).toEqual({ contextMenu: true, fieldMenu: false, downloads: true, reload: true, print: true, paste: false });
   await expect(page.getByRole('button', { name: 'Create issue', exact: true })).not.toHaveAttribute('title', /./);
+});
+
+test('numbered steps count up per image and ellipses draw', async ({ page }) => {
+  await addImages(page, [white]);
+  const box = (await page.getByTestId('canvas').boundingBox())!;
+  await page.keyboard.press('n');
+  await page.mouse.click(box.x + 100, box.y + 100);
+  await page.mouse.click(box.x + 250, box.y + 150);
+  await page.keyboard.press('e');
+  await drag(page, [0.1, 0.6], [0.5, 0.9]);
+  await expect(tile(page, 1)).toHaveAccessibleName(/3 marks$/);
+  await expect.poll(async () => page.evaluate(async () => {
+    const db = await new Promise<IDBDatabase>((resolve, reject) => { const r = indexedDB.open('snipflag-preview'); r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error); });
+    const sessions = await new Promise<import('../src/model').Session[]>((resolve, reject) => { const r = db.transaction('sessions').objectStore('sessions').getAll(); r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error); });
+    db.close();
+    return (sessions[0]?.images[0]?.annotations ?? []).map(a => a.kind === 'step' ? `step${a.text}` : a.kind);
+  })).toEqual(['step1', 'step2', 'ellipse']);
+  // The first badge is a solid disc in the chosen color.
+  const [badge] = (await exportPixels(page, [[86, 100]])).pixels;
+  expect(badge).toEqual([239, 68, 68, 255]);
+});
+
+test('custom colors use a themed picker and are remembered', async ({ page }, testInfo) => {
+  await addImages(page, [white]);
+  await page.keyboard.press('p');
+  await page.getByRole('button', { name: 'Custom color', exact: true }).click();
+  const picker = page.getByRole('dialog', { name: 'Custom color' });
+  await expect(picker.getByRole('slider', { name: 'Saturation and brightness' })).toBeVisible();
+  await expect(picker.getByLabel('Hue')).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('color-picker-daylight.png'), animations: 'disabled' });
+  await picker.getByLabel('Hex color').fill('#123abc');
+  await picker.getByLabel('Hex color').press('Enter');
+  await expect(picker).toBeHidden();
+  const swatch = page.getByRole('radio', { name: 'Custom #123ABC' });
+  await expect(swatch).toHaveAttribute('aria-checked', 'true');
+  await page.keyboard.press('h');
+  await expect(page.getByRole('radio', { name: 'Custom #123ABC' })).toHaveCount(0);
+  await expect(page.getByRole('status', { name: 'Saved on this computer' })).toBeVisible();
+  await page.reload();
+  await page.keyboard.press('p');
+  await expect(page.getByRole('radio', { name: 'Custom #123ABC' })).toBeVisible();
+  await page.getByRole('button', { name: 'Custom color', exact: true }).click();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog', { name: 'Custom color' })).toBeHidden();
+});
+
+test('about section credits the creator', async ({ page }, testInfo) => {
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Settings' });
+  await dialog.getByRole('button', { name: 'About', exact: true }).click();
+  await expect(dialog.getByText('Saqlain Razee')).toBeVisible();
+  await expect(dialog.getByRole('button', { name: /GitHub\s*Razee4315/ })).toBeVisible();
+  await expect(dialog.getByRole('button', { name: /LinkedIn\s*saqlainrazee/ })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('settings-about.png'), animations: 'disabled' });
 });

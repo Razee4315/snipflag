@@ -81,6 +81,12 @@ export function pixelate(source: CanvasImageSource, a: Pick<Annotation, 'x' | 'y
   }
   return out;
 }
+/** Black or white, whichever reads better on a badge color. */
+export function contrastText(hex: string) {
+  const v = hex.replace('#', ''); const n = parseInt(v.length === 3 ? v.split('').map(c => c + c).join('') : v, 16);
+  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  return (0.299 * r + 0.587 * g + 0.114 * b) > 170 ? '#111827' : '#FFFFFF';
+}
 /** Smooth freehand stroke: quadratic curves through segment midpoints remove the jagged polyline look. */
 function strokeSmooth(ctx: CanvasRenderingContext2D, p: number[]) {
   const n = p.length;
@@ -94,6 +100,17 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, source: CanvasImag
   ctx.save();
   ctx.strokeStyle = a.color; ctx.fillStyle = a.color; ctx.lineWidth = a.stroke; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
   if (a.kind === 'rectangle') ctx.strokeRect(a.x, a.y, a.width, a.height);
+  if (a.kind === 'ellipse' && a.width > 0 && a.height > 0) {
+    ctx.beginPath(); ctx.ellipse(a.x + a.width / 2, a.y + a.height / 2, a.width / 2, a.height / 2, 0, 0, Math.PI * 2); ctx.stroke();
+  }
+  if (a.kind === 'step') {
+    const r = a.width / 2; const cx = a.x + r; const cy = a.y + r;
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+    ctx.lineWidth = Math.max(2, r * 0.14); ctx.strokeStyle = '#FFFFFF'; ctx.stroke();
+    ctx.fillStyle = contrastText(a.color); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = `bold ${Math.round(r * (a.text.length > 1 ? 0.95 : 1.1))}px ${FONT_FAMILY}`;
+    ctx.fillText(a.text, cx, cy + r * 0.04);
+  }
   if (a.kind === 'redact') { ctx.globalAlpha = 1; ctx.fillStyle = '#000000'; ctx.fillRect(Math.floor(a.x), Math.floor(a.y), Math.ceil(a.width) + 1, Math.ceil(a.height) + 1); }
   if (a.kind === 'pixelate' && a.width >= 1 && a.height >= 1) ctx.drawImage(pixelate(source, a), Math.round(a.x), Math.round(a.y));
   if (a.kind === 'text') {

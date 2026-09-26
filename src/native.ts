@@ -69,6 +69,16 @@ export const connectLinear = () => native<void>('connect_linear');
 export const cancelLogin = () => native<void>('cancel_login');
 export const disconnectLinear = () => native<void>('disconnect_linear');
 export const openLinearSetup = () => native<void>('open_linear_setup');
+export type AboutLink = 'github' | 'linkedin' | 'repository' | 'license';
+export const ABOUT_LINKS: Record<AboutLink, string> = {
+  github: 'https://github.com/Razee4315', linkedin: 'https://www.linkedin.com/in/saqlainrazee/',
+  repository: 'https://github.com/Razee4315/snipflag', license: 'https://github.com/Razee4315/snipflag/blob/main/LICENSE',
+};
+/** Opens a fixed creator/project page in the default browser (Rust enforces the same allowlist). */
+export async function openAboutLink(target: AboutLink) {
+  if (desktop) return native<void>('open_about_link', { target });
+  window.open(ABOUT_LINKS[target], '_blank', 'noopener,noreferrer');
+}
 export const submitIssue = (session: Session, persisted: string[], exports: { id: string; dataUrl: string }[]) =>
   native<IssueResult>('submit_issue', { session: forSave(session, persisted), exports });
 export const submissionStatus = (id: string) => desktop ? native<{ state: string } | null>('submission_status', { id }) : Promise.resolve(null);

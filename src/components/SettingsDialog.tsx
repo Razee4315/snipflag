@@ -1,8 +1,8 @@
 import { useState, type CSSProperties } from 'react';
 import { acceleratorFromEvent, REDIRECT_URI, shortcutLabel, type Connection, type Settings } from '../model';
-import { clearHistory, copyText, desktop, errorText, openLinearSetup, type AppStatus } from '../native';
+import { clearHistory, copyText, desktop, errorText, openAboutLink, openLinearSetup, type AboutLink, type AppStatus } from '../native';
 import Dialog from './Dialog';
-import { Mark } from './icons';
+import { Icon, Mark, type IconName } from './icons';
 import { play } from '../sound';
 import type { ConnectionState } from './IssuePanel';
 
@@ -11,7 +11,11 @@ interface Props {
   onSave: (settings: Settings) => Promise<void>; onConnect: () => void; onCancelConnect: () => void; onDisconnect: () => Promise<void>;
   onHistoryCleared: () => void; onClose: () => void;
 }
-const SECTIONS = ['Connection', 'Capture', 'Appearance', 'Privacy', 'Shortcuts'] as const;
+const SECTIONS = ['Connection', 'Capture', 'Appearance', 'Privacy', 'Shortcuts', 'About'] as const;
+const CREATOR: { target: AboutLink; label: string; detail: string; icon: IconName }[] = [
+  { target: 'github', label: 'GitHub', detail: 'Razee4315', icon: 'github' },
+  { target: 'linkedin', label: 'LinkedIn', detail: 'saqlainrazee', icon: 'linkedin' },
+];
 const THEMES: { value: Settings['theme']; label: string }[] = [{ value: 'system', label: 'Match system' }, { value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' }];
 const RETENTION = [{ v: 7, l: '7 days' }, { v: 30, l: '30 days' }, { v: 90, l: '90 days' }, { v: 365, l: '1 year' }, { v: 0, l: 'Keep until I delete' }];
 
@@ -135,11 +139,35 @@ export default function SettingsDialog(p: Props) {
       <section className="settings-section" hidden={section !== 'Shortcuts'}>
         <h3>Keyboard shortcuts</h3>
         <dl className="shortcut-list">
-          {[['Capture from anywhere', shortcutLabel(draft.shortcut)], ['Select / Arrow / Rectangle', 'V / A / R'], ['Pen / Highlighter / Text', 'P / H / T'], ['Pixelate', 'B'], ['Snap arrow / pen to 15°', 'Hold Shift'], ['Draw a square', 'Shift + Rectangle'], ['Undo / Redo', 'Ctrl / ⌘ + Z / Shift + Z'], ['Delete selected mark', 'Delete'], ['Paste screenshot', 'Ctrl / ⌘ + V'], ['Create issue', 'Ctrl / ⌘ + Enter'], ['Zoom canvas', 'Ctrl / ⌘ + scroll']].map(([label, keys]) => <div key={label}><dt>{label}</dt><dd><kbd>{keys}</kbd></dd></div>)}
+          {[['Capture from anywhere', shortcutLabel(draft.shortcut)], ['Select / Arrow', 'V / A'], ['Rectangle / Ellipse', 'R / E'], ['Pen / Highlighter / Text', 'P / H / T'], ['Numbered step / Pixelate', 'N / B'], ['Snap arrow / pen to 15°', 'Hold Shift'], ['Square or circle', 'Shift + Rectangle / Ellipse'], ['Undo / Redo', 'Ctrl / ⌘ + Z / Shift + Z'], ['Delete selected mark', 'Delete'], ['Paste screenshot', 'Ctrl / ⌘ + V'], ['Create issue', 'Ctrl / ⌘ + Enter'], ['Zoom canvas', 'Ctrl / ⌘ + scroll']].map(([label, keys]) => <div key={label}><dt>{label}</dt><dd><kbd>{keys}</kbd></dd></div>)}
         </dl>
         <p className="small muted">Tool shortcuts pause while you type. Each screenshot keeps its own undo history.</p>
       </section>
-      <p className="about small muted"><Mark size={15} /> Snipflag {p.status?.version ?? ''} · {p.status?.platform ?? ''} · development build</p>
+      <section className="settings-section" hidden={section !== 'About'}>
+        <div className="about-hero">
+          <span className="about-mark" aria-hidden="true"><Mark size={30} /></span>
+          <div>
+            <h3>Snipflag</h3>
+            <p className="small muted">Version {p.status?.version ?? ''} · {p.status?.platform ?? ''}</p>
+          </div>
+        </div>
+        <p className="small">Screenshots to clear Linear issues. Capture, mark up and send several screenshots as one issue.</p>
+        <div className="creator">
+          <p className="small muted">Designed and built by <strong>Saqlain Razee</strong></p>
+          <div className="creator-links">
+            {CREATOR.map(link => (
+              <button key={link.target} type="button" className="creator-link" onClick={() => openAboutLink(link.target).catch(e => setError(errorText(e)))}>
+                <Icon name={link.icon} size={18} /><span><strong>{link.label}</strong><small>{link.detail}</small></span><Icon name="external" size={14} />
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="row">
+          <button type="button" className="link-button" onClick={() => openAboutLink('repository').catch(e => setError(errorText(e)))}>Source code</button>
+          <span className="muted small">·</span>
+          <button type="button" className="link-button" onClick={() => openAboutLink('license').catch(e => setError(errorText(e)))}>MIT License</button>
+        </div>
+      </section>
     </Dialog>
   );
 }

@@ -25,7 +25,7 @@ export function bounds(a: Annotation): Box {
     const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
     return { x: a.x + minX - pad, y: a.y + minY - pad, width: maxX - minX + pad * 2, height: maxY - minY + pad * 2 };
   }
-  if (a.kind === 'rectangle') return { x: a.x - a.stroke / 2, y: a.y - a.stroke / 2, width: a.width + a.stroke, height: a.height + a.stroke };
+  if (a.kind === 'rectangle' || a.kind === 'ellipse') return { x: a.x - a.stroke / 2, y: a.y - a.stroke / 2, width: a.width + a.stroke, height: a.height + a.stroke };
   return { x: a.x, y: a.y, width: a.width, height: a.height };
 }
 export function translate(a: Annotation, dx: number, dy: number): Annotation { return { ...a, x: a.x + dx, y: a.y + dy }; }
@@ -37,6 +37,11 @@ export function transform(a: Annotation, box: Box, sx: number, sy: number): Anno
   const old = bounds(a);
   const x = box.x + (a.x - old.x) * sx; const y = box.y + (a.y - old.y) * sy;
   if (isFreehand(a.kind) || a.kind === 'arrow') return { ...a, x, y, points: a.points.map((v, i) => i % 2 === 0 ? v * sx : v * sy) };
+  if (a.kind === 'step') {
+    // Badges stay round: scale by the larger factor.
+    const side = Math.max(12, Math.min(400, a.width * Math.max(sx, sy)));
+    return { ...a, x: box.x, y: box.y, width: side, height: side };
+  }
   if (a.kind === 'text') {
     const fontSize = Math.max(8, Math.min(400, Math.round(a.fontSize * sy)));
     return { ...a, x: box.x, y: box.y, fontSize, width: a.width * (fontSize / a.fontSize), height: a.height * (fontSize / a.fontSize) };
@@ -46,6 +51,7 @@ export function transform(a: Annotation, box: Box, sx: number, sy: number): Anno
 /** Whether a finished drag produced something worth keeping. */
 export function isMeaningful(a: Annotation): boolean {
   if (a.kind === 'text') return a.text.trim().length > 0;
+  if (a.kind === 'step') return true;
   if (isFreehand(a.kind)) return a.points.some((x, i) => i % 2 === 0 && Math.hypot(x - a.points[0], a.points[i + 1] - a.points[1]) >= 1);
   if (a.kind === 'arrow') return Math.hypot(a.points[2] - a.points[0], a.points[3] - a.points[1]) >= 6;
   return a.width >= 3 && a.height >= 3;

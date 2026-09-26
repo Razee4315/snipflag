@@ -1,13 +1,19 @@
 import type { SVGProps } from 'react';
 
 const paths = {
-  select: 'M5 3l14 8-6 1.5L10 19z',
-  arrow: 'M5 19L19 5M10 5h9v9',
-  rectangle: 'M4 5h16v14H4z',
-  pen: 'M4 20l4-1L19 8l-3-3L5 16zM14 7l3 3',
-  text: 'M5 6V4h14v2M12 4v16M9 20h6',
-  pixelate: 'M4 4h5v5H4zM15 4h5v5h-5zM9.5 9.5h5v5h-5zM4 15h5v5H4zM15 15h5v5h-5z',
-  highlight: 'M4 20h8M14.5 4.5l5 5L11 18H6v-5zM12 7l5 5',
+  // Tool icons share one 24px grid, rounded joins and optical weight; small filled accents mark what each tool leaves behind.
+  select: 'M6.2 3.8v14.4l3.9-3.7 2.6 5.8 2.5-1.1-2.6-5.7h5.5z',
+  arrow: 'M5.5 18.5L17.5 6.5M10 6h8v8',
+  rectangle: 'M4.5 7a2.5 2.5 0 012.5-2.5h10A2.5 2.5 0 0119.5 7v10a2.5 2.5 0 01-2.5 2.5H7A2.5 2.5 0 014.5 17z',
+  ellipse: 'M12 5c4.4 0 8 3.1 8 7s-3.6 7-8 7-8-3.1-8-7 3.6-7 8-7z',
+  pen: 'M4.5 19.5l1-4.2L15.6 5.2a2 2 0 012.8 0l.4.4a2 2 0 010 2.8L8.7 18.5zM13.8 7l3.2 3.2',
+  highlight: 'M9.5 16.5l-3-3 8.3-8.3a2 2 0 012.8 0l.2.2a2 2 0 010 2.8zM6.5 13.5L4 19l5.5-2.5M13 20h7',
+  text: 'M5.5 7.5V5h13v2.5M12 5v14M9.5 19h5',
+  step: 'M12 3.8a8.2 8.2 0 110 16.4 8.2 8.2 0 010-16.4zM10.6 9.6L12.6 8v8.2',
+  pixelate: 'M4.5 7A2.5 2.5 0 017 4.5h10A2.5 2.5 0 0119.5 7v10a2.5 2.5 0 01-2.5 2.5H7A2.5 2.5 0 014.5 17z',
+  palette: 'M12 3.8a8.2 8.2 0 100 16.4c1 0 1.5-.8 1.2-1.6-.4-1 .2-2.1 1.3-2.1h1.7a3.8 3.8 0 003.8-3.8c0-4.9-3.6-8.9-8-8.9zM7.8 11.5h.01M10 7.8h.01M14.2 7.8h.01',
+  github: 'M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 00-1.3-3.2 4.2 4.2 0 00-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 00-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 00-.1 3.2A4.6 4.6 0 004 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21',
+  linkedin: 'M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-4 0v7h-4v-7a6 6 0 016-6zM2 9h4v12H2zM4 2.5a2 2 0 110 4 2 2 0 010-4z',
   undo: 'M9 14L4 9l5-5M4 9h10a6 6 0 010 12h-3',
   redo: 'M15 14l5-5-5-5M20 9H10a6 6 0 000 12h3',
   zoomIn: 'M11 18a7 7 0 100-14 7 7 0 000 14zM20 20l-4-4M11 8v6M8 11h6',
@@ -35,11 +41,20 @@ const paths = {
   file: 'M6 3h9l4 4v14H6zM14 3v5h5',
 } as const;
 export type IconName = keyof typeof paths;
+/** Filled details layered on top of the outline. */
+const fills: Partial<Record<IconName, string>> = {
+  select: 'M6.2 3.8v14.4l3.9-3.7 2.6 5.8 2.5-1.1-2.6-5.7h5.5z',
+  arrow: 'M18 6l-.1 8.1-8-8z',
+  highlight: 'M6.5 13.5L4 19l5.5-2.5z',
+  pixelate: 'M8 8h2.7v2.7H8zM13.3 8H16v2.7h-2.7zM10.7 10.7h2.6v2.6h-2.6zM8 13.3h2.7V16H8zM13.3 13.3H16V16h-2.7z',
+};
 
 export function Icon({ name, size = 18, ...rest }: { name: IconName; size?: number } & SVGProps<SVGSVGElement>) {
+  const fill = fills[name];
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" {...rest}>
       <path d={paths[name]} />
+      {fill && <path d={fill} fill="currentColor" stroke="none" opacity={name === 'select' ? 0.18 : 1} />}
     </svg>
   );
 }

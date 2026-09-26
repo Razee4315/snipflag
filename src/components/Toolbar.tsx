@@ -1,15 +1,19 @@
-import type { CSSProperties } from 'react';
-import type { Tool } from '../model';
+import { useCallback, useState, type CSSProperties } from 'react';
+import { loadCustomColors, saveCustomColor } from '../color';
+import { stepSize, type Tool } from '../model';
 import { activeImage, canRedo, canUndo, isLocked, useStore } from '../store';
+import ColorPicker from './ColorPicker';
 import { Icon, type IconName } from './icons';
 
 export const TOOLS: { tool: Tool; label: string; key: string; icon: IconName }[] = [
   { tool: 'select', label: 'Select', key: 'V', icon: 'select' },
   { tool: 'arrow', label: 'Arrow', key: 'A', icon: 'arrow' },
   { tool: 'rectangle', label: 'Rectangle', key: 'R', icon: 'rectangle' },
+  { tool: 'ellipse', label: 'Ellipse', key: 'E', icon: 'ellipse' },
   { tool: 'pen', label: 'Pen', key: 'P', icon: 'pen' },
   { tool: 'highlight', label: 'Highlighter', key: 'H', icon: 'highlight' },
   { tool: 'text', label: 'Text', key: 'T', icon: 'text' },
+  { tool: 'step', label: 'Numbered step', key: 'N', icon: 'step' },
   { tool: 'pixelate', label: 'Pixelate', key: 'B', icon: 'pixelate' },
 ];
 const COLORS = [
@@ -31,6 +35,9 @@ export default function Toolbar() {
   const locked = useStore(isLocked); const undoable = useStore(canUndo); const redoable = useStore(canRedo);
   const selected = useStore(s => activeImage(s)?.annotations.find(a => a.id === s.selection));
   const { setTool, setStyle, undo, redo, updateAnnotation, removeAnnotation } = useStore.getState();
+  const [picker, setPicker] = useState(false);
+  const [custom, setCustom] = useState(() => ({ pen: loadCustomColors('pen'), marker: loadCustomColors('marker') }));
+  const closePicker = useCallback(() => setPicker(false), []);
   const styled = selected && selected.kind !== 'redact' && selected.kind !== 'pixelate' ? selected : undefined;
   const marker = tool === 'highlight' || styled?.kind === 'highlight';
   // Style changes apply to the selected annotation as well as future ones.
@@ -40,14 +47,23 @@ export default function Toolbar() {
     if (styled.kind === 'text' && patch.fontSize) {
       const ratio = patch.fontSize / styled.fontSize;
       updateAnnotation(styled.id, { ...patch, width: styled.width * ratio, height: styled.height * ratio });
+    } else if (styled.kind === 'step' && patch.stroke) {
+      const side = stepSize(patch.stroke);
+      updateAnnotation(styled.id, { stroke: patch.stroke, x: styled.x + (styled.width - side) / 2, y: styled.y + (styled.height - side) / 2, width: side, height: side });
     } else updateAnnotation(styled.id, patch);
   };
   const palette = marker ? HIGHLIGHTS : COLORS;
+  const set = marker ? 'marker' : 'pen';
+  const extras = custom[set].filter(c => !palette.some(p => p.value === c));
   const activeColor = (styled && (styled.kind === 'highlight') === marker ? styled.color : marker ? highlightColor : color).toUpperCase();
   const widths = marker ? HIGHLIGHT_SIZES : STROKES;
   const activeWidth = styled && styled.kind !== 'text' && (styled.kind === 'highlight') === marker ? styled.stroke : marker ? highlightSize : stroke;
   const showText = tool === 'text' || styled?.kind === 'text';
   const showWidth = !showText && tool !== 'pixelate';
+  const pick = (hex: string) => {
+    setCustom(c => ({ ...c, [set]: saveCustomColor(set, hex, palette.map(p => p.value)) }));
+    style({ color: hex }); setPicker(false);
+  };
   return (
     <div className="toolbar" role="toolbar" aria-label="Annotation tools">
       <div className="tool-group">
@@ -61,14 +77,19 @@ export default function Toolbar() {
       <div className="tool-options">
         {tool !== 'pixelate' && (
           <div className="tool-group" role="radiogroup" aria-label={marker ? 'Highlighter color' : 'Color'}>
-            {palette.map(c => (
-              <button key={c.value} type="button" role="radio" aria-checked={activeColor === c.value} aria-label={c.name} title={c.name}
+            {[...palette, ...extras.map(value => ({ value, name: `Custom ${value}` }))].map(c => (
+              <button key={c.value} type="button" role="radio" aria-checked={activeColor === c.value} aria-label={c.name} title={c.name.replace('Custom ', '')}
                 className={marker ? 'swatch marker' : 'swatch'} style={{ '--swatch': c.value } as CSSProperties} disabled={locked} onClick={() => style({ color: c.value })} />
             ))}
+            <span className="color-add">
+              <button type="button" className={picker ? 'swatch-add open' : 'swatch-add'} aria-label="Custom color" title="Custom color" aria-expanded={picker} disabled={locked}
+                onClick={() => setPicker(p => !p)}><Icon name="plus" size={13} /></button>
+              {picker && <ColorPicker value={activeColor} label={marker ? 'Custom highlighter color' : 'Custom color'} onPick={pick} onClose={closePicker} />}
+            </span>
           </div>
         )}
         {showWidth && (
-          <div className="tool-group sizes" role="radiogroup" aria-label={marker ? 'Highlighter size' : 'Width'}>
+          <div className="tool-group sizes" role="radiogroup" aria-label={marker ? 'Highlighter size' : tool === 'step' || styled?.kind === 'step' ? 'Badge size' : 'Width'}>
             {widths.map((w, i) => (
               <button key={w} type="button" role="radio" aria-checked={activeWidth === w} aria-label={`${w} px`} title={`${w} px`} className="size" disabled={locked}
                 onClick={() => style({ stroke: w })}>
@@ -86,6 +107,7 @@ export default function Toolbar() {
           </label>
         )}
         {tool === 'pixelate' && <span className="tool-hint">Drag over anything private. Pixels are burned into the exported image.</span>}
+        {tool === 'step' && <span className="tool-hint">Click to place the next number.</span>}
       </div>
       <div className="tool-group push">
         {selected && (
