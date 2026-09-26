@@ -58,7 +58,8 @@ class Page(HTMLParser):
 def main(root):
     root = Path(root)
     errors, titles, descs = [], {}, {}
-    pages = sorted(root.rglob("*.html"))
+    # Search-console verification files (google*.html) are plain tokens, not pages.
+    pages = sorted(f for f in root.rglob("*.html") if not f.name.startswith("google"))
     parsed = {}
     for f in pages:
         p = Page()
