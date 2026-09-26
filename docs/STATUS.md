@@ -108,3 +108,14 @@ Next: install the Windows development artifact and verify frameless drag/resize/
 ## v1 release preparation — 2026-09-26
 
 Owner requested v1 on GitHub Releases and screenshots in README. Prepared matching 1.0.0 package/Tauri/Cargo versions and root lockfile metadata, README gallery from verified synthetic CI screenshots, and release notes. Release remains explicitly unsigned/prerelease under the existing acceptance gate; no runtime/signing claims changed. New publication workflow requires successful checks and four-platform installer runs at its exact SHA, publishes six installers with SHA256 checksums, and never marks stable/latest. Next: push release preparation, run CI and packaging, publish only after both succeed, then record the release URL. No local build or installation.
+
+## v1 release published — 2026-09-26
+
+- Release source and tag: `59017516274199f6b8461c3306f737777496bdb4` (`5901751`), version `1.0.0`, pushed to main.
+- [v1.0.0 release](https://github.com/Razee4315/snipflag/releases/tag/v1.0.0) is published (`isDraft=false`, `isPrerelease=true`), titled **Snipflag v1.0.0 — unsigned preview**. Verified all seven assets: Windows NSIS/MSI, macOS Apple Silicon/Intel DMG, Linux deb/AppImage, and SHA256SUMS.txt. All six installers carry an `unsigned-` filename prefix.
+- [Checks 36227110895](https://github.com/Razee4315/snipflag/actions/runs/36227110895): frontend and Windows/macOS/Linux native jobs all passed at the release source.
+- [Development installers 36227111618](https://github.com/Razee4315/snipflag/actions/runs/36227111618): all four platform jobs passed at the same source.
+- [Publication 36227461740](https://github.com/Razee4315/snipflag/actions/runs/36227461740): succeeded after validating both successful run SHAs. Installers were downloaded, checksummed, and uploaded entirely on GitHub Actions. No release build or dependency installation ran locally. No failures in these release runs.
+- README now embeds four verified synthetic UI previews: daylight, dark theme, image mentions, and settings. The gallery explicitly identifies browser/CI previews rather than native runtime evidence.
+
+Next: run and record the documented Windows-first native acceptance matrix, real Linear rendering with authorized test content, and macOS/Linux runtime checks; configure signing before promoting to stable. Publication does not close any of those gates. This checkpoint changes documentation only.
