@@ -49,8 +49,12 @@ export default function Editor({ image, zoom, onZoom, onScale }: Props) {
   const wrap = useRef<HTMLDivElement>(null); const size = useSize(wrap);
   const layer = useRef<Konva.Layer>(null); const transformer = useRef<Konva.Transformer>(null);
   const [draft, setDraft] = useState<Annotation | null>(null);
-  const [textEdit, setTextEdit] = useState<TextEdit | null>(null);
+  const [textEdit, setTextEditState] = useState<TextEdit | null>(null);
+  // Mirrors textEdit so blur and pointer handlers commit the same edit at most once.
+  const textRef = useRef<TextEdit | null>(null);
+  const setTextEdit = (t: TextEdit | null) => { textRef.current = t; setTextEditState(t); };
   const start = useRef<{ x: number; y: number } | null>(null);
+  const textStart = useRef<{ x: number; y: number } | null>(null);
   const pixelCache = useRef(new Map<string, HTMLCanvasElement>());
 
   const fit = Math.min((size.width - 48) / image.width, (size.height - 48) / image.height, 1);
@@ -82,7 +86,8 @@ export default function Editor({ image, zoom, onZoom, onScale }: Props) {
   };
   const base = (): Omit<Annotation, 'kind'> => ({ id: crypto.randomUUID(), x: 0, y: 0, width: 0, height: 0, points: [], color, stroke, text: '', fontSize });
 
-  const commitText = (t: TextEdit) => {
+  const commitText = () => {
+    const t = textRef.current; if (!t) return;
     setTextEdit(null);
     const text = t.value.replace(/\s+$/, '');
     const existing = t.id ? image.annotations.find(a => a.id === t.id) : undefined;
@@ -104,8 +109,8 @@ export default function Editor({ image, zoom, onZoom, onScale }: Props) {
     }
     setSelection(null);
     if (tool === 'text') {
-      if (textEdit) { commitText(textEdit); return; }
-      setTextEdit({ id: null, x: p.x, y: p.y - fontSize * LINE_HEIGHT / 2, value: '', fontSize, color });
+      // Open the editor on pointer up: the browser moves focus on pointer down, which would blur it at once.
+      if (textRef.current) commitText(); else textStart.current = p;
       return;
     }
     start.current = p;
@@ -126,6 +131,8 @@ export default function Editor({ image, zoom, onZoom, onScale }: Props) {
     }
   };
   const onUp = () => {
+    const t = textStart.current; textStart.current = null;
+    if (t && tool === 'text') { setTextEdit({ id: null, x: t.x, y: t.y - fontSize * LINE_HEIGHT / 2, value: '', fontSize, color }); return; }
     const d = draft; start.current = null; setDraft(null);
     if (!d || !isMeaningful(d)) return;
     edit([...image.annotations, d]);
@@ -176,7 +183,7 @@ export default function Editor({ image, zoom, onZoom, onScale }: Props) {
     <div className="canvas-scroll" ref={wrap}>
       <div className="canvas-frame" style={{ width: stageWidth, height: stageHeight, cursor }} data-testid="canvas">
         <Stage width={stageWidth} height={stageHeight} scaleX={scale} scaleY={scale}
-          onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerLeave={() => { if (draft) onUp(); }} onWheel={onWheel}>
+          onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerLeave={() => { textStart.current = null; if (draft) onUp(); }} onWheel={onWheel}>
           <Layer ref={layer}>
             {source && <KonvaImage image={source} width={image.width} height={image.height} listening={false} />}
             {ordered.map(a => renderShape(a, true))}
@@ -190,11 +197,11 @@ export default function Editor({ image, zoom, onZoom, onScale }: Props) {
         {textEdit && (
           <textarea className="text-editor" style={textStyle} autoFocus aria-label="Annotation text" value={textEdit.value} rows={Math.max(1, textEdit.value.split('\n').length)}
             onChange={e => setTextEdit({ ...textEdit, value: e.target.value })}
-            onBlur={() => commitText(textEdit)}
+            onBlur={commitText}
             onKeyDown={e => {
               e.stopPropagation();
               if (e.key === 'Escape') { e.preventDefault(); setTextEdit(null); }
-              if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitText(textEdit); }
+              if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitText(); }
             }} />
         )}
       </div>
