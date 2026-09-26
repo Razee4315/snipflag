@@ -1,5 +1,12 @@
 # Current state / handoff
 
+## v1.2.0 released as Latest — 2026-09-26
+
+The owner explicitly approved publishing all Add next work and the updater as **v1.2.0** marked Latest; this replaces the earlier "keep 1.1.0" instruction. Version bump and notes in `61f807e` (package, package-lock, Tauri, Cargo, Cargo.lock; `docs/releases/v1.2.0.md`; CHANGELOG).
+- [Checks 36260585537](https://github.com/Razee4315/snipflag/actions/runs/36260585537) and signed [Development installers 36260586278](https://github.com/Razee4315/snipflag/actions/runs/36260586278) **passed** at `61f807e`. [Publish 36261003234](https://github.com/Razee4315/snipflag/actions/runs/36261003234) verified both runs against that commit and created [v1.2.0](https://github.com/Razee4315/snipflag/releases/tag/v1.2.0) with six `unsigned-` installers, two macOS update archives, `SHA256SUMS.txt` and `latest.json`. It was then edited to a regular release titled "Snipflag v1.2.0" and marked Latest, as v1.1.0 was.
+- Verified: `releases/latest` returns v1.2.0 (not draft, not prerelease), and the updater endpoint serves `latest.json` for version 1.2.0 with all ten platform keys. README and website links now point to v1.2.0 with real sizes; every asset link returns 200.
+- Still true: installers are not Authenticode/Apple-signed (update packages carry Snipflag's updater signature). v1.1.0 installs have no updater and need a manual upgrade. A real in-place update can only be tested once a later version exists. Native runtime gates in TESTING.md remain open. The updater key files stay in `%USERPROFILE%\.snipflag\`; the owner has backed them up and asked that they be kept.
+
 ## Auto-updater (owner request) — implemented, key pending, 2026-09-26
 
 The owner asked for an auto-updater after the Add next work. Implemented in `251c416`, with test fix `81a8abb`:

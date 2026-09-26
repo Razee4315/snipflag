@@ -21,7 +21,7 @@
 
 Snipflag is a focused desktop app for reporting visual problems. Capture a region of your screen, mark what matters, capture another, add a title, and send everything to Linear as a single issue with the screenshots in order. It runs on Windows (primary), macOS, and Linux, and is built with Tauri 2, Rust, React, and TypeScript.
 
-> **Website:** [razee4315.github.io/snipflag](https://razee4315.github.io/snipflag/) · **v1.1.0:** [Download the release (unsigned installers)](https://github.com/Razee4315/snipflag/releases/tag/v1.1.0). Native runtime acceptance and signing are still pending; see [verification status](docs/STATUS.md).
+> **Website:** [razee4315.github.io/snipflag](https://razee4315.github.io/snipflag/) · **v1.2.0:** [Download the release (unsigned installers)](https://github.com/Razee4315/snipflag/releases/tag/v1.2.0). Native runtime acceptance and signing are still pending; see [verification status](docs/STATUS.md).
 
 ## See it in action
 
@@ -84,7 +84,7 @@ Snipflag is designed and built by **Saqlain Razee** ([GitHub](https://github.com
 
 ## Getting started
 
-Download [v1.1.0 installers](https://github.com/Razee4315/snipflag/releases/tag/v1.1.0) from GitHub Releases. All installers are built on GitHub Actions.
+Download [v1.2.0 installers](https://github.com/Razee4315/snipflag/releases/tag/v1.2.0) from GitHub Releases. All installers are built on GitHub Actions.
 
 Additional development installers are produced by the [Development installers](https://github.com/Razee4315/snipflag/actions/workflows/build.yml) workflow:
 
@@ -103,7 +103,7 @@ On macOS, grant Screen Recording permission when asked. On Linux Wayland, some c
 
 Snipflag signs in to Linear with OAuth and PKCE. No client secret is used, and the resulting token is kept in your operating system's credential store.
 
-New configured development installers offer **Connect Linear** directly. Approve access in your browser, then return to Snipflag. The existing published 1.1.0 installers predate this onboarding change.
+Choose **Connect Linear**, approve access in your browser, then return to Snipflag. From v1.2.0, Snipflag also checks for signed updates and offers an Update button; installs from v1.1.0 or earlier need one manual upgrade.
 
 Self-builds can use **Settings → Advanced: custom Linear application**: register an OAuth application with callback `http://127.0.0.1:47839/callback` and enter its public client ID. Leave the field blank to use the installer's built-in connection. Maintainers configure that connection through the `SNIPFLAG_LINEAR_CLIENT_ID` repository variable; no client secret is embedded. More detail is in [docs/LINEAR.md](docs/LINEAR.md).
 
