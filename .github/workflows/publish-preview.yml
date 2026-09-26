@@ -52,7 +52,10 @@ jobs:
               raise SystemExit(f'Expected six installers; found {len(assets)}')
           checksums = out / 'SHA256SUMS.txt'
           checksums.write_text(''.join(f'{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.name}\n' for p in assets))
-          notes = pathlib.Path('docs/releases/v1.0.0.md').read_text()
+          notes_file = pathlib.Path(f'docs/releases/{tag}.md')
+          if not notes_file.exists():
+              raise SystemExit(f'Missing release notes: {notes_file}')
+          notes = notes_file.read_text()
           notes += f'\n\nSource: `{sha}`\n\n[Checks](https://github.com/{repo}/actions/runs/{os.environ["CHECKS_RUN"]}) · [Builds](https://github.com/{repo}/actions/runs/{os.environ["BUILD_RUN"]})\n'
           pathlib.Path('release-notes.md').write_text(notes)
           gh('release', 'create', tag, '--target', sha, '--draft', '--prerelease', '--title', f'Snipflag {tag} — unsigned preview', '--notes-file', 'release-notes.md')
