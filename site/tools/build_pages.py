@@ -75,7 +75,6 @@ def header(p, current=""):
     <a class="brand" href="{p}" aria-label="Snipflag home"><img src="{p}favicon.svg" width="28" height="28" alt="">Snipflag</a>
     <nav class="nav" id="nav" aria-label="Main">
       <a class="wipe" href="{p}#how">How it works</a>
-      <a class="wipe" href="{p}#try">Try it</a>
       <a class="wipe" href="{p}compare/"{cur}>Compare</a>
       <a class="wipe" href="{p}#faq">FAQ</a>
       <a class="wipe" href="https://github.com/Razee4315/snipflag">GitHub</a>
@@ -91,7 +90,7 @@ def footer(p):
     return f"""<footer class="site-footer">
   <div class="wrap">
     <div class="fine"><a class="brand" href="{p}"><img src="{p}favicon.svg" width="28" height="28" alt="">Snipflag</a><p>© 2026 Snipflag contributors. Not affiliated with Linear or any product compared here. Product names belong to their owners.</p></div>
-    <nav aria-label="Product"><h2>Product</h2><a href="{p}#how">How it works</a><a href="{p}#try">Try it</a><a href="{p}#download">Download</a></nav>
+    <nav aria-label="Product"><h2>Product</h2><a href="{p}#how">How it works</a><a href="{p}#download">Download</a></nav>
     <nav aria-label="Compare"><h2>Compare</h2><a href="{p}compare/">All tools</a><a href="{p}compare/screenpresso/">Screenpresso</a><a href="{p}compare/jam/">Jam</a><a href="{p}compare/bugshot/">BugShot</a><a href="{p}compare/sharex-greenshot-flameshot/">ShareX and others</a></nav>
     <nav aria-label="Project"><h2>Project</h2><a href="https://github.com/Razee4315/snipflag">GitHub</a><a href="https://github.com/Razee4315/snipflag/releases">Releases</a><a href="https://github.com/Razee4315/snipflag/blob/main/LICENSE">MIT License</a></nav>
   </div>
@@ -163,7 +162,7 @@ def cta(p, text):
     return f"""<section class="section" aria-label="Download Snipflag"><div class="wrap">
 <div class="cta-band" data-reveal><h2>{text}</h2>
 <div class="hero-actions"><a class="btn btn-primary" data-download href="{p}#download">{DL}<span data-dl-label>Download free</span> <small data-dl-meta></small></a>
-<a class="btn btn-ghost" href="{p}#try">Try it in your browser</a></div></div>
+<a class="btn btn-ghost" href="{p}#how">See how it works</a></div></div>
 </div></section>"""
 
 

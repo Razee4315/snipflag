@@ -121,19 +121,6 @@ p { margin: 0; }
 .steps li::before { content: counter(s); display: grid; place-items: center; width: 32px; height: 32px; margin-bottom: 1.25rem; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font: 600 .9375rem/1 var(--font); }
 .steps p { margin-top: .5rem; color: var(--muted); font-size: 1rem; }
 
-/* Try it */
-.editor { background: var(--bg-2); border-radius: var(--radius); padding: 10px; }
-.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
-.tool { display: inline-flex; align-items: center; gap: .45rem; min-height: 40px; padding: 0 .9rem; border: 0; border-radius: 999px; background: transparent; color: var(--muted); cursor: pointer; font-size: .9375rem; font-weight: 500; transition: background-color var(--dur), color var(--dur); }
-.tool:hover { color: var(--text); background: rgba(238,242,238,.06); }
-.tool:active { transform: scale(.97); }
-.tool[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
-.tool svg { width: 17px; height: 17px; }
-.toolbar .end { margin-left: auto; display: flex; gap: 4px; }
-.canvas-wrap { position: relative; margin-top: 10px; border-radius: var(--radius-sm); overflow: hidden; background: var(--bg); touch-action: none; }
-.canvas-wrap canvas { width: 100%; height: auto; cursor: crosshair; }
-.canvas-wrap .hint { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); padding: .5rem 1rem; border-radius: 999px; background: rgba(12,31,27,.88); color: var(--text); font-size: .875rem; pointer-events: none; transition: opacity 300ms; white-space: nowrap; }
-
 /* Features */
 .features { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--gutter); }
 .feature { padding: 1.75rem; border-radius: var(--radius); background: var(--bg-2); }
@@ -242,7 +229,6 @@ details.qa .a a { color: var(--text); text-decoration: underline; text-decoratio
   body { font-size: 1.0625rem; }
   .hero-actions .btn { width: 100%; }
   .hero-actions .btn small { display: none; }
-  .tool .txt { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }

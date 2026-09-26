@@ -1,5 +1,11 @@
 # Current state / handoff
 
+## Website: "Try it" section removed (owner request) — 2026-09-27
+
+- Removed the in-browser "Try it" editor section from `site/index.html`, `site/assets/js/editor.js`, and its CSS.
+- Removed the "Try it" header and footer links on every page. The hero and compare CTA ghost buttons now say "See how it works" and link to `#how`. `site/tools/build_pages.py` matches.
+- `site/assets/img/sample.webp` is now unused, but the Website screenshots workflow still produces it.
+
 ## v1.2.0 released as Latest — 2026-09-26
 
 The owner explicitly approved publishing all Add next work and the updater as **v1.2.0** marked Latest; this replaces the earlier "keep 1.1.0" instruction. Version bump and notes in `61f807e` (package, package-lock, Tauri, Cargo, Cargo.lock; `docs/releases/v1.2.0.md`; CHANGELOG).
