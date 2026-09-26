@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "description": "Snip screenshots, mark them up, and flag them as one Linear issue.",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/Razee4315/snipflag.git" },
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 1420",

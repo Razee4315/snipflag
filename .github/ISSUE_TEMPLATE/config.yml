@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/Razee4315/snipflag/blob/main/SECURITY.md
+    about: Please report security issues privately. Do not open a public issue.
+  - name: Get help
+    url: https://github.com/Razee4315/snipflag/blob/main/SUPPORT.md
+    about: Setup help and answers to common questions.

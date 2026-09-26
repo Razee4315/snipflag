@@ -3,7 +3,8 @@ name = "snipflag"
 version = "0.1.0"
 edition = "2021"
 description = "Snip screenshots, mark them up, and flag them as one Linear issue"
-license = "UNLICENSED"
+license = "MIT"
+repository = "https://github.com/Razee4315/snipflag"
 
 [lib]
 name = "snipflag_lib"

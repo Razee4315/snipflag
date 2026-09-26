@@ -1,0 +1,89 @@
+name: Bug report
+description: Something in Snipflag does not work as expected.
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a problem. Please do not attach screenshots or logs that contain private information, access tokens, or signed URLs. Security issues belong in a private report, see SECURITY.md.
+  - type: input
+    id: version
+    attributes:
+      label: Snipflag version or commit
+      description: Shown at the bottom of Settings, or the Actions run you downloaded.
+      placeholder: "0.1.0 (development build from run 36219749995)"
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows
+        - macOS (Apple Silicon)
+        - macOS (Intel)
+        - Linux (X11)
+        - Linux (Wayland)
+    validations:
+      required: true
+  - type: input
+    id: os-version
+    attributes:
+      label: OS version and display setup
+      description: Include display scaling and monitor layout if the problem involves capture.
+      placeholder: "Windows 11 24H2, two monitors at 100% and 150%, second monitor left of primary"
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Screen capture
+        - Annotation editor
+        - Screenshots list (import, paste, reorder)
+        - Drafts and history
+        - Linear connection
+        - Creating the issue
+        - Tray, shortcut, or startup
+        - Installer
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: Include the exact error message if one was shown.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Press Ctrl+Shift+2
+        2. Drag across the second monitor
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Additional context
+      description: Anything else that helps, such as whether it happens every time.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues and this is not a duplicate.
+          required: true
+        - label: My report contains no tokens, signed URLs, or private screenshot content.
+          required: true
