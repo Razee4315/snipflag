@@ -23,20 +23,20 @@ Snipflag is a focused desktop app for reporting visual problems. Capture a regio
 
 > **Website:** [razee4315.github.io/snipflag](https://razee4315.github.io/snipflag/) · **v1.0.0:** [Download the release (unsigned installers)](https://github.com/Razee4315/snipflag/releases/tag/v1.0.0). Native runtime acceptance and signing are still pending; see [verification status](docs/STATUS.md).
 
-## Screenshots
+## See it in action
 
-CI-rendered UI previews using synthetic sample images. Native window controls and the connected Linear state differ from browser preview.
+![Snipflag in action: capture a checkout page, number and box the problems, pixelate the email and card, create the Linear issue, and open it in Linear](docs/assets/demo.gif)
 
-![Snipflag daylight workspace with an annotated checkout screenshot](docs/assets/screenshots/daylight.png)
+A real recording: capture, annotate, pixelate private fields, create the issue, and open it in Linear.
 
 <details>
-<summary>Dark theme, image mentions, and settings</summary>
+<summary>More screenshots (light and dark)</summary>
 
-![Snipflag dark workspace](docs/assets/screenshots/after-hours.png)
+UI rendered on CI with synthetic sample content. Native window controls and the connected Linear state differ slightly in the desktop app.
 
-![Description image mention picker with screenshot thumbnails](docs/assets/screenshots/image-mentions.png)
+![Snipflag daylight workspace: a billing screenshot with the email pixelated and the wrong total boxed, next to the issue form](docs/assets/screenshots/workspace-light.png)
 
-![Snipflag appearance, sound and motion settings](docs/assets/screenshots/settings.png)
+![Snipflag after-hours workspace with the same annotated billing screenshot](docs/assets/screenshots/workspace-dark.png)
 
 </details>
 
