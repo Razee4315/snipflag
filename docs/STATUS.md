@@ -20,6 +20,8 @@ Tauri 2 + Rust + React/TypeScript. Windows primary, macOS/Linux targets. All bui
   - native on windows-latest, macos-latest, ubuntu-24.04: `cargo test` 15 passed (path/UUID validation, image bounds, persistence round trip, sent-session immutability, receipt kept after delete, settings validation, PKCE, callback state, description ordering, submission plans, not-found detection, crop clamping, save-name sanitizing) and `cargo check --all-targets`.
 - Development installers run [36219749995](https://github.com/Razee4315/snipflag/actions/runs/36219749995) at `a2b3074`: all four jobs green. Unsigned artifacts (7-day retention): `snipflag-development-unsigned-x86_64-pc-windows-msvc` (NSIS + MSI, 9 MB), `…-aarch64-apple-darwin` and `…-x86_64-apple-darwin` (DMG, 5 MB each), `…-x86_64-unknown-linux-gnu` (deb + AppImage, 85 MB). Packaging success is not runtime verification.
 
+- After the logo and project-docs update at `fe9df73`: Checks [36223367657](https://github.com/Razee4315/snipflag/actions/runs/36223367657) green on all jobs, and Development installers [36223378647](https://github.com/Razee4315/snipflag/actions/runs/36223378647) green on all four targets with icons generated from the new mark. These are the current artifacts to test.
+
 ## Failures fixed during this session
 
 - Bootstrap run 36210728328 failed: missing `lib.rs`. Fixed by adding the native core; lockfiles came from bootstrap run 36218767872 and were committed.
