@@ -1,0 +1,285 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
+import EmptyState from './components/EmptyState';
+import Editor, { type Zoom } from './components/Editor';
+import Filmstrip from './components/Filmstrip';
+import HistoryDialog from './components/HistoryDialog';
+import { Icon, Logo } from './components/icons';
+import IssuePanel, { type ConnectionState } from './components/IssuePanel';
+import SettingsDialog from './components/SettingsDialog';
+import Toolbar, { TOOLS } from './components/Toolbar';
+import { defaults, imageLabel, sessionLabel, shortcutLabel, validateSession, type CaptureImage, type Connection, type Settings } from './model';
+import {
+  appStatus, cancelLogin, connectLinear, desktop, disconnectLinear, errorText, exportPng, linearConnection, listSessions, loadSession,
+  loadSettings, on, PREVIEW_MESSAGE, readClipboardImage, saveSession, saveSettings, startCapture, submissionStatus, submitIssue, type AppStatus, type RawImage,
+} from './native';
+import { fileBaseName, flatten, importImage } from './render';
+import { activeImage, isLocked, useStore } from './store';
+
+type Notice = { kind: 'error' | 'info'; text: string } | null;
+const isTyping = (t: EventTarget | null) => t instanceof HTMLElement && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName));
+
+export default function App() {
+  const session = useStore(s => s.session); const image = useStore(activeImage); const busy = useStore(s => s.busy);
+  const saveState = useStore(s => s.saveState); const saveError = useStore(s => s.saveError); const locked = useStore(isLocked);
+  const [settings, setSettings] = useState<Settings>(defaults);
+  const [status, setStatus] = useState<AppStatus | null>(null);
+  const [connection, setConnection] = useState<Connection | null>(null);
+  const [connectionState, setConnectionState] = useState<ConnectionState>('idle');
+  const [connectionError, setConnectionError] = useState('');
+  const [dialog, setDialog] = useState<'settings' | 'history' | null>(null);
+  const [notice, setNotice] = useState<Notice>(null);
+  const [zoom, setZoom] = useState<Zoom>('fit'); const [scale, setScale] = useState(1);
+  const [progress, setProgress] = useState(''); const [submitError, setSubmitError] = useState('');
+  const [pendingState, setPendingState] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const saveChain = useRef<Promise<void>>(Promise.resolve());
+  const saveTimer = useRef<number | undefined>(undefined);
+
+  const notify = useCallback((text: string, kind: 'error' | 'info' = 'info') => setNotice({ kind, text }), []);
+  useEffect(() => { if (!notice) return; const t = window.setTimeout(() => setNotice(null), notice.kind === 'error' ? 9000 : 3500); return () => window.clearTimeout(t); }, [notice]);
+
+  // Durable drafts: every change is saved shortly after it happens, and immediately before capture or network work.
+  const saveNow = useCallback(() => {
+    const run = async () => {
+      const { session: s, persisted, setSaveState, markPersisted } = useStore.getState();
+      if (!s.images.length && !s.title.trim() && !s.description.trim()) return;
+      setSaveState('saving');
+      try { await saveSession(s, persisted); markPersisted(s.id, s.images.map(i => i.id)); setSaveState('saved'); }
+      catch (e) { setSaveState('error', errorText(e)); throw e; }
+    };
+    const next = saveChain.current.then(run, run); saveChain.current = next.catch(() => undefined); return next;
+  }, []);
+  const flush = useCallback(() => { window.clearTimeout(saveTimer.current); return saveNow(); }, [saveNow]);
+  useEffect(() => {
+    if (!ready) return;
+    window.clearTimeout(saveTimer.current);
+    saveTimer.current = window.setTimeout(() => { saveNow().catch(() => undefined); }, 400);
+    return () => window.clearTimeout(saveTimer.current);
+  }, [session, ready, saveNow]);
+
+  const refreshConnection = useCallback(async () => {
+    if (!desktop) return;
+    setConnectionState('loading');
+    try {
+      const c = await linearConnection(); setConnection(c); setConnectionError(''); setConnectionState('idle');
+      const { session: s, patch } = useStore.getState();
+      if (c && !s.issue) {
+        if (s.teamId && !c.teams.some(t => t.id === s.teamId)) patch({ teamId: '', projectId: '', assigneeId: '', labelIds: [] });
+        if (!useStore.getState().session.teamId) {
+          const remembered = (await loadSettings()).teamMemory[c.workspaceId];
+          const team = c.teams.find(t => t.id === remembered) ?? (c.teams.length === 1 ? c.teams[0] : undefined);
+          if (team) patch({ teamId: team.id });
+        }
+      }
+    } catch (e) { setConnection(null); setConnectionError(errorText(e)); setConnectionState('error'); }
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const loaded = await loadSettings(); setSettings(loaded); setStatus(await appStatus());
+        const sessions = await listSessions();
+        if (sessions[0] && !sessions[0].issue) useStore.getState().hydrate(await loadSession(sessions[0].id));
+      } catch (e) { notify(`Could not restore your last draft: ${errorText(e)}`, 'error'); }
+      setReady(true);
+      void refreshConnection();
+    })();
+  }, [notify, refreshConnection]);
+  useEffect(() => {
+    const root = document.documentElement;
+    if (settings.theme === 'system') delete root.dataset.theme; else root.dataset.theme = settings.theme;
+  }, [settings.theme]);
+  useEffect(() => { if (status?.shortcutError) notify(status.shortcutError, 'error'); }, [status, notify]);
+  useEffect(() => {
+    setPendingState(null); setSubmitError(''); setProgress('');
+    submissionStatus(session.id).then(s => setPendingState(s?.state ?? null)).catch(() => undefined);
+  }, [session.id]);
+
+  const addImages = useCallback((images: CaptureImage[]) => {
+    try { useStore.getState().addImages(images); setZoom('fit'); } catch (e) { notify(errorText(e), 'error'); }
+  }, [notify]);
+  const importFiles = useCallback(async (files: File[]) => {
+    const images: CaptureImage[] = [];
+    try { for (const f of files) images.push(await importImage(f, fileBaseName(f.name))); addImages(images); }
+    catch (e) { notify(errorText(e), 'error'); }
+  }, [addImages, notify]);
+  const pasteImage = useCallback(async () => {
+    try {
+      const data = await readClipboardImage();
+      if (data instanceof Blob) addImages([await importImage(data, '')]);
+      else { const raw = data as RawImage; addImages([{ id: crypto.randomUUID(), name: '', width: raw.width, height: raw.height, dataUrl: raw.dataUrl, annotations: [] }]); }
+    } catch (e) { notify(errorText(e), 'error'); }
+  }, [addImages, notify]);
+
+  const capture = useCallback(async () => {
+    if (!desktop) { notify(PREVIEW_MESSAGE, 'error'); return; }
+    const s = useStore.getState();
+    if (s.busy) return;
+    if (!s.session.issue && s.session.images.length >= 10) { notify('This session already has 10 screenshots. Start a new session to capture more.', 'error'); return; }
+    try { await flush(); await startCapture(); } catch (e) { notify(errorText(e), 'error'); }
+  }, [flush, notify]);
+  const captureRef = useRef(capture); captureRef.current = capture;
+
+  useEffect(() => {
+    const subs = [
+      on('capture-requested', () => { void captureRef.current(); }),
+      on<RawImage>('capture-complete', p => addImages([{ id: crypto.randomUUID(), name: '', width: p.width, height: p.height, dataUrl: p.dataUrl, annotations: [] }])),
+      on<string>('capture-failed', m => notify(m, 'error')),
+      on<string>('submission-progress', m => setProgress(m)),
+    ];
+    return () => { subs.forEach(p => p.then(u => u())); };
+  }, [addImages, notify]);
+
+  const newSession = useCallback(async () => {
+    if (useStore.getState().busy) return;
+    try { await flush(); } catch { notify('The current draft could not be saved. Fix the problem before starting a new session.', 'error'); return; }
+    useStore.getState().reset(); setZoom('fit');
+  }, [flush, notify]);
+  const openSession = useCallback(async (id: string) => {
+    await flush();
+    useStore.getState().hydrate(await loadSession(id)); setZoom('fit'); setDialog(null);
+  }, [flush]);
+
+  const submit = useCallback(async () => {
+    const s = useStore.getState();
+    if (s.busy) return;
+    if (!desktop) { setSubmitError(PREVIEW_MESSAGE); return; }
+    const invalid = validateSession(s.session);
+    if (invalid) { setSubmitError(invalid); return; }
+    if (!connection) { setSubmitError('Connect Linear before creating the issue.'); return; }
+    s.setBusy(true); setSubmitError(''); setProgress('Saving draft…');
+    try {
+      await flush();
+      const { session: snapshot, persisted } = useStore.getState();
+      const exports: { id: string; dataUrl: string }[] = [];
+      for (const [i, img] of snapshot.images.entries()) {
+        setProgress(`Preparing screenshot ${i + 1} of ${snapshot.images.length}…`);
+        exports.push({ id: img.id, dataUrl: await flatten(img) });
+      }
+      const issue = await submitIssue(snapshot, persisted, exports);
+      useStore.getState().setIssue(issue); setPendingState('sent'); setProgress('');
+      notify(`Created ${issue.identifier}.`);
+    } catch (e) {
+      useStore.getState().setBusy(false); setProgress(''); setSubmitError(errorText(e));
+      submissionStatus(s.session.id).then(x => setPendingState(x?.state ?? null)).catch(() => undefined);
+    }
+  }, [connection, flush, notify]);
+
+  const connect = useCallback(async () => {
+    setConnectionState('connecting'); setConnectionError('');
+    try { await connectLinear(); await refreshConnection(); notify('Linear connected.'); }
+    catch (e) { setConnectionState('error'); setConnectionError(errorText(e)); }
+  }, [notify, refreshConnection]);
+  const disconnect = useCallback(async () => {
+    await disconnectLinear(); setConnection(null); setConnectionState('idle');
+    setSettings(await loadSettings()); notify('Linear disconnected.');
+  }, [notify]);
+  const rememberTeam = useCallback((teamId: string) => {
+    if (!connection) return;
+    const next = { ...settings, teamMemory: { ...settings.teamMemory, [connection.workspaceId]: teamId } };
+    saveSettings(next).then(setSettings).catch(() => undefined);
+  }, [connection, settings]);
+
+  const exportActive = useCallback(async (clipboard: boolean) => {
+    const s = useStore.getState(); const img = activeImage(s); if (!img) return;
+    const index = s.session.images.indexOf(img);
+    try {
+      const ok = await exportPng(await flatten(img), imageLabel(img, index), clipboard);
+      if (ok) notify(clipboard ? 'Image copied to the clipboard.' : 'Image saved.');
+    } catch (e) { notify(errorText(e), 'error'); }
+  }, [notify]);
+
+  // Keyboard: tool keys, undo/redo, submit, paste.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (dialog) return;
+      const mod = e.ctrlKey || e.metaKey; const key = e.key.toLowerCase();
+      if (mod && key === 'enter') { e.preventDefault(); void submit(); return; }
+      if (isTyping(e.target)) return;
+      const { undo, redo, setTool } = useStore.getState();
+      if (mod && key === 'z') { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }
+      if (mod && key === 'y') { e.preventDefault(); redo(); return; }
+      if (mod || e.altKey) return;
+      const tool = TOOLS.find(t => t.key.toLowerCase() === key);
+      if (tool && !isLocked(useStore.getState())) { e.preventDefault(); setTool(tool.tool); }
+    };
+    const onPaste = (e: ClipboardEvent) => {
+      if (dialog || isTyping(e.target)) return;
+      const files = [...(e.clipboardData?.files ?? [])].filter(f => f.type.startsWith('image/'));
+      if (files.length) { e.preventDefault(); void importFiles(files); }
+      else if (desktop) { e.preventDefault(); void pasteImage(); }
+    };
+    window.addEventListener('keydown', onKey); window.addEventListener('paste', onPaste);
+    return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('paste', onPaste); };
+  }, [dialog, submit, importFiles, pasteImage]);
+
+  const count = session.images.length; const index = image ? session.images.indexOf(image) : -1;
+  const saveText = saveState === 'saving' ? 'Saving…' : saveState === 'saved' ? 'Saved on this computer' : saveState === 'error' ? `Not saved: ${saveError}` : 'Nothing to save yet';
+  return (
+    <div className="app" onDragOver={e => { if ([...e.dataTransfer.types].includes('Files')) e.preventDefault(); }}
+      onDrop={e => { const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/')); if (files.length) { e.preventDefault(); void importFiles(files); } }}>
+      <header className="topbar">
+        <div className="brand"><Logo /><span>Snipflag</span></div>
+        <div className="session-meta">
+          <span className="session-name" title={sessionLabel(session)}>{sessionLabel(session)}</span>
+          <span className={saveState === 'error' ? 'save-state error' : 'save-state'} role="status" aria-live="polite">{saveText}</span>
+        </div>
+        <span className="count">{count ? `${count} ${count === 1 ? 'image' : 'images'} · one issue` : ''}</span>
+        <div className="top-actions">
+          <button type="button" className="button ghost" onClick={() => void newSession()} disabled={busy}><Icon name="plus" /> New session</button>
+          <button type="button" className="button ghost" onClick={() => setDialog('history')}><Icon name="history" /> History</button>
+          <button type="button" className="button ghost" onClick={() => setDialog('settings')}><Icon name="settings" /> Settings</button>
+        </div>
+      </header>
+      <main className="workspace">
+        <section className="stage-area" aria-label="Screenshot editor">
+          {image ? (
+            <>
+              <Toolbar />
+              <Editor image={image} zoom={zoom} onZoom={setZoom} onScale={setScale} />
+              <div className="image-bar">
+                <label className="caption-field">
+                  <span className="visually-hidden">Caption for screenshot {index + 1}</span>
+                  <input value={image.name} placeholder={`Screenshot ${index + 1} caption`} disabled={locked} maxLength={200}
+                    onChange={e => useStore.getState().updateImage(image.id, { name: e.target.value })} />
+                </label>
+                <span className="small muted dims">{image.width} × {image.height}</span>
+                <div className="zoom" role="group" aria-label="Zoom">
+                  <button type="button" className="tool" aria-label="Zoom out" title="Zoom out" onClick={() => setZoom(Math.max(0.1, scale / 1.25))}><Icon name="zoomOut" /></button>
+                  <button type="button" className="zoom-value" aria-label="Actual size" title="Actual size (100%)" onClick={() => setZoom(1)}>{Math.round(scale * 100)}%</button>
+                  <button type="button" className="tool" aria-label="Zoom in" title="Zoom in" onClick={() => setZoom(Math.min(8, scale * 1.25))}><Icon name="zoomIn" /></button>
+                  <button type="button" className={zoom === 'fit' ? 'tool active' : 'tool'} aria-label="Fit to window" title="Fit to window" onClick={() => setZoom('fit')}><Icon name="fit" /></button>
+                </div>
+                <button type="button" className="button" onClick={() => void exportActive(true)}><Icon name="copy" /> Copy image</button>
+                <button type="button" className="button" onClick={() => void exportActive(false)}><Icon name="save" /> Save image</button>
+              </div>
+            </>
+          ) : (
+            <EmptyState shortcut={shortcutLabel(settings.shortcut)} onCapture={() => void capture()} onAdd={() => fileInput.current?.click()} onPaste={() => void pasteImage()} />
+          )}
+          {count > 0 && <Filmstrip canCapture={desktop} onCapture={() => void capture()} onAdd={() => fileInput.current?.click()} />}
+        </section>
+        <IssuePanel connection={connection} connectionState={connectionState} connectionError={connectionError} hasClientId={!!settings.clientId}
+          progress={progress} submitError={submitError} pendingState={pendingState}
+          onConnect={() => void connect()} onCancelConnect={() => void cancelLogin().catch(() => undefined)} onRetryConnection={() => void refreshConnection()}
+          onOpenSettings={() => setDialog('settings')} onSubmit={() => void submit()} onNewSession={() => void newSession()} onTeamChosen={rememberTeam} notify={notify} />
+      </main>
+      <input ref={fileInput} type="file" accept="image/png,image/jpeg,image/webp" multiple hidden aria-label="Add images"
+        onChange={e => { const files = [...(e.target.files ?? [])]; e.target.value = ''; if (files.length) void importFiles(files); }} />
+      <div className={notice ? `toast ${notice.kind}` : 'toast'} role={notice?.kind === 'error' ? 'alert' : 'status'} aria-live="polite">
+        {notice && <><span>{notice.text}</span><button type="button" className="icon-button" aria-label="Dismiss" onClick={() => setNotice(null)}><Icon name="close" size={14} /></button></>}
+      </div>
+      {dialog === 'settings' && (
+        <SettingsDialog settings={settings} status={status} connection={connection} connectionState={connectionState} connectionError={connectionError}
+          onSave={async next => { setSettings(await saveSettings(next)); setStatus(await appStatus()); }}
+          onConnect={() => void connect()} onCancelConnect={() => void cancelLogin().catch(() => undefined)} onDisconnect={disconnect}
+          onHistoryCleared={() => useStore.getState().reset()} onClose={() => setDialog(null)} />
+      )}
+      {dialog === 'history' && (
+        <HistoryDialog currentId={session.id} onOpen={openSession} onClose={() => setDialog(null)}
+          onDeleted={id => { if (id === useStore.getState().session.id) useStore.getState().reset(); }} />
+      )}
+    </div>
+  );
+}

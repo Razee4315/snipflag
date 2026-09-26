@@ -1,0 +1,92 @@
+import { create } from 'zustand';
+import { estimateBytes, LIMITS, newSession, reorder, type Annotation, type CaptureImage, type IssueResult, type Session, type Tool } from './model';
+
+type History = { past: Annotation[][]; future: Annotation[][] };
+export type SaveState = 'idle' | 'saving' | 'saved' | 'error';
+interface State {
+  session: Session; activeId: string; tool: Tool; color: string; stroke: number; fontSize: number;
+  histories: Record<string, History>; busy: boolean; selection: string | null; saveState: SaveState; saveError: string;
+  /** Image IDs whose pixels are already durable for the current session. */
+  persisted: string[];
+  hydrate: (session: Session) => void; reset: () => void; patch: (patch: Partial<Session>) => void;
+  addImages: (images: CaptureImage[]) => void; select: (id: string) => void;
+  updateImage: (id: string, patch: Partial<CaptureImage>) => void;
+  edit: (annotations: Annotation[]) => void; undo: () => void; redo: () => void;
+  removeImage: (id: string) => void; moveImage: (from: number, to: number) => void;
+  setTool: (tool: Tool) => void; setStyle: (style: Partial<Pick<State, 'color' | 'stroke' | 'fontSize'>>) => void;
+  setBusy: (busy: boolean) => void; setSelection: (id: string | null) => void; updateAnnotation: (id: string, patch: Partial<Annotation>) => void; removeAnnotation: (id: string) => void; setIssue: (issue: IssueResult) => void;
+  setSaveState: (state: SaveState, error?: string) => void; markPersisted: (sessionId: string, ids: string[]) => void;
+}
+const locked = (s: State) => s.busy || !!s.session.issue;
+
+export const useStore = create<State>((set, get) => ({
+  session: newSession(), activeId: '', tool: 'arrow', color: '#EF4444', stroke: 3, fontSize: 22,
+  histories: {}, busy: false, selection: null, saveState: 'idle', saveError: '', persisted: [],
+  hydrate: (session) => set({ session, selection: null, activeId: session.images[0]?.id ?? '', histories: {}, persisted: session.images.map(i => i.id), saveState: 'saved', saveError: '' }),
+  reset: () => set({ session: newSession(), activeId: '', selection: null, histories: {}, persisted: [], saveState: 'idle', saveError: '', busy: false }),
+  patch: (patch) => { if (!locked(get())) set(s => ({ session: { ...s.session, ...patch, updatedAt: Date.now() } })); },
+  select: (activeId) => set({ activeId, selection: null }),
+  addImages: (images) => {
+    const s = get(); if (s.busy) throw new Error('Wait for the current operation to finish.');
+    if (!images.length) return;
+    // A sent session is immutable; new screenshots start a fresh draft.
+    const fresh = !!s.session.issue; const session = fresh ? newSession() : s.session;
+    if (session.images.length + images.length > LIMITS.images) throw new Error(`A session holds up to ${LIMITS.images} images. Remove one or start a new session.`);
+    const total = [...session.images, ...images].reduce((sum, i) => sum + estimateBytes(i.dataUrl), 0);
+    if (total > LIMITS.sessionBytes) throw new Error('This session would exceed the 100 MB image limit.');
+    set({
+      session: { ...session, images: [...session.images, ...images], updatedAt: Date.now() }, activeId: images[images.length - 1].id,
+      ...(fresh ? { histories: {}, persisted: [] } : {}),
+    });
+  },
+  updateImage: (id, patch) => {
+    if (locked(get())) return;
+    set(s => ({ session: { ...s.session, updatedAt: Date.now(), images: s.session.images.map(i => i.id === id ? { ...i, ...patch } : i) } }));
+  },
+  edit: (annotations) => {
+    const s = get(); const image = s.session.images.find(i => i.id === s.activeId); if (!image || locked(s)) return;
+    const h = s.histories[image.id] ?? { past: [], future: [] };
+    set({ histories: { ...s.histories, [image.id]: { past: [...h.past, image.annotations].slice(-100), future: [] } } });
+    get().updateImage(image.id, { annotations });
+  },
+  undo: () => {
+    const s = get(); set({ selection: null }); const image = s.session.images.find(i => i.id === s.activeId); const h = s.histories[s.activeId];
+    if (!image || !h?.past.length || locked(s)) return;
+    set({ histories: { ...s.histories, [image.id]: { past: h.past.slice(0, -1), future: [image.annotations, ...h.future] } } });
+    get().updateImage(image.id, { annotations: h.past[h.past.length - 1] });
+  },
+  redo: () => {
+    const s = get(); set({ selection: null }); const image = s.session.images.find(i => i.id === s.activeId); const h = s.histories[s.activeId];
+    if (!image || !h?.future.length || locked(s)) return;
+    set({ histories: { ...s.histories, [image.id]: { past: [...h.past, image.annotations], future: h.future.slice(1) } } });
+    get().updateImage(image.id, { annotations: h.future[0] });
+  },
+  removeImage: (id) => {
+    const s = get(); if (locked(s)) return;
+    const index = s.session.images.findIndex(i => i.id === id); if (index < 0) return;
+    const images = s.session.images.filter(i => i.id !== id); const histories = { ...s.histories }; delete histories[id];
+    const activeId = s.activeId === id ? (images[Math.min(index, images.length - 1)]?.id ?? '') : s.activeId;
+    set({ session: { ...s.session, images, updatedAt: Date.now() }, activeId, histories });
+  },
+  moveImage: (from, to) => { const s = get(); s.patch({ images: reorder(s.session.images, from, to) }); },
+  setTool: (tool) => set({ tool }),
+  setStyle: (style) => set(style),
+  setBusy: (busy) => set({ busy, selection: busy ? null : get().selection }),
+  setSelection: (selection) => set({ selection }),
+  updateAnnotation: (id, patch) => {
+    const image = activeImage(get()); if (!image) return;
+    get().edit(image.annotations.map(a => a.id === id ? { ...a, ...patch } : a));
+  },
+  removeAnnotation: (id) => {
+    const image = activeImage(get()); if (!image) return;
+    get().edit(image.annotations.filter(a => a.id !== id)); set({ selection: null });
+  },
+  setIssue: (issue) => set(s => ({ session: { ...s.session, issue, updatedAt: Date.now() }, busy: false })),
+  setSaveState: (saveState, saveError = '') => set({ saveState, saveError }),
+  markPersisted: (sessionId, ids) => { if (get().session.id === sessionId) set(s => ({ persisted: [...new Set([...s.persisted, ...ids])] })); },
+}));
+
+export const activeImage = (s: Pick<State, 'session' | 'activeId'>) => s.session.images.find(i => i.id === s.activeId);
+export const canUndo = (s: State) => !!s.histories[s.activeId]?.past.length && !locked(s);
+export const canRedo = (s: State) => !!s.histories[s.activeId]?.future.length && !locked(s);
+export const isLocked = locked;
