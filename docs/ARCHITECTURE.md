@@ -10,6 +10,9 @@ Tauri 2 / Rust desktop core; React + TypeScript + Vite UI; Konva/react-konva ann
 - `src/geometry.ts`: annotation bounds, move, and resize in image coordinates.
 - `src/store.ts`: Zustand editing state, independent per-image undo histories, selection, busy/sent locks, persisted-image tracking.
 - `src/render.ts`: import/conversion to PNG, pixelation, `drawAnnotation`, and the authoritative flattened PNG export with redaction painted last. The editor draws every annotation with the same `drawAnnotation`, so the canvas matches the export.
+- `src/report.ts`: the outgoing issue description (resolved `@image` prose plus one ordered section per image) with upload addresses left open. It mirrors Rust `compose_description`; both run `src/report.fixtures.json`.
+- `src/components/ReportPreview.tsx`: local preview of destination, fields, title, description and flattened images in upload order. Creating from it reuses the reviewed pixels only when the session object is unchanged.
+- `src/templates.ts`: built-in description templates, template tidying, and per-team remembered details (`rememberDetails`, `detailsToFill`). Rust `normalize_settings` validates `templates` (null = built-in) and `teamDefaults`.
 - `src/native.ts`: narrow IPC facade; browser preview uses IndexedDB and refuses Linear/capture actions with an explicit message.
 - `src/App.tsx` and `src/components/*`: workspace, toolbar, Konva editor, filmstrip, issue panel, settings/history dialogs, and the per-monitor capture overlay (`index.html?capture=N`).
 - `src-tauri/src/storage.rs`: SQLite schema, atomic image writes by validated UUID, bounded decoding, retention, settings validation, submission receipts.

@@ -1,5 +1,17 @@
 # Test and release gates
 
+## Templates and remembered team details
+
+Automated coverage: Rust settings validation for templates (trimmed names, ID and length limits, null keeps built-ins) and remembered details (UUIDs, priority range); unit tests for built-in/edited templates, tidy names, filling only empty fields with IDs the team still offers, and a bounded per-team memory; browser test for template chips, edit/remove/add/restore in Settings, persistence across reload, and templates hidden once text exists. The updated composer test uses the Bug report template.
+
+Native gates (need a connected workspace; no issue creation is required except where stated): remembered team applies to a new session and to a draft sent-then-recaptured, not to a restored draft that already has a team, and not again after choosing no team; after an explicitly authorized synthetic create, a new draft for that team fills project/assignee/labels/priority only where empty; removed Linear projects/labels/members are skipped; Forget and Disconnect clear the memory; search fields with more than eight teams/projects/members; Retry after a metadata failure.
+
+## Report preview
+
+Automated coverage: shared Rust/TypeScript description fixtures (aliases, reordered images, legacy drafts without aliases, literal code, Unicode prose, escaped captions, 200-character captions); browser test for destination/field blockers, title, mention chips, ordered section headings, exact Markdown with upload placeholders, flattened pixels at original size with pixelation burned in, tool shortcuts blocked behind the dialog, and a refreshed preview after a caption change. The browser suite cannot create an issue.
+
+Native gates: with a connected workspace and explicitly authorized synthetic content, compare the preview with the created Linear issue (title, destination, fields, prose links, section order and images); edit after previewing and confirm the new revision is sent; preview a locked uncertain attempt; check large multi-image preview memory and time on Windows.
+
 ## Built-in Linear onboarding
 
 Automated coverage: built-in/custom/missing client selection, empty saved settings after upgrade, Settings connection availability and collapsed advanced setup, browser-only refusal, custom ID persistence. Installer builds fail early when the public client variable is missing unless custom-client-only mode is explicitly selected. These checks do not contact Linear.

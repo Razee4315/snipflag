@@ -17,7 +17,7 @@ Practical limits: 10 images/session; 20 MiB encoded input/image; 40 megapixels d
 3. Arrow, rectangle, pen, highlighter, text, pixelation; select/move/resize, color, width, text size, delete, per-image undo/redo, zoom/fit.
 4. Add screenshots repeatedly, import PNG/JPEG/WebP, paste images, reorder and caption.
 5. PNG clipboard/save and final flattened export at original pixel dimensions.
-6. Linear OAuth with PKCE; reconnect/disconnect; teams/projects/labels/assignees; title, description, team, priority; remember valid selections per workspace/team.
+6. Linear OAuth with PKCE; reconnect/disconnect; teams/projects/labels/assignees; title, description, team, priority; remember valid selections per workspace/team (last team per workspace; last sent project, assignee, labels and priority per team, applied only to empty fields); editable description templates.
 7. Upload final annotated images only after explicit Create issue. Preserve drafts and partial progress on failures; reconcile ambiguous creates to prevent duplicates.
 8. Recent local sessions, resume, delete, submitted issue link. Explicit retention controls; no automatic screenshot analytics.
 9. Clear errors for missing permissions, shortcut conflicts, unavailable keyring, expired login, no teams, rate limits, failed uploads, disk failures, and unsupported compositor behavior.
