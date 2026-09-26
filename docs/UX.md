@@ -2,13 +2,13 @@
 
 ## Main workspace
 
-Frameless draggable app header → compact screenshot canvas + nearby issue composer → small image filmstrip. The first image sizes the editor to a bounded compact window; expand/compact is explicit. Save-and-hide flushes the draft before returning to the tray. Keep the screenshot dominant. Slim utility strip: accessible save-state indicator, New session, History, Settings, and custom window controls. No repeated title, logo or slogans. Canvas toolbar: select, arrow, rectangle, pen, text, pixelate, redact, color, thickness, undo/redo. Image controls: fit/zoom, copy, save.
+Top-aligned screenshot canvas + nearby issue composer → small image filmstrip. The draggable utility controls occupy the composer corner, leaving no empty strip above the screenshot. The first image sizes the editor to a bounded compact window; expand/compact is explicit. Save-and-hide flushes the draft before returning to the tray. Keep the screenshot dominant. Composer-corner utilities: accessible save-state indicator, New session, History, Settings, and custom window controls. No repeated title, logo or slogans. Canvas toolbar: select, arrow, rectangle, pen, text, pixelate, redact, color, thickness, undo/redo. Image controls: fit/zoom, copy, save.
 
-Empty state: “Capture a screenshot”. Primary Capture screen; secondary Add images; paste hint. No fake sample screenshot in the working app.
+Empty state: “Capture a screenshot”. Primary Capture screen; secondary Add images and Paste. No fake sample screenshot in the working app.
 
-Filmstrip: numbered thumbnails, captions, selected outline, add button. Each tile has accessible move earlier/later and remove actions. The filmstrip exposes its image count and one-issue grouping to assistive technology. Selection does not mutate any other image.
+Filmstrip: stable image-alias numbered thumbnails, captions, selected outline, add button. Each tile has accessible move earlier/later and remove actions. The filmstrip exposes its image count and one-issue grouping to assistive technology. Selection does not mutate any other image.
 
-Issue panel: connection/workspace, title, description, team, optional reproduction-steps scaffold and collapsed project/assignee/labels/priority, attachment count, primary “Create issue”. Keep the panel disabled only when genuinely unavailable and explain why. No redirect to Linear to fill the issue form.
+Issue panel: connection/workspace, title, description, team, optional reproduction-steps scaffold and collapsed project/assignee/labels/priority, primary “Create issue”. Keep the panel disabled only when genuinely unavailable and explain why. No redirect to Linear to fill the issue form.
 
 ## Repeated capture
 
@@ -31,3 +31,5 @@ Default global: Ctrl/Cmd+Shift+2 (check registration failure). Editor: V select,
 ## Accessibility
 
 Visible focus, native button semantics, labels for icon controls, keyboard-accessible image ordering, status live regions, reduced motion, no color-only success/error, modal focus containment/restoration. At narrow widths, issue panel moves below the canvas instead of clipping inputs.
+
+Description: type @ to filter attached images by alias or caption. Up/Down navigates, Enter/Tab inserts, Escape dismisses. References keep their UUID identity through reordering and reload; missing images show an error. Submitted references become clickable Linear asset links with full images still in filmstrip order below.

@@ -30,3 +30,6 @@ Development version 0.1.0. Not yet released; installers are unsigned development
 - Compact frameless workspace with image-aware sizing, custom window controls, and minimal utility chrome.
 - Warm daylight and forest dark themes; compact image rail and simplified issue composer.
 - Settings organized into Connection, Capture, Appearance, Privacy, and Shortcuts.
+
+- Description @image references with a thumbnail picker, caption search, stable identity and clickable links in Linear; missing references block submission.
+- Screenshot workspace aligned to the top, with utilities in the composer corner.
