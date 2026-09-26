@@ -71,6 +71,7 @@ for (const theme of ['Dark', 'Light'] as const) {
     await dialog.getByRole('button', { name: 'Appearance', exact: true }).click();
     await dialog.getByText(theme, { exact: true }).click();
     await dialog.getByRole('button', { name: 'Save settings' }).click();
+    await page.keyboard.press('Escape');
     await expect(dialog).toHaveCount(0);
 
     await page.addStyleTag({ content: '.ws-text { visibility: hidden !important; } *, *::before, *::after { caret-color: transparent !important; }' });
