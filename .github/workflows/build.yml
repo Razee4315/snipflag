@@ -40,9 +40,12 @@ jobs:
       - run: npm test
       - run: npm run tauri -- icon public/icon.svg
       - run: npm run tauri -- build --target ${{ matrix.target }} --bundles ${{ matrix.bundles }} -- --locked
+        env:
+          # Public OAuth client ID only (never a secret). Optional: users can also paste it in Settings.
+          SNIPFLAG_LINEAR_CLIENT_ID: ${{ vars.SNIPFLAG_LINEAR_CLIENT_ID }}
       - uses: actions/upload-artifact@v4
         with:
-          name: clipsenda-development-unsigned-${{ matrix.target }}
+          name: snipflag-development-unsigned-${{ matrix.target }}
           path: |
             src-tauri/target/${{ matrix.target }}/release/bundle/**/*.exe
             src-tauri/target/${{ matrix.target }}/release/bundle/**/*.msi

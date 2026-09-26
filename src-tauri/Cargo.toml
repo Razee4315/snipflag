@@ -1,11 +1,12 @@
 [package]
-name = "clipsenda"
+name = "snipflag"
 version = "0.1.0"
 edition = "2021"
-description = "Capture, annotate, and send screenshots to Linear"
+description = "Snip screenshots, mark them up, and flag them as one Linear issue"
+license = "UNLICENSED"
 
 [lib]
-name = "clipsenda_lib"
+name = "snipflag_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

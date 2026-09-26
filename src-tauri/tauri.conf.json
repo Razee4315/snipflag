@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Clipsenda",
+  "productName": "Snipflag",
   "version": "0.1.0",
-  "identifier": "io.github.razee4315.clipsenda",
+  "identifier": "io.github.razee4315.snipflag",
   "build": {
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build",
@@ -10,7 +10,7 @@
     "frontendDist": "../dist"
   },
   "app": {
-    "windows": [{ "label": "main", "title": "Clipsenda", "width": 1240, "height": 820, "minWidth": 860, "minHeight": 620, "dragDropEnabled": false }],
+    "windows": [{ "label": "main", "title": "Snipflag", "width": 1240, "height": 820, "minWidth": 860, "minHeight": 600, "visible": false, "dragDropEnabled": false }],
     "security": {
       "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src ipc: http://ipc.localhost; object-src 'none'; frame-src 'none'; base-uri 'self'",
       "devCsp": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src ipc: http://ipc.localhost ws://localhost:1420 ws://127.0.0.1:1420 http://localhost:1420; object-src 'none'"
@@ -19,7 +19,10 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "publisher": "Razee4315",
+    "category": "Productivity",
     "shortDescription": "Screenshots to clear Linear issues",
+    "longDescription": "Snipflag captures and annotates one or more screenshots and sends them to Linear as a single issue.",
     "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
     "macOS": { "minimumSystemVersion": "12.0" }
   }

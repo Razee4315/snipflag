@@ -8,7 +8,7 @@ Turn a visual problem into an actionable Linear issue in seconds. A minimal desk
 
 A reporting session contains an ordered list of up to 10 images, one issue form, a stable submission UUID, and optional resulting issue ID/URL. Each image owns its annotations and undo/redo history. Capture/import/paste another image without clearing the form or existing images. Users can switch images, rename/caption, reorder, remove, copy, or save each. Multiple images become ordered image sections in ONE issue description; never one issue per image.
 
-Practical limits: 10 images/session; 20 MiB encoded input/image; 40 megapixels decoded/image; 100 MiB total encoded image input/session. Surface validation before mutation. These are Clipsenda limits, not claims about Linear's maximums.
+Practical limits: 10 images/session; 20 MiB encoded input/image; 40 megapixels decoded/image; 100 MiB total encoded image input/session. Surface validation before mutation. These are Snipflag limits, not claims about Linear's maximums.
 
 ## Required functionality
 

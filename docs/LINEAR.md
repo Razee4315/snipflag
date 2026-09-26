@@ -2,7 +2,7 @@
 
 ## Owner setup
 
-Create a Linear OAuth application in the workspace's API settings. Configure redirect URI `http://127.0.0.1:47839/callback`. Enter its public client ID in Clipsenda Settings (or configure the repository build variable later). Use user actor, authorization-code flow, S256 PKCE. Never paste a client secret into the app or repository. Request read/write for metadata, uploads, and issue creation; narrow scopes after verifying schema needs.
+Create a Linear OAuth application in the workspace's API settings. Configure redirect URI `http://127.0.0.1:47839/callback`. Enter its public client ID in Snipflag Settings (or configure the repository build variable later). Use user actor, authorization-code flow, S256 PKCE. Never paste a client secret into the app or repository. Request read/write for metadata, uploads, and issue creation; narrow scopes after verifying schema needs.
 
 The callback port is fixed for registration; report a port conflict with retry instructions. Validate state, impose a timeout, bind loopback only, and discard the verifier after completion. Browser cancellation must leave the draft untouched. Persist access/refresh tokens only in the platform credential store. Refresh before expiry; disconnect clears local tokens and workspace selections.
 

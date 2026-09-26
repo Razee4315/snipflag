@@ -1,4 +1,4 @@
-# Working on Clipsenda
+# Working on Snipflag
 
 Read `docs/STATUS.md`, `docs/PRODUCT.md`, `docs/ARCHITECTURE.md`, and `docs/TESTING.md` before changing code. Update STATUS at every meaningful checkpoint with exact commits, CI links, failures, and next steps. Do not describe planned work as implemented or builds as runtime verification.
 
