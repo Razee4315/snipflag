@@ -72,7 +72,7 @@ export default function IssuePanel(p: Props) {
         ) : p.connectionState === 'loading' && !p.connection ? (
           <div className="row"><span className="spinner" aria-hidden="true" /> <span className="small">Checking Linear connection…</span></div>
         ) : p.connection ? (
-          <div className="row"><span className="dot ok" aria-hidden="true" /><span className="small"><strong>{p.connection.workspace}</strong> · {p.connection.name}</span>
+          <div className="row"><span className="small"><strong>{p.connection.workspace}</strong> · {p.connection.name}</span>
             <button type="button" className="link-button" onClick={p.onRetryConnection} aria-label="Refresh Linear teams">Refresh</button></div>
         ) : !p.hasClientId ? (
           <div className="stack-tight">

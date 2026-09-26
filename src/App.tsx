@@ -240,7 +240,7 @@ export default function App() {
       <header className="topbar" onMouseDown={e => {
         if (e.button === 0 && !(e.target as HTMLElement).closest('button, input, a')) void editorWindow('drag').catch(err => notify(errorText(err), 'error'));
       }}>
-        <span className={`save-indicator ${saveState}`} role="status" aria-label={saveText} title={saveText} />
+        <span className={`save-indicator visually-hidden ${saveState}`} role="status" aria-label={saveText} title={saveText} />
         {saveState === 'error' && <span className="save-error" role="alert">{saveText}</span>}
         <div className="drag-space" aria-hidden="true" />
         <div className="top-actions">

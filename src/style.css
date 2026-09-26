@@ -356,3 +356,19 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: .9; }
   .topbar { top: 3px; }
   .panel { padding-top: 14px; }
 }
+
+/* Themed scrollbars everywhere (WebView2/WebKit), with a Firefox fallback. */
+:root { --scroll-thumb: color-mix(in srgb, var(--muted) 38%, transparent); --scroll-thumb-hover: color-mix(in srgb, var(--muted) 62%, transparent); }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border: 3px solid transparent; border-radius: 10px; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: var(--scroll-thumb-hover); background-clip: padding-box; border: 3px solid transparent; }
+::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+@supports not selector(::-webkit-scrollbar) { * { scrollbar-width: thin; scrollbar-color: var(--scroll-thumb) transparent; } }
+
+/* Settings keep one fixed size; long sections scroll inside while tabs and footer stay put. */
+.dialog.wide { height: min(600px, calc(100vh - 48px)); }
+.dialog.wide .dialog-inner { height: 100%; max-height: none; }
+.dialog.wide .dialog-body { flex: 1; min-height: 0; }
+.dialog.wide .settings-nav { position: sticky; top: 0; z-index: 1; flex-shrink: 0; }
+.dialog-body { scrollbar-gutter: stable; }

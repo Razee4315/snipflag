@@ -1,6 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
-  <rect width="512" height="512" rx="128" fill="#116D65"/>
-  <path d="M340 142H232a57 57 0 0 0 0 114h48" stroke="#BFF2DA" stroke-width="52" stroke-linecap="round"/>
-  <path d="M232 256h48a57 57 0 0 1 0 114H172" stroke="#FFF9ED" stroke-width="52" stroke-linecap="round"/>
-  <circle cx="365" cy="370" r="20" fill="#F3B66B"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>Snipflag</title>
+  <rect width="512" height="512" rx="112" fill="#0A0A0A"/>
+  <g fill="none" stroke="#FFFFFF" stroke-width="34" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M204 135h-69v69m173 173h69v-69M135 308v69h69"/>
+    <path d="M235 277l139-139m-89 0h89v89"/>
+  </g>
 </svg>

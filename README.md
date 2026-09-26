@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/logo.svg" width="112" height="112" alt="Snipflag abstract S logo">
+  <img src="docs/assets/logo.svg" width="112" height="112" alt="Snipflag logo">
 </p>
 
 <h1 align="center">Snipflag</h1>
