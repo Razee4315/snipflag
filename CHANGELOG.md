@@ -13,8 +13,15 @@ All notable changes to Snipflag are documented here. The format follows [Keep a 
 - Texture, motion and micro-interactions throughout, with an Interface animations switch that respects reduced motion.
 - Faster: capture overlays load a small separate bundle, overlay previews for all monitors are encoded in parallel right after the grab, and startup reads run together.
 
+- Editing: 8 px default stroke; stroke and marker sizes shown as circles; pen and highlighter show a brush-size circle cursor and draw smoother, more natural strokes from every pointer sample.
+- Pixelate now averages real color blocks (at least 12 px) and is the privacy tool; the solid redaction tool was removed at the owner's request (older drafts still render their redactions).
+- The utility bar is a visible drag card with a theme-colored line mark; the empty-state mark is static and theme-aware; the workspace chip shows names only; the theme is chosen with three preview cards.
+- Desktop behavior: browser context menus and shortcuts (downloads, print, find, reload, devtools, history, page zoom), autoscroll, file-drop navigation and interface text selection are blocked. Long hover labels on labeled buttons were removed.
+- Fixed icon buttons whose default browser padding pushed their icons off center (for example Fit to window).
+
 ### Added
 
+- Highlighter tool (H) with marker inks and sizes, painted beneath other marks.
 - Synthesized sound effects for captures, added images, created issues and failures, with a Play sound effects switch and preview.
 
 ## [1.0.0] - 2026-09-26

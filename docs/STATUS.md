@@ -148,3 +148,16 @@ No local build, install or browser run.
 - Visual review of CI screenshots (synthetic images only): daylight/dark workspace, both empty states, open dark priority picker (themed list with checkmark), mention picker, appearance settings with sound/motion switches. README gallery refreshed from these renders.
 
 Still manual gates, not proven by CI: WebView2 rendering of `base-select` pickers, audible sounds and the autoplay unlock, reveal-after-paint and launch/capture window sizing at each DPI, frameless drag from the utility bar and empty state, parallel preview encoding on multi-monitor setups, and the NSIS installer icon. Next: install the Windows artifact and run these checks; then decide on a v1.1.0 release with the owner.
+
+## Owner feedback round 2 — 2026-09-26
+
+Owner reviewed the installed build and requested: centered Fit to window icon, a nicer title-bar logo and a visible drag area, a better light-theme empty state with no logo animation, no workspace avatar, a clearer theme control, native desktop behavior (no browser context menu or Ctrl+J downloads and similar), no long hover label on Create issue, an 8 px default stroke, a real highlighter, removal of the redact tool, better pixelation, and brush-size circle cursors with smoother pen movement.
+
+Implemented (frontend only; Rust unchanged):
+- Root cause of off-center icons: default browser `button` padding squeezed 28px tool buttons; global `padding: 0` for buttons.
+- `src/desktop.ts` guards installed for the editor and capture overlays, with unit tests for the shortcut classifier and a browser test.
+- Highlighter kind `highlight` (multiply at 70%, painted first); pen/highlighter smoothing via coalesced pointer events and midpoint quadratic curves; brush cursor; size circles.
+- Pixelate uses alpha-weighted block averages on a grid (at least 12 px). Redact removed from the toolbar and shortcuts; `redact` stays a renderable legacy kind. AGENTS.md privacy line updated to reflect the owner's decision.
+- Tests: pixelation burn-in export test replaces the redaction test; new highlighter layering/export test; theme radio cards; desktop-behavior test.
+
+Verification: pending on Actions for this commit.

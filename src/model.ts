@@ -1,5 +1,8 @@
-export type Tool = 'select' | 'arrow' | 'rectangle' | 'pen' | 'text' | 'pixelate' | 'redact';
-export type Shape = Exclude<Tool, 'select'>;
+export type Tool = 'select' | 'arrow' | 'rectangle' | 'pen' | 'highlight' | 'text' | 'pixelate';
+/** 'redact' is no longer a tool but older drafts may still contain solid redactions; they keep rendering. */
+export type Shape = Exclude<Tool, 'select'> | 'redact';
+/** Freehand kinds share points, Shift snapping and smoothing. */
+export const isFreehand = (kind: Shape) => kind === 'pen' || kind === 'highlight';
 /** Geometry is always in IMAGE pixels. Pen and arrow points are relative to (x, y). */
 export interface Annotation {
   id: string; kind: Shape; x: number; y: number;

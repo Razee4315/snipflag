@@ -3,7 +3,7 @@ import EmptyState from './components/EmptyState';
 import Editor, { type Zoom } from './components/Editor';
 import Filmstrip from './components/Filmstrip';
 import HistoryDialog from './components/HistoryDialog';
-import { Icon, Logo } from './components/icons';
+import { Icon, Mark } from './components/icons';
 import IssuePanel, { type ConnectionState } from './components/IssuePanel';
 import SettingsDialog from './components/SettingsDialog';
 import Toolbar, { TOOLS } from './components/Toolbar';
@@ -254,7 +254,8 @@ export default function App() {
     <div className="app" onDragOver={e => { if ([...e.dataTransfer.types].includes('Files')) e.preventDefault(); }}
       onDrop={e => { const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/')); if (files.length) { e.preventDefault(); void importFiles(files); } }}>
       <header className="titlebar" onMouseDown={dragWindow}>
-        <Logo size={22} />
+        <span className="brand-chip" aria-hidden="true"><Mark size={15} /></span>
+        <span className="grip" aria-hidden="true" />
         <span className="visually-hidden" role="status" aria-label={saveText}>{saveText}</span>
         {saveState === 'error' && <span className="save-error" role="alert" title={saveText}><Icon name="alert" size={14} /> {saveText}</span>}
         <div className="drag-space" aria-hidden="true" />
@@ -275,7 +276,7 @@ export default function App() {
             <div className="image-bar">
               <label className="caption-field">
                 <span className="visually-hidden">Caption for screenshot {index + 1}</span>
-                <input value={image.name} placeholder={`Screenshot ${index + 1} caption`} disabled={locked} maxLength={200}
+                <input value={image.name} placeholder={`Screenshot ${index + 1} caption`} disabled={locked} maxLength={200} autoComplete="off"
                   onChange={e => useStore.getState().updateImage(image.id, { name: e.target.value })} />
               </label>
               <span className="dims">{image.width} × {image.height}</span>

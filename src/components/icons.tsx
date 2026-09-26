@@ -7,7 +7,7 @@ const paths = {
   pen: 'M4 20l4-1L19 8l-3-3L5 16zM14 7l3 3',
   text: 'M5 6V4h14v2M12 4v16M9 20h6',
   pixelate: 'M4 4h5v5H4zM15 4h5v5h-5zM9.5 9.5h5v5h-5zM4 15h5v5H4zM15 15h5v5h-5z',
-  redact: 'M3 7h18v10H3z',
+  highlight: 'M4 20h8M14.5 4.5l5 5L11 18H6v-5zM12 7l5 5',
   undo: 'M9 14L4 9l5-5M4 9h10a6 6 0 010 12h-3',
   redo: 'M15 14l5-5-5-5M20 9H10a6 6 0 000 12h3',
   zoomIn: 'M11 18a7 7 0 100-14 7 7 0 000 14zM20 20l-4-4M11 8v6M8 11h6',
@@ -37,14 +37,18 @@ const paths = {
 export type IconName = keyof typeof paths;
 
 export function Icon({ name, size = 18, ...rest }: { name: IconName; size?: number } & SVGProps<SVGSVGElement>) {
-  const filled = name === 'redact';
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" {...rest}>
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" {...rest}>
       <path d={paths[name]} />
     </svg>
   );
 }
-/** The same vector source (public/icon.svg) drives the in-app mark, installer, taskbar and tray artwork. */
-export function Logo({ size = 30, className = 'mark' }: { size?: number; className?: string }) {
-  return <img className={className} src="/icon.svg" width={size} height={size} alt="" draggable={false} />;
+/** Line-only Snipflag mark that follows the surrounding text color, for surfaces where the black tile is too heavy. */
+export function Mark({ size = 18, className = 'brand-mark' }: { size?: number; className?: string }) {
+  return (
+    <svg className={className} width={size} height={size} viewBox="96 96 320 320" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" strokeWidth="38" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M204 135h-69v69m173 173h69v-69M135 308v69h69" />
+      <path className="brand-arrow" d="M235 277l139-139m-89 0h89v89" />
+    </svg>
+  );
 }

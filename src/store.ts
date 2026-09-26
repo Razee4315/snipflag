@@ -5,7 +5,7 @@ import { estimateBytes, LIMITS, newSession, reorder, type Annotation, type Captu
 type History = { past: Annotation[][]; future: Annotation[][] };
 export type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 interface State {
-  session: Session; activeId: string; tool: Tool; color: string; stroke: number; fontSize: number;
+  session: Session; activeId: string; tool: Tool; color: string; stroke: number; fontSize: number; highlightColor: string; highlightSize: number;
   histories: Record<string, History>; busy: boolean; selection: string | null; saveState: SaveState; saveError: string;
   /** Image IDs whose pixels are already durable for the current session. */
   persisted: string[];
@@ -14,14 +14,14 @@ interface State {
   updateImage: (id: string, patch: Partial<CaptureImage>) => void;
   edit: (annotations: Annotation[]) => void; undo: () => void; redo: () => void;
   removeImage: (id: string) => void; moveImage: (from: number, to: number) => void;
-  setTool: (tool: Tool) => void; setStyle: (style: Partial<Pick<State, 'color' | 'stroke' | 'fontSize'>>) => void;
+  setTool: (tool: Tool) => void; setStyle: (style: Partial<Pick<State, 'color' | 'stroke' | 'fontSize' | 'highlightColor' | 'highlightSize'>>) => void;
   setBusy: (busy: boolean) => void; setSelection: (id: string | null) => void; updateAnnotation: (id: string, patch: Partial<Annotation>) => void; removeAnnotation: (id: string) => void; setIssue: (issue: IssueResult) => void;
   setSaveState: (state: SaveState, error?: string) => void; markPersisted: (sessionId: string, ids: string[]) => void;
 }
 const locked = (s: State) => s.busy || !!s.session.issue;
 
 export const useStore = create<State>((set, get) => ({
-  session: newSession(), activeId: '', tool: 'arrow', color: '#EF4444', stroke: 3, fontSize: 22,
+  session: newSession(), activeId: '', tool: 'arrow', color: '#EF4444', stroke: 8, fontSize: 22, highlightColor: '#FDE047', highlightSize: 24,
   histories: {}, busy: false, selection: null, saveState: 'idle', saveError: '', persisted: [],
   hydrate: (session) => set({ session: session.issue ? session : { ...session, imageReferences: ensureImageReferences(session.images, session.imageReferences) }, selection: null, activeId: session.images[0]?.id ?? '', histories: {}, persisted: session.images.map(i => i.id), saveState: 'saved', saveError: '' }),
   reset: () => set({ session: newSession(), activeId: '', selection: null, histories: {}, persisted: [], saveState: 'idle', saveError: '', busy: false }),

@@ -95,41 +95,63 @@ test('browser preview never pretends to reach Linear', async ({ page }) => {
   await expect(dialog.getByLabel('Linear OAuth client ID')).toBeVisible();
   await expect(dialog.getByRole('button', { name: 'Connect Linear' })).toBeDisabled();
   await dialog.getByRole('button', { name: 'Appearance', exact: true }).click();
-  await dialog.getByLabel('Theme').selectOption('dark');
+  await dialog.getByText('Dark', { exact: true }).click();
+  await expect(dialog.getByRole('radio', { name: 'Dark', exact: true })).toBeChecked();
   await dialog.getByRole('button', { name: 'Save settings' }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   await page.keyboard.press('Escape');
   await expect(dialog).toBeHidden();
 });
 
-test('export keeps original dimensions and burns in opaque redaction', async ({ page }) => {
-  await addImages(page, [white]);
-  await page.keyboard.press('r');
-  await drag(page, [0.2, 0.2], [0.8, 0.8]);
-  await page.keyboard.press('x');
-  await drag(page, [0.25, 0.25], [0.75, 0.75]);
+async function exportPixels(page: Page, points: [number, number][]) {
   const downloading = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Save image' }).click();
   const file = await (await downloading).path();
   const dataUrl = `data:image/png;base64,${readFileSync(file).toString('base64')}`;
-  const result = await page.evaluate(async (src) => {
+  return page.evaluate(async ({ src, points }) => {
     const img = new Image(); img.src = src; await img.decode();
     const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
     const ctx = c.getContext('2d')!; ctx.drawImage(img, 0, 0);
-    const px = (x: number, y: number) => [...ctx.getImageData(x, y, 1, 1).data];
-    return { width: img.width, height: img.height, center: px(200, 150), edge: px(105, 80), outside: px(390, 290) };
-  }, dataUrl);
+    return { width: img.width, height: img.height, pixels: points.map(([x, y]) => [...ctx.getImageData(x, y, 1, 1).data]) };
+  }, { src: dataUrl, points });
+}
+
+test('export keeps original dimensions and burns in pixelation', async ({ page }) => {
+  await addImages(page, [white]);
+  await page.keyboard.press('r');
+  await drag(page, [0.2, 0.2], [0.8, 0.8]);
+  await page.keyboard.press('b');
+  await drag(page, [0.1, 0.1], [0.5, 0.5]);
+  // Rectangle top edge inside the pixelated area, the same edge outside it, and untouched background.
+  const result = await exportPixels(page, [[140, 60], [260, 60], [390, 290]]);
   expect(result.width).toBe(400);
   expect(result.height).toBe(300);
-  // The redaction covers the rectangle drawn before it and is fully opaque.
-  expect(result.center).toEqual([0, 0, 0, 255]);
-  expect(result.edge).toEqual([0, 0, 0, 255]);
-  expect(result.outside).toEqual([255, 255, 255, 255]);
+  // Pixelation is painted into the pixels and covers the mark beneath it with averaged source blocks.
+  expect(result.pixels[0]).toEqual([255, 255, 255, 255]);
+  expect(result.pixels[1]).toEqual([239, 68, 68, 255]);
+  expect(result.pixels[2]).toEqual([255, 255, 255, 255]);
+});
+
+test('highlighter marks translucently underneath other annotations', async ({ page }) => {
+  await addImages(page, [white]);
+  await page.keyboard.press('p');
+  await drag(page, [0.1, 0.5], [0.9, 0.5]);
+  await page.keyboard.press('h');
+  await expect(page.getByRole('radiogroup', { name: 'Highlighter color' })).toBeVisible();
+  await expect(page.getByRole('radio', { name: '24 px' })).toHaveAttribute('aria-checked', 'true');
+  await drag(page, [0.1, 0.5], [0.9, 0.5]);
+  await expect(tile(page, 1)).toHaveAccessibleName(/2 marks$/);
+  const [pen, marker] = (await exportPixels(page, [[200, 150], [200, 160]])).pixels;
+  // The pen stays on top at full strength; the marker tints white paper without hiding it.
+  expect(pen).toEqual([239, 68, 68, 255]);
+  expect(marker[0]).toBeGreaterThan(240);
+  expect(marker[2]).toBeLessThan(170);
+  expect(marker[3]).toBe(255);
 });
 
 test('tools are reachable by keyboard and named', async ({ page }) => {
   await addImages(page, [white]);
-  for (const [key, name] of [['v', 'Select'], ['a', 'Arrow'], ['r', 'Rectangle'], ['p', 'Pen'], ['t', 'Text'], ['b', 'Pixelate'], ['x', 'Redact']]) {
+  for (const [key, name] of [['v', 'Select'], ['a', 'Arrow'], ['r', 'Rectangle'], ['p', 'Pen'], ['h', 'Highlighter'], ['t', 'Text'], ['b', 'Pixelate']]) {
     await page.keyboard.press(key);
     await expect(page.getByRole('button', { name: new RegExp(`^${name}`) })).toHaveAttribute('aria-pressed', 'true');
   }
@@ -176,7 +198,8 @@ test('workspace composer preserves evidence and provides a QA report scaffold', 
     await dialog.getByRole('button', { name: section, exact: true }).click();
     await expect(dialog.getByRole('button', { name: section, exact: true })).toHaveAttribute('aria-pressed', 'true');
   }
-  await dialog.getByLabel('Theme').selectOption('dark');
+  await dialog.getByText('Dark', { exact: true }).click();
+  await expect(dialog.getByRole('radio', { name: 'Dark', exact: true })).toBeChecked();
   await dialog.getByRole('button', { name: 'Save settings' }).click();
   await page.screenshot({ path: testInfo.outputPath('settings-after-hours.png'), animations: 'disabled' });
   await page.keyboard.press('Escape');
@@ -327,4 +350,23 @@ test('settings dialog keeps a fixed size and scrolls long sections inside', asyn
   }
   expect(new Set(heights).size).toBe(1);
   await expect(dialog.getByRole('button', { name: 'Save settings' })).toBeInViewport();
+});
+
+test('the interface behaves like a desktop app, not a web page', async ({ page }) => {
+  await addImages(page, [white]);
+  const blocked = await page.evaluate(() => {
+    const fire = (target: Element, event: Event) => { target.dispatchEvent(event); return event.defaultPrevented; };
+    const key = (init: KeyboardEventInit) => new KeyboardEvent('keydown', { bubbles: true, cancelable: true, ...init });
+    const panel = document.querySelector('.panel')!; const title = document.querySelector('input[placeholder="What needs fixing?"]')!;
+    return {
+      contextMenu: fire(panel, new MouseEvent('contextmenu', { bubbles: true, cancelable: true })),
+      fieldMenu: fire(title, new MouseEvent('contextmenu', { bubbles: true, cancelable: true })),
+      downloads: fire(panel, key({ key: 'j', ctrlKey: true })),
+      reload: fire(panel, key({ key: 'F5' })),
+      print: fire(title, key({ key: 'p', ctrlKey: true })),
+      paste: fire(title, key({ key: 'v', ctrlKey: true })),
+    };
+  });
+  expect(blocked).toEqual({ contextMenu: true, fieldMenu: false, downloads: true, reload: true, print: true, paste: false });
+  await expect(page.getByRole('button', { name: 'Create issue', exact: true })).not.toHaveAttribute('title', /./);
 });

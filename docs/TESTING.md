@@ -5,7 +5,7 @@
 - TypeScript strict typecheck and production frontend build.
 - Unit tests: independent image edit histories, reorder/remove semantics, send validation, caption escaping, crop coordinate conversion, immutable submitted sessions.
 - Browser tests: empty state, importing two images, switching/annotating/reordering, undo/redo, draft restore, controls accessible by name, settings, no fake connection success.
-- Pixel checks: exported dimensions, opaque redaction over source pixels, consistent ordering and annotation export.
+- Pixel checks: exported dimensions, pixelation burned in over marks beneath it, highlighter tinting under the pen, consistent ordering and annotation export.
 - Rust tests: UUID/path validation, bounds, session persistence, submission state/reconciliation decisions.
 - Native compile on all platforms and development packaging.
 
@@ -29,4 +29,4 @@ Native follow-up: verify no blank flash at launch (reveal after paint, 4 s fallb
 
 Shift drawing regression coverage: 15-degree snapping in every quadrant, image-edge clipping that preserves angle, modifier changes without pointer movement, straight pen despite a curved pointer path, Shift rectangles, and persisted constraints after reload. Native follow-up should include modifier press/release while drawing with the Windows pointer stack.
 
-Description image references: picker keyboard/mouse selection, native undo/redo, caption filtering, reorder/reload identity, deleted-reference errors and no alias recycling. Rust tests cover reference resolution, missing uploads and literal-code/email/URL exclusions. Final manual Linear gate: two-image report with repeated references, reordered images and annotations/redaction; confirm each link opens the correct final image and full images remain ordered.
+Description image references: picker keyboard/mouse selection, native undo/redo, caption filtering, reorder/reload identity, deleted-reference errors and no alias recycling. Rust tests cover reference resolution, missing uploads and literal-code/email/URL exclusions. Final manual Linear gate: two-image report with repeated references, reordered images and annotations/pixelation; confirm each link opens the correct final image and full images remain ordered.

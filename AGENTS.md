@@ -15,7 +15,7 @@ Read `docs/STATUS.md`, `docs/PRODUCT.md`, `docs/ARCHITECTURE.md`, and `docs/TEST
 - Rust owns credentials, network access, disk access, and native capture. Frontend uses narrow commands.
 - No fake success, mock production integrations, disabled CSP, unrestricted shell/fs/http plugin grants, or secret frontend environment variables.
 - Persist drafts before network work. Use stable issue UUIDs and reconcile uncertain creates before retrying.
-- Maintain original image dimensions and per-image annotation history. Flatten before export/upload. Solid redaction is the privacy tool; blur is cosmetic.
+- Maintain original image dimensions and per-image annotation history. Flatten before export/upload. Pixelation (true block averages, at least 12 px blocks, burned into every export) is the privacy tool; the owner removed the solid redaction tool on 2026-09-26, but legacy redactions in old drafts must keep rendering last.
 - Run remote checks after changes; fix failures before claiming success. Platform compilation does not prove native capture or signing.
 - Do not publish a stable release until the acceptance matrix is satisfied. Keep early artifacts clearly marked development/unsigned.
 - Do not introduce proactive subagents unless explicitly authorized by the user.

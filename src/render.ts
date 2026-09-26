@@ -4,10 +4,16 @@ export const FONT_FAMILY = '"Segoe UI", system-ui, -apple-system, "Helvetica Neu
 export const LINE_HEIGHT = 1.2;
 /** Arrow head length in image pixels, shared by editor and export. */
 export const arrowHead = (stroke: number) => Math.max(12, stroke * 4);
-/** Paint order: redactions always last so nothing drawn later can expose their pixels. */
+/** Paint order: highlights sit under every other mark; legacy solid redactions stay last so nothing can expose their pixels. */
 export function paintOrder(annotations: Annotation[]) {
-  return [...annotations.filter(a => a.kind !== 'redact'), ...annotations.filter(a => a.kind === 'redact')];
+  return [
+    ...annotations.filter(a => a.kind === 'highlight'),
+    ...annotations.filter(a => a.kind !== 'highlight' && a.kind !== 'redact'),
+    ...annotations.filter(a => a.kind === 'redact'),
+  ];
 }
+/** Highlighter look: a translucent marker multiplied into the pixels, so dark text stays crisp underneath. */
+export const HIGHLIGHT_ALPHA = 0.7;
 
 export function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -37,15 +43,51 @@ export function fromDrawable(source: CanvasImageSource, width: number, height: n
 }
 export function fileBaseName(name: string) { return name.replace(/\.[^.]+$/, '').slice(0, 120); }
 
-/** Cosmetic pixelation of the source pixels under `a`. Not a secure redaction. */
+/** Pixel block size for a pixelation area: large enough that text and faces are unreadable, even on small areas. */
+export const pixelBlock = (width: number, height: number) => Math.max(12, Math.round(Math.min(width, height) / 6));
+
+/**
+ * Pixelates the source pixels under `a` with true per-block color averages (not smoothed resampling, which can
+ * keep recoverable detail). Blocks are aligned to the image grid so neighboring areas match. The result is burned
+ * into exports.
+ */
 export function pixelate(source: CanvasImageSource, a: Pick<Annotation, 'x' | 'y' | 'width' | 'height'>) {
+  const x0 = Math.round(a.x); const y0 = Math.round(a.y);
   const w = Math.max(1, Math.round(a.width)); const h = Math.max(1, Math.round(a.height));
-  const block = Math.max(6, Math.round(Math.min(w, h) / 12));
-  const tiny = canvas(Math.max(1, Math.ceil(w / block)), Math.max(1, Math.ceil(h / block)));
-  const t = tiny.getContext('2d')!; t.imageSmoothingEnabled = true;
-  t.drawImage(source, Math.round(a.x), Math.round(a.y), w, h, 0, 0, tiny.width, tiny.height);
-  const out = canvas(w, h); const ctx = out.getContext('2d')!; ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(tiny, 0, 0, w, h); return out;
+  const block = pixelBlock(w, h);
+  // Expand to whole grid blocks, read them once, then paint each block's average color.
+  const gx = Math.floor(x0 / block) * block; const gy = Math.floor(y0 / block) * block;
+  const gw = Math.ceil((x0 + w - gx) / block) * block; const gh = Math.ceil((y0 + h - gy) / block) * block;
+  const read = canvas(gw, gh); const r = read.getContext('2d', { willReadFrequently: true })!;
+  r.drawImage(source, -gx, -gy);
+  const data = r.getImageData(0, 0, gw, gh).data;
+  const out = canvas(w, h); const ctx = out.getContext('2d')!;
+  for (let by = 0; by < gh; by += block) {
+    for (let bx = 0; bx < gw; bx += block) {
+      // Alpha-weighted average over real pixels only: grid cells past the image edge must not thin out a block
+      // and let original pixels show through.
+      let red = 0, green = 0, blue = 0, alpha = 0, visible = 0;
+      for (let y = by; y < by + block; y++) {
+        for (let x = bx; x < bx + block; x++) {
+          const i = (y * gw + x) * 4; const o = data[i + 3];
+          if (!o) continue;
+          red += data[i] * o; green += data[i + 1] * o; blue += data[i + 2] * o; alpha += o; visible++;
+        }
+      }
+      if (!visible) continue;
+      ctx.fillStyle = `rgba(${Math.round(red / alpha)}, ${Math.round(green / alpha)}, ${Math.round(blue / alpha)}, ${(alpha / visible / 255).toFixed(3)})`;
+      ctx.fillRect(gx + bx - x0, gy + by - y0, block, block);
+    }
+  }
+  return out;
+}
+/** Smooth freehand stroke: quadratic curves through segment midpoints remove the jagged polyline look. */
+function strokeSmooth(ctx: CanvasRenderingContext2D, p: number[]) {
+  const n = p.length;
+  ctx.beginPath(); ctx.moveTo(p[0], p[1]);
+  if (n <= 4) { ctx.lineTo(p[n - 2], p[n - 1]); ctx.stroke(); return; }
+  for (let i = 2; i < n - 2; i += 2) ctx.quadraticCurveTo(p[i], p[i + 1], (p[i] + p[i + 2]) / 2, (p[i + 1] + p[i + 3]) / 2);
+  ctx.lineTo(p[n - 2], p[n - 1]); ctx.stroke();
 }
 
 export function drawAnnotation(ctx: CanvasRenderingContext2D, source: CanvasImageSource, a: Annotation) {
@@ -57,6 +99,10 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, source: CanvasImag
   if (a.kind === 'text') {
     ctx.font = `bold ${a.fontSize}px ${FONT_FAMILY}`; ctx.textBaseline = 'middle';
     a.text.split('\n').forEach((line, i) => ctx.fillText(line, a.x, a.y + (i + 0.5) * a.fontSize * LINE_HEIGHT));
+  }
+  if (a.kind === 'highlight' && a.points.length >= 4) {
+    ctx.translate(a.x, a.y); ctx.globalAlpha = HIGHLIGHT_ALPHA; ctx.globalCompositeOperation = 'multiply';
+    strokeSmooth(ctx, a.points);
   }
   if ((a.kind === 'pen' || a.kind === 'arrow') && a.points.length >= 4) {
     ctx.translate(a.x, a.y);
@@ -71,15 +117,11 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, source: CanvasImag
       ctx.closePath(); ctx.fill();
       endX -= Math.cos(angle) * head * 0.8; endY -= Math.sin(angle) * head * 0.8;
       ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(endX, endY); ctx.stroke();
-    } else {
-      ctx.beginPath(); ctx.moveTo(p[0], p[1]);
-      for (let i = 2; i < n; i += 2) ctx.lineTo(p[i], p[i + 1]);
-      ctx.stroke();
-    }
+    } else strokeSmooth(ctx, p);
   }
   ctx.restore();
 }
-/** Authoritative export: original dimensions, flattened pixels, redaction painted last. */
+/** Authoritative export: original dimensions, flattened pixels, pixelation burned in. */
 export async function flatten(image: CaptureImage): Promise<string> {
   const source = await loadImage(image.dataUrl);
   const c = canvas(image.width, image.height); const ctx = c.getContext('2d')!;

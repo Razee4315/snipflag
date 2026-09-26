@@ -14,7 +14,7 @@ Practical limits: 10 images/session; 20 MiB encoded input/image; 40 megapixels d
 
 1. Tray presence, show/quit, configurable global capture shortcut, duplicate instance handling.
 2. Freeze screen, drag region, Escape cancels, per-monitor capture respecting scaling and negative coordinates. Cross-monitor spanning selection is a later enhancement; users can capture each monitor into the same session.
-3. Arrow, rectangle, pen, text, pixelation, solid redaction; select/move/resize, color, width, text size, delete, per-image undo/redo, zoom/fit.
+3. Arrow, rectangle, pen, highlighter, text, pixelation; select/move/resize, color, width, text size, delete, per-image undo/redo, zoom/fit.
 4. Add screenshots repeatedly, import PNG/JPEG/WebP, paste images, reorder and caption.
 5. PNG clipboard/save and final flattened export at original pixel dimensions.
 6. Linear OAuth with PKCE; reconnect/disconnect; teams/projects/labels/assignees; title, description, team, priority; remember valid selections per workspace/team.
@@ -30,7 +30,7 @@ Practical limits: 10 images/session; 20 MiB encoded input/image; 40 megapixels d
 - App restart restores the draft and pending submission identity.
 - Failed upload does not create a screenshot-less issue. Repeated click cannot send concurrently.
 - An ambiguous issue response never silently causes a second issue.
-- Export contains actual redacted pixels, not an editable overlay or hidden source.
+- Export contains actual pixelated pixels, not an editable overlay or hidden source.
 - Every primary action works by keyboard and has a visible accessible name.
 - No external upload before explicit submission; connection metadata requests are clearly separate.
 

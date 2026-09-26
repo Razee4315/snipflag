@@ -48,11 +48,11 @@ CI-rendered UI previews using synthetic sample images. Native window controls an
 - Also add images from files (PNG, JPEG, WebP), paste from the clipboard, or drag and drop.
 
 **Annotate**
-- Arrow, rectangle, pen, text, pixelate, and solid redaction.
+- Arrow, rectangle, pen, highlighter, text, and pixelate.
 - Hold Shift for 15° arrow/pen snapping or square rectangles.
 - Select, move, and resize marks; change color, width, and text size; zoom, fit, and 100%.
 - Each screenshot keeps its own annotations and undo history, so you can move between them freely.
-- Exports keep the original pixel dimensions, and redaction is burned into the pixels.
+- Exports keep the original pixel dimensions, and pixelation is burned into the pixels.
 
 **Report**
 - Up to 10 screenshots per session, reorderable and captioned, sent as one issue.
@@ -70,7 +70,7 @@ CI-rendered UI previews using synthetic sample images. Native window controls an
 |---|---|
 | Capture (global) | `Ctrl/Cmd + Shift + 2` (configurable) |
 | Select, Arrow, Rectangle, Pen, Text | `V`, `A`, `R`, `P`, `T` |
-| Pixelate, Redact | `B`, `X` |
+| Highlighter, Pixelate | `H`, `B` |
 | Undo, Redo | `Ctrl/Cmd + Z`, `Ctrl/Cmd + Shift + Z` |
 | Delete selected mark | `Delete` |
 | Create issue | `Ctrl/Cmd + Enter` |
@@ -108,7 +108,7 @@ Builds can also embed a client ID through the `SNIPFLAG_LINEAR_CLIENT_ID` reposi
 - Screenshots stay on your computer until you choose **Create issue**.
 - Linear is contacted only to sign in, load your teams and fields, and create the issue you submit.
 - No analytics, no screenshot cloud, and no account needed to capture or annotate.
-- Use **Redact** for secrets. It paints opaque pixels over the area in every export. Pixelate is cosmetic and should not be relied on to hide information.
+- Use **Pixelate** for private details. It replaces the area with large averaged color blocks that are burned into every export. For long secrets such as API keys, prefer not capturing them at all.
 - Drafts are stored unencrypted in the app data folder. You can delete them from History or Settings.
 
 Details are in [docs/SECURITY.md](docs/SECURITY.md). To report a vulnerability, see [SECURITY.md](SECURITY.md).

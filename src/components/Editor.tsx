@@ -2,7 +2,7 @@ import Konva from 'konva';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import { Image as KonvaImage, Layer, Shape, Stage, Transformer } from 'react-konva';
 import { bounds, isMeaningful, snapAngle, transform, translate, type Point } from '../geometry';
-import { clampRect, normalizeRect, type Annotation, type CaptureImage } from '../model';
+import { clampRect, isFreehand, normalizeRect, type Annotation, type CaptureImage } from '../model';
 import { drawAnnotation, FONT_FAMILY, LINE_HEIGHT, paintOrder, pixelate } from '../render';
 import { isLocked, useStore } from '../store';
 
@@ -43,6 +43,8 @@ function isTyping(target: EventTarget | null) {
 
 export default function Editor({ image, zoom, onZoom, onScale }: Props) {
   const tool = useStore(s => s.tool); const color = useStore(s => s.color); const stroke = useStore(s => s.stroke); const fontSize = useStore(s => s.fontSize);
+  const highlightColor = useStore(s => s.highlightColor); const highlightSize = useStore(s => s.highlightSize);
+  const brush = useRef<HTMLDivElement>(null);
   const selection = useStore(s => s.selection); const locked = useStore(isLocked);
   const { edit, setSelection, removeAnnotation } = useStore.getState();
   const source = useImageElement(image.dataUrl);
@@ -52,7 +54,7 @@ export default function Editor({ image, zoom, onZoom, onScale }: Props) {
   const draftRef = useRef<Annotation | null>(null);
   const setDraft = (value: Annotation | null) => { draftRef.current = value; setDraftState(value); };
   const penSegment = useRef<{ origin: Point; prefix: number[] } | null>(null);
-  const updateDrawing = useRef<(shift: boolean) => void>(() => undefined);
+  const updateDrawing = useRef<(shift: boolean, samples?: Point[]) => void>(() => undefined);
   const [textEdit, setTextEditState] = useState<TextEdit | null>(null);
   // Mirrors textEdit so blur and pointer handlers commit the same edit at most once.
   const textRef = useRef<TextEdit | null>(null);
@@ -122,12 +124,15 @@ export default function Editor({ image, zoom, onZoom, onScale }: Props) {
     }
     start.current = p;
     penSegment.current = null;
-    setDraft({ ...base(), kind: tool, x: p.x, y: p.y, points: tool === 'pen' ? [0, 0] : tool === 'arrow' ? [0, 0, 0, 0] : [] });
+    setDraft({
+      ...base(), kind: tool, x: p.x, y: p.y, points: isFreehand(tool) ? [0, 0] : tool === 'arrow' ? [0, 0, 0, 0] : [],
+      ...(tool === 'highlight' ? { color: highlightColor, stroke: highlightSize } : {}),
+    });
   };
-  updateDrawing.current = (shift: boolean) => {
+  updateDrawing.current = (shift: boolean, samples?: Point[]) => {
     const s = start.current; const draft = draftRef.current; if (!s || !draft) return;
     const p = pointer(); if (!p) return;
-    if (draft.kind === 'pen') {
+    if (isFreehand(draft.kind)) {
       const n = draft.points.length; const lx = draft.points[n - 2], ly = draft.points[n - 1];
       if (shift) {
         penSegment.current ??= { origin: { x: s.x + lx, y: s.y + ly }, prefix: [...draft.points] };
@@ -137,8 +142,13 @@ export default function Editor({ image, zoom, onZoom, onScale }: Props) {
         return;
       }
       penSegment.current = null;
-      if (Math.hypot(p.x - s.x - lx, p.y - s.y - ly) * scale < 2) return;
-      setDraft({ ...draft, points: [...draft.points, p.x - s.x, p.y - s.y] });
+      // Every coalesced pointer sample between frames keeps fast strokes smooth and natural.
+      const points = [...draft.points]; let x = lx, y = ly;
+      for (const q of samples?.length ? samples : [p]) {
+        if (Math.hypot(q.x - s.x - x, q.y - s.y - y) * scale < 1.5) continue;
+        x = q.x - s.x; y = q.y - s.y; points.push(x, y);
+      }
+      if (points.length !== draft.points.length) setDraft({ ...draft, points });
     } else if (draft.kind === 'arrow') {
       const end = shift ? snapAngle(s, p, image) : p;
       setDraft({ ...draft, points: [0, 0, end.x - s.x, end.y - s.y] });
@@ -177,7 +187,10 @@ export default function Editor({ image, zoom, onZoom, onScale }: Props) {
           if (a.kind === 'pixelate' && source) {
             const key = `${a.id}:${a.x}:${a.y}:${a.width}:${a.height}`;
             let cached = pixelCache.current.get(key);
-            if (!cached) { cached = pixelate(source, a); pixelCache.current.set(key, cached); }
+            if (!cached) {
+              if (pixelCache.current.size > 40) pixelCache.current.clear();
+              cached = pixelate(source, a); pixelCache.current.set(key, cached);
+            }
             native.drawImage(cached, Math.round(a.x), Math.round(a.y));
           } else if (source) drawAnnotation(native, source, a);
           native.restore();
@@ -196,16 +209,33 @@ export default function Editor({ image, zoom, onZoom, onScale }: Props) {
   };
 
   const stageWidth = Math.max(1, Math.round(image.width * scale)); const stageHeight = Math.max(1, Math.round(image.height * scale));
-  const cursor = locked ? 'default' : tool === 'select' ? 'default' : tool === 'text' ? 'text' : 'crosshair';
+  const brushTool = !locked && isFreehand(tool);
+  const brushSize = Math.max(6, (tool === 'highlight' ? highlightSize : stroke) * scale);
+  const cursor = locked ? 'default' : tool === 'select' ? 'default' : tool === 'text' ? 'text' : brushTool ? 'none' : 'crosshair';
+  /** Pointer samples in image pixels, including the coalesced ones the browser batched since the last event. */
+  const samples = (e: PointerEvent): Point[] => {
+    const rect = layer.current?.getStage()?.container().getBoundingClientRect(); if (!rect) return [];
+    const events = e.getCoalescedEvents?.() ?? [];
+    return (events.length ? events : [e]).map(ev => ({
+      x: Math.max(0, Math.min(image.width, (ev.clientX - rect.left) / scale)), y: Math.max(0, Math.min(image.height, (ev.clientY - rect.top) / scale)),
+    }));
+  };
+  const moveBrush = (e: { clientX: number; clientY: number; currentTarget: HTMLElement }) => {
+    const el = brush.current; if (!el) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    el.style.transform = `translate(${e.clientX - rect.left - brushSize / 2}px, ${e.clientY - rect.top - brushSize / 2}px)`;
+    el.style.opacity = '1';
+  };
   const textStyle: CSSProperties | undefined = textEdit ? {
     left: textEdit.x * scale, top: textEdit.y * scale, fontSize: textEdit.fontSize * scale, color: textEdit.color, fontFamily: FONT_FAMILY, lineHeight: LINE_HEIGHT,
   } : undefined;
 
   return (
     <div className="canvas-scroll" ref={wrap}>
-      <div key={image.id} className="canvas-frame" style={{ width: stageWidth, height: stageHeight, cursor }} data-testid="canvas">
+      <div key={image.id} className="canvas-frame" style={{ width: stageWidth, height: stageHeight, cursor }} data-testid="canvas"
+        onPointerMove={brushTool ? moveBrush : undefined} onPointerLeave={() => { if (brush.current) brush.current.style.opacity = '0'; }}>
         <Stage width={stageWidth} height={stageHeight} scaleX={scale} scaleY={scale}
-          onPointerDown={onDown} onPointerMove={e => updateDrawing.current(e.evt.shiftKey)} onPointerUp={onUp} onPointerLeave={() => { textStart.current = null; if (draftRef.current) onUp(); }} onWheel={onWheel}>
+          onPointerDown={onDown} onPointerMove={e => updateDrawing.current(e.evt.shiftKey, samples(e.evt))} onPointerUp={onUp} onPointerLeave={() => { textStart.current = null; if (draftRef.current) onUp(); }} onWheel={onWheel}>
           <Layer ref={layer}>
             {source && <KonvaImage image={source} width={image.width} height={image.height} listening={false} />}
             {ordered.map(a => renderShape(a, true))}
@@ -216,6 +246,8 @@ export default function Editor({ image, zoom, onZoom, onScale }: Props) {
               boundBoxFunc={(oldBox, newBox) => (Math.abs(newBox.width) < 4 || Math.abs(newBox.height) < 4 ? oldBox : newBox)} />
           </Layer>
         </Stage>
+        {brushTool && <div ref={brush} className={tool === 'highlight' ? 'brush-cursor highlight' : 'brush-cursor'} aria-hidden="true"
+          style={{ width: brushSize, height: brushSize, '--brush': tool === 'highlight' ? highlightColor : color } as CSSProperties} />}
         {textEdit && (
           <textarea className="text-editor" style={textStyle} autoFocus aria-label="Annotation text" value={textEdit.value} rows={Math.max(1, textEdit.value.split('\n').length)}
             onChange={e => setTextEdit({ ...textEdit, value: e.target.value })}

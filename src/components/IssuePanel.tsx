@@ -76,8 +76,8 @@ export default function IssuePanel(p: Props) {
       <div className="panel-scroll">
         <section className="connection" aria-live="polite">
           {!desktop ? (
-            <div className="workspace-chip preview" title="Capture and Linear submission require the installed desktop app.">
-              <span className="avatar" aria-hidden="true">P</span><span className="ws-text"><strong>Browser preview</strong><small>Linear works in the desktop app</small></span>
+            <div className="workspace-chip preview">
+              <span className="ws-text"><strong>Browser preview</strong><small>Linear works in the desktop app</small></span>
             </div>
           ) : p.connectionState === 'connecting' ? (
             <div className="workspace-chip"><span className="spinner" aria-hidden="true" /><span className="ws-text"><strong>Waiting for Linear…</strong><small>Finish signing in in your browser</small></span>
@@ -86,7 +86,6 @@ export default function IssuePanel(p: Props) {
             <div className="workspace-chip"><span className="spinner" aria-hidden="true" /><span className="ws-text"><strong>Checking Linear…</strong></span></div>
           ) : p.connection ? (
             <div className="workspace-chip">
-              <span className="avatar" aria-hidden="true">{p.connection.workspace.trim().charAt(0).toUpperCase() || 'L'}</span>
               <span className="ws-text"><strong>{p.connection.workspace}</strong><small>{p.connection.name}</small></span>
               <button type="button" className={refreshing ? 'icon-button spinning' : 'icon-button'} onClick={p.onRetryConnection} aria-label="Refresh Linear teams" title="Refresh teams"><Icon name="refresh" size={16} /></button>
             </div>
@@ -104,7 +103,7 @@ export default function IssuePanel(p: Props) {
         <form id="issue-form" className="issue-form" onSubmit={e => { e.preventDefault(); p.onSubmit(); }}>
           <label className="field">
             <span>Title</span>
-            <input value={session.title} maxLength={LIMITS.title} disabled={locked} placeholder="What needs fixing?" onChange={e => patch({ title: e.target.value })} />
+            <input value={session.title} maxLength={LIMITS.title} disabled={locked} autoComplete="off" placeholder="What needs fixing?" onChange={e => patch({ title: e.target.value })} />
           </label>
           <DescriptionEditor key={session.id} value={session.description} images={session.images} references={session.imageReferences ?? {}} disabled={locked} onChange={description => patch({ description })} />
           {!session.description && <button type="button" className="template-button" disabled={locked} onClick={() => patch({ description: TEMPLATE })}><Icon name="plus" size={14} /> Add reproduction steps</button>}
@@ -143,7 +142,7 @@ export default function IssuePanel(p: Props) {
               </label>
               <fieldset className="field labels" disabled={locked || !options}>
                 <legend>Labels{session.labelIds.length ? ` (${session.labelIds.length})` : ''}</legend>
-                {(options?.labels.length ?? 0) > 8 && <input className="filter" placeholder="Filter labels" aria-label="Filter labels" value={labelFilter} onChange={e => setLabelFilter(e.target.value)} />}
+                {(options?.labels.length ?? 0) > 8 && <input className="filter" autoComplete="off" placeholder="Filter labels" aria-label="Filter labels" value={labelFilter} onChange={e => setLabelFilter(e.target.value)} />}
                 <div className="label-list">
                   {labels.map(l => (
                     <label key={l.id} className="check label-row">
@@ -167,8 +166,7 @@ export default function IssuePanel(p: Props) {
         {busy && p.progress && <div role="status" aria-live="polite" className="small progress"><span className="spinner" aria-hidden="true" /> {p.progress}</div>}
         <div className="foot-actions">
           <button type="button" className="button" onClick={p.onNewSession} disabled={busy}><Icon name="plus" size={16} /> New session</button>
-          <button type="submit" form="issue-form" className={busy ? 'button primary busy' : 'button primary'} disabled={busy || !count} aria-keyshortcuts="Control+Enter"
-            title={`${count} ${count === 1 ? 'screenshot' : 'screenshots'} in one issue. Uploads only when you send. Ctrl / ⌘ + Enter.`}>
+          <button type="submit" form="issue-form" className={busy ? 'button primary busy' : 'button primary'} disabled={busy || !count} aria-keyshortcuts="Control+Enter">
             {busy ? 'Sending…' : p.pendingState ? 'Retry create issue' : 'Create issue'}<Icon name="right" size={16} />
           </button>
         </div>

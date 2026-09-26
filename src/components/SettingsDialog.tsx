@@ -2,7 +2,7 @@ import { useState, type CSSProperties } from 'react';
 import { acceleratorFromEvent, REDIRECT_URI, shortcutLabel, type Connection, type Settings } from '../model';
 import { clearHistory, copyText, desktop, errorText, openLinearSetup, type AppStatus } from '../native';
 import Dialog from './Dialog';
-import { Logo } from './icons';
+import { Mark } from './icons';
 import { play } from '../sound';
 import type { ConnectionState } from './IssuePanel';
 
@@ -12,6 +12,7 @@ interface Props {
   onHistoryCleared: () => void; onClose: () => void;
 }
 const SECTIONS = ['Connection', 'Capture', 'Appearance', 'Privacy', 'Shortcuts'] as const;
+const THEMES: { value: Settings['theme']; label: string }[] = [{ value: 'system', label: 'Match system' }, { value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' }];
 const RETENTION = [{ v: 7, l: '7 days' }, { v: 30, l: '30 days' }, { v: 90, l: '90 days' }, { v: 365, l: '1 year' }, { v: 0, l: 'Keep until I delete' }];
 
 export default function SettingsDialog(p: Props) {
@@ -89,13 +90,16 @@ export default function SettingsDialog(p: Props) {
         </label>
       </section>
 
-      <section className="settings-section" hidden={section !== 'Appearance'}><h3>Appearance</h3><div className="theme-preview" aria-hidden="true"><div className="theme-sample light-sample"><i /><span>Daylight</span></div><div className="theme-sample dark-sample"><i /><span>After hours</span></div></div>
-        <label className="field">
-          <span>Theme</span>
-          <select value={draft.theme} onChange={e => setDraft({ ...draft, theme: e.target.value as Settings['theme'] })}>
-            <option value="system">Match system</option><option value="light">Light</option><option value="dark">Dark</option>
-          </select>
-        </label>
+      <section className="settings-section" hidden={section !== 'Appearance'}><h3>Appearance</h3>
+        <div className="theme-options" role="radiogroup" aria-label="Theme">
+          {THEMES.map(t => (
+            <label key={t.value} className={draft.theme === t.value ? 'theme-option selected' : 'theme-option'}>
+              <input type="radio" name="theme" value={t.value} checked={draft.theme === t.value} onChange={() => setDraft({ ...draft, theme: t.value })} />
+              <span className={`theme-swatch ${t.value}`} aria-hidden="true"><i /><b /><b /></span>
+              <span className="theme-name">{t.label}</span>
+            </label>
+          ))}
+        </div>
         <h3 className="subhead">Sound and motion</h3>
         <div className="row between">
           <label className="check switch">
@@ -112,7 +116,7 @@ export default function SettingsDialog(p: Props) {
         <small className="muted">Your system's reduce-motion setting is always respected.</small>
       </section>
 
-      <section className="settings-section" hidden={section !== 'Privacy'}><h3>Privacy</h3><div className="privacy-card"><strong>Only shared when you choose Create issue.</strong><p className="small muted">Use solid redaction to remove private details before sending. Pixelation is cosmetic.</p></div>
+      <section className="settings-section" hidden={section !== 'Privacy'}><h3>Privacy</h3><div className="privacy-card"><strong>Only shared when you choose Create issue.</strong><p className="small muted">Use Pixelate (B) to hide private details before sending. Pixelated areas are burned into the uploaded image.</p></div>
         <p className="small muted">Drafts and their screenshots are stored only on this computer, unencrypted in the app data folder.</p>
         <label className="field">
           <span>Delete drafts not opened for</span>
@@ -131,11 +135,11 @@ export default function SettingsDialog(p: Props) {
       <section className="settings-section" hidden={section !== 'Shortcuts'}>
         <h3>Keyboard shortcuts</h3>
         <dl className="shortcut-list">
-          {[['Capture from anywhere', shortcutLabel(draft.shortcut)], ['Select / Arrow / Rectangle', 'V / A / R'], ['Pen / Text', 'P / T'], ['Snap arrow / pen to 15°', 'Hold Shift'], ['Draw a square', 'Shift + Rectangle'], ['Pixelate / Solid redaction', 'B / X'], ['Undo / Redo', 'Ctrl / ⌘ + Z / Shift + Z'], ['Delete selected mark', 'Delete'], ['Paste screenshot', 'Ctrl / ⌘ + V'], ['Create issue', 'Ctrl / ⌘ + Enter'], ['Zoom canvas', 'Ctrl / ⌘ + scroll']].map(([label, keys]) => <div key={label}><dt>{label}</dt><dd><kbd>{keys}</kbd></dd></div>)}
+          {[['Capture from anywhere', shortcutLabel(draft.shortcut)], ['Select / Arrow / Rectangle', 'V / A / R'], ['Pen / Highlighter / Text', 'P / H / T'], ['Pixelate', 'B'], ['Snap arrow / pen to 15°', 'Hold Shift'], ['Draw a square', 'Shift + Rectangle'], ['Undo / Redo', 'Ctrl / ⌘ + Z / Shift + Z'], ['Delete selected mark', 'Delete'], ['Paste screenshot', 'Ctrl / ⌘ + V'], ['Create issue', 'Ctrl / ⌘ + Enter'], ['Zoom canvas', 'Ctrl / ⌘ + scroll']].map(([label, keys]) => <div key={label}><dt>{label}</dt><dd><kbd>{keys}</kbd></dd></div>)}
         </dl>
         <p className="small muted">Tool shortcuts pause while you type. Each screenshot keeps its own undo history.</p>
       </section>
-      <p className="about small muted"><Logo size={18} /> Snipflag {p.status?.version ?? ''} · {p.status?.platform ?? ''} · development build</p>
+      <p className="about small muted"><Mark size={15} /> Snipflag {p.status?.version ?? ''} · {p.status?.platform ?? ''} · development build</p>
     </Dialog>
   );
 }

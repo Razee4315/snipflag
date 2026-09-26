@@ -31,8 +31,8 @@ export default function Filmstrip({ onCapture, onAdd, canCapture }: { onCapture:
           );
         })}
         <li className="tile add">
-          {canCapture && <button type="button" className="add-button" disabled={full || locked} onClick={onCapture} title={full ? 'This session is full' : 'Capture another screenshot'}><Icon name="camera" /> <span>Capture</span></button>}
-          <button type="button" className="add-button" disabled={full || locked} onClick={onAdd} title={full ? 'This session is full' : 'Add images from files'}><Icon name="image" /> <span>Add images</span></button>
+          {canCapture && <button type="button" className="add-button" disabled={full || locked} onClick={onCapture} title={full ? 'This session is full' : undefined}><Icon name="camera" /> <span>Capture</span></button>}
+          <button type="button" className="add-button" disabled={full || locked} onClick={onAdd} title={full ? 'This session is full' : undefined}><Icon name="image" /> <span>Add images</span></button>
         </li>
       </ol>
     </nav>

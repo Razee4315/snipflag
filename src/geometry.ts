@@ -1,4 +1,4 @@
-import type { Annotation } from './model';
+import { isFreehand, type Annotation } from './model';
 
 export interface Box { x: number; y: number; width: number; height: number }
 export interface Point { x: number; y: number }
@@ -19,7 +19,7 @@ const HEAD = (stroke: number) => Math.max(12, stroke * 4);
 
 /** Bounding box in image pixels, padded to include strokes and arrow heads. */
 export function bounds(a: Annotation): Box {
-  if (a.kind === 'pen' || a.kind === 'arrow') {
+  if (isFreehand(a.kind) || a.kind === 'arrow') {
     const xs = a.points.filter((_, i) => i % 2 === 0); const ys = a.points.filter((_, i) => i % 2 === 1);
     const pad = a.kind === 'arrow' ? Math.max(HEAD(a.stroke), a.stroke) : a.stroke;
     const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
@@ -36,7 +36,7 @@ export function translate(a: Annotation, dx: number, dy: number): Annotation { r
 export function transform(a: Annotation, box: Box, sx: number, sy: number): Annotation {
   const old = bounds(a);
   const x = box.x + (a.x - old.x) * sx; const y = box.y + (a.y - old.y) * sy;
-  if (a.kind === 'pen' || a.kind === 'arrow') return { ...a, x, y, points: a.points.map((v, i) => i % 2 === 0 ? v * sx : v * sy) };
+  if (isFreehand(a.kind) || a.kind === 'arrow') return { ...a, x, y, points: a.points.map((v, i) => i % 2 === 0 ? v * sx : v * sy) };
   if (a.kind === 'text') {
     const fontSize = Math.max(8, Math.min(400, Math.round(a.fontSize * sy)));
     return { ...a, x: box.x, y: box.y, fontSize, width: a.width * (fontSize / a.fontSize), height: a.height * (fontSize / a.fontSize) };
@@ -46,7 +46,7 @@ export function transform(a: Annotation, box: Box, sx: number, sy: number): Anno
 /** Whether a finished drag produced something worth keeping. */
 export function isMeaningful(a: Annotation): boolean {
   if (a.kind === 'text') return a.text.trim().length > 0;
-  if (a.kind === 'pen') return a.points.some((x, i) => i % 2 === 0 && Math.hypot(x - a.points[0], a.points[i + 1] - a.points[1]) >= 1);
+  if (isFreehand(a.kind)) return a.points.some((x, i) => i % 2 === 0 && Math.hypot(x - a.points[0], a.points[i + 1] - a.points[1]) >= 1);
   if (a.kind === 'arrow') return Math.hypot(a.points[2] - a.points[0], a.points[3] - a.points[1]) >= 6;
   return a.width >= 3 && a.height >= 3;
 }
