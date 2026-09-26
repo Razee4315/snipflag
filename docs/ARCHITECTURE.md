@@ -20,6 +20,7 @@ Tauri 2 / Rust desktop core; React + TypeScript + Vite UI; Konva/react-konva ann
 - `src-tauri/src/linear.rs`: GraphQL metadata with pagination, uploads, ordered Markdown, idempotent issue creation with reconciliation.
 - `src-tauri/src/auth.rs`: PKCE loopback flow with state check, timeout and cancel; keyring credential storage and refresh.
 - `src-tauri/src/files.rs`: clipboard image read/write (arboard) and native save picker export.
+- `src-tauri/src/update.rs`: signed updates through `tauri-plugin-updater` with the build-time public key and a fixed Latest-release manifest; `check_update` keeps the found update in Rust and `install_update` downloads, verifies, installs and restarts after the renderer's save handshake.
 - `src-tauri/src/lib.rs`: plugin wiring (single instance first), tray, global shortcut, close-to-tray, command registration.
 
 ## Data

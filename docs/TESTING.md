@@ -1,5 +1,11 @@
 # Test and release gates
 
+## Signed updates
+
+Automated coverage: fixed HTTPS release endpoint, bounded release notes, `autoUpdate` settings validation, build-time public key format check, workflow preflight requiring both or neither key halves, browser About section without updates. CI cannot prove an update installs.
+
+Native gates, with a configured key pair and two published test versions: Windows NSIS and MSI installs update in place and restart with the draft intact (including an active text edit); the update is refused while capture/submission/login is busy; a tampered or wrongly signed `latest.json`/installer is rejected and the app is unchanged; offline and GitHub errors show a message only on manual checks; the switch stops background checks; macOS Apple Silicon/Intel `.app.tar.gz` and Linux AppImage update; `.deb` installs are not offered AppImage updates.
+
 ## Templates and remembered team details
 
 Automated coverage: Rust settings validation for templates (trimmed names, ID and length limits, null keeps built-ins) and remembered details (UUIDs, priority range); unit tests for built-in/edited templates, tidy names, filling only empty fields with IDs the team still offers, and a bounded per-team memory; browser test for template chips, edit/remove/add/restore in Settings, persistence across reload, and templates hidden once text exists. The updated composer test uses the Bug report template.
