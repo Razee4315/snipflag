@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Snipflag vs BugShot: desktop app vs Chrome side panel</title>
+<meta name="description" content="Snipflag vs BugShot: two open-source, MIT-licensed tools that file Linear issues with OAuth. One runs on your desktop, one in Chrome.">
+<link rel="canonical" href="https://razee4315.github.io/snipflag/compare/bugshot/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#0B1F1B">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; base-uri 'self'; form-action 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Snipflag">
+<meta property="og:title" content="Snipflag vs BugShot: desktop app vs Chrome side panel">
+<meta property="og:description" content="Snipflag vs BugShot: two open-source, MIT-licensed tools that file Linear issues with OAuth. One runs on your desktop, one in Chrome.">
+<meta property="og:url" content="https://razee4315.github.io/snipflag/compare/bugshot/">
+<meta property="og:image" content="https://razee4315.github.io/snipflag/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Snipflag vs BugShot: desktop app vs Chrome side panel">
+<meta name="twitter:description" content="Snipflag vs BugShot: two open-source, MIT-licensed tools that file Linear issues with OAuth. One runs on your desktop, one in Chrome.">
+<meta name="twitter:image" content="https://razee4315.github.io/snipflag/og.png">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<link rel="manifest" href="../../site.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Instrument+Sans:wght@400..600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../assets/css/site.css">
+<script src="../../assets/js/boot.js"></script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://razee4315.github.io/snipflag/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Compare",
+          "item": "https://razee4315.github.io/snipflag/compare/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "vs BugShot",
+          "item": "https://razee4315.github.io/snipflag/compare/bugshot/"
+        }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Are Snipflag and BugShot both open source?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Both are MIT licensed and hosted on GitHub."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can BugShot capture desktop apps?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "BugShot is a Chrome side panel, so it captures browser content. For native apps and other windows, use a desktop tool such as Snipflag."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Which one is better for Linear?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Both sign in to Linear with OAuth and PKCE. Pick by where your bugs live: web pages favor BugShot, everything else favors Snipflag."
+          }
+        }
+      ]
+    },
+    {
+      "@type": "WebPage",
+      "name": "Snipflag vs BugShot: desktop app vs Chrome side panel",
+      "url": "https://razee4315.github.io/snipflag/compare/bugshot/",
+      "dateModified": "2026-09-26",
+      "description": "Snipflag vs BugShot: two open-source, MIT-licensed tools that file Linear issues with OAuth. One runs on your desktop, one in Chrome.",
+      "about": [
+        {
+          "@id": "https://razee4315.github.io/snipflag/#app"
+        },
+        {
+          "@type": "SoftwareApplication",
+          "name": "BugShot"
+        }
+      ]
+    }
+  ]
+}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="cursor" aria-hidden="true"><span class="h"></span><span class="v"></span><span class="dot"></span><span class="xy">0, 0</span></div>
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="../../" aria-label="Snipflag home"><img src="../../favicon.svg" width="30" height="30" alt="">Snipflag</a>
+    <nav class="nav" id="nav" aria-label="Main">
+      <a class="wipe" href="../../#how">How it works</a>
+      <a class="wipe" href="../../#try">Try it</a>
+      <a class="wipe" href="../../#features">Features</a>
+      <a class="wipe" href="../../compare/" aria-current="page">Compare</a>
+      <a class="wipe" href="../../#faq">FAQ</a>
+      <a class="wipe" href="https://github.com/Razee4315/snipflag">GitHub</a>
+    </nav>
+    <a class="btn btn-primary btn-sm nav-cta" href="#download">Download</a>
+    <button class="menu-btn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="nav"><span></span><span></span><span></span></button>
+  </div>
+</header>
+<main id="main">
+<section class="page-hero"><div class="wrap">
+<nav class="crumbs mono" aria-label="Breadcrumb"><ol><li><a class="wipe" href="../../">Home</a></li><li><a class="wipe" href="../">Compare</a></li><li aria-current="page">vs BugShot</li></ol></nav>
+<h1 data-split>Snipflag vs BugShot</h1>
+<p class="lede">BugShot is the closest open-source relative: MIT licensed, Linear OAuth with PKCE, annotated screenshots. The difference is where they live. BugShot is a Chrome side panel for web bugs, with logs and recordings. Snipflag is a desktop app that captures anything on your screen.</p>
+<p class="checked mono">Last checked 26 September 2026</p>
+</div></section>
+
+<section class="section pt0" aria-labelledby="verdict-title"><div class="wrap">
+<h2 id="verdict-title" class="sr-only">Which should you choose?</h2>
+<div class="verdict">
+<div class="pick us" data-reveal><p class="label">Choose Snipflag if</p><ul><li>The problem is outside the browser: native apps, desktop tools, other windows</li><li>You want a global shortcut from the system tray</li><li>You want drafts that survive restarts and duplicate-safe retries</li><li>Your team works in Linear only</li></ul></div>
+<div class="pick" data-reveal><p class="label">Choose BugShot if</p><ul><li>Every bug you report is in a web page</li><li>You want console, network logs and recordings attached</li><li>You file to several trackers: Jira, GitHub, GitLab, Notion and more</li><li>You prefer a browser extension to a desktop install</li></ul></div>
+</div>
+</div></section>
+
+<section class="section pt0" aria-labelledby="table-title"><div class="wrap">
+<div class="head"><p class="label">Side by side</p><h2 id="table-title" data-split>The details.</h2><p>From each product's own pages. “Not documented” means we could not confirm it.</p></div>
+<div class="table-scroll" data-reveal><table class="matrix">
+<caption>Found a mistake? <a class="inline-link" href="https://github.com/Razee4315/snipflag/issues">Tell us on GitHub</a> and we will fix it.</caption>
+<thead><tr><th scope="col">Feature</th><th scope="col" class="us">Snipflag</th><th scope="col">BugShot</th></tr></thead>
+<tbody>
+<tr><th scope="row">Where it runs</th><td class="us">Desktop app: Windows, macOS, Linux</td><td>Chrome side panel</td></tr>
+<tr><th scope="row">Captures</th><td class="us"><span class="yes">Any screen region, every monitor</span></td><td><span class="part">Browser tabs</span></td></tr>
+<tr><th scope="row">Linear sign-in</th><td class="us"><span class="yes">OAuth with PKCE</span></td><td><span class="yes">OAuth with PKCE, or API key</span></td></tr>
+<tr><th scope="row">Other trackers</th><td class="us"><span class="no">Linear only</span></td><td><span class="yes">Jira, GitHub, GitLab, Notion, Asana, ClickUp, Slack</span></td></tr>
+<tr><th scope="row">Console and network logs</th><td class="us"><span class="no">No</span></td><td><span class="yes">Yes</span></td></tr>
+<tr><th scope="row">Recordings</th><td class="us"><span class="no">No</span></td><td><span class="yes">Yes</span></td></tr>
+<tr><th scope="row">Several screenshots in one issue</th><td class="us"><span class="yes">Up to 10, ordered, with @image references</span></td><td><span class="yes">Multiple annotated captures in the report</span></td></tr>
+<tr><th scope="row">Open source</th><td class="us"><span class="yes">MIT</span></td><td><span class="yes">MIT</span></td></tr>
+<tr><th scope="row">Price</th><td class="us">Free</td><td>Free</td></tr>
+</tbody></table></div>
+</div></section>
+
+<section class="section" aria-labelledby="diff-title"><div class="wrap two-col">
+<div><p class="label">The main difference</p><h2 id="diff-title" class="diff-title">Different jobs, honestly.</h2></div>
+<div class="prose muted" data-reveal><p>BugShot turns a browser bug into a full report, with logs, recordings and even CSS diffs, and sends it to the tracker of your choice. For web teams on several trackers, that is hard to beat.</p><p>Snipflag lives outside the browser, in your system tray. It freezes every monitor, lets you capture any app, keeps each screenshot&#x27;s annotations and history separate, and sends one ordered Linear issue. It is the better fit when the bug is not in a web page.</p></div>
+</div></section>
+
+<section class="section" aria-labelledby="faq-title"><div class="wrap faq">
+<div class="head-col"><p class="label">FAQ</p><h2 id="faq-title" data-split>Questions.</h2></div>
+<div class="list"><details class="qa"><summary>Are Snipflag and BugShot both open source?</summary><div class="a"><p>Yes. Both are MIT licensed and hosted on GitHub.</p></div></details>
+<details class="qa"><summary>Can BugShot capture desktop apps?</summary><div class="a"><p>BugShot is a Chrome side panel, so it captures browser content. For native apps and other windows, use a desktop tool such as Snipflag.</p></div></details>
+<details class="qa"><summary>Which one is better for Linear?</summary><div class="a"><p>Both sign in to Linear with OAuth and PKCE. Pick by where your bugs live: web pages favor BugShot, everything else favors Snipflag.</p></div></details></div>
+</div></section>
+
+<section class="section pt0"><div class="wrap"><p class="sources">Sources: <a href="https://github.com/SinhyeokKang/bugshot-2">BugShot repository and README</a>. See also <a href="../">all comparisons</a>.</p></div></section>
+<section class="section" aria-label="Download Snipflag"><div class="wrap">
+<div class="cta-band" data-reveal><h2>Screenshots in. One Linear issue out.</h2>
+<div class="hero-actions"><a class="btn btn-primary" data-download href="https://github.com/Razee4315/snipflag/releases/tag/v1.0.0"><svg class="nudge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12m0 0-5-5m5 5 5-5M5 20h14"/></svg><span data-dl-label>Download v1.0.0</span> <small data-dl-meta>Free</small></a>
+<a class="btn btn-ghost" href="../../#try">Try the editor <svg class="nudge-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a></div></div>
+</div></section>
+</main>
+<footer class="site-footer" id="download">
+  <div class="wrap">
+    <p class="label">Download · v1.0.0 preview</p>
+    <p class="display" data-foot-title>One issue.<br>Full story.</p>
+    <div class="foot-dl">
+      <a class="btn" href="https://github.com/Razee4315/snipflag/releases/download/v1.0.0/unsigned-Snipflag_1.0.0_x64-setup.exe" data-os="windows">Windows <small>.exe · 4.4 MB</small></a>
+      <a class="btn alt" href="https://github.com/Razee4315/snipflag/releases/download/v1.0.0/unsigned-Snipflag_1.0.0_x64_en-US.msi" data-os="windows">Windows <small>.msi · 6 MB</small></a>
+      <a class="btn" href="https://github.com/Razee4315/snipflag/releases/download/v1.0.0/unsigned-Snipflag_1.0.0_aarch64.dmg" data-os="mac">macOS Apple silicon <small>.dmg · 5.4 MB</small></a>
+      <a class="btn alt" href="https://github.com/Razee4315/snipflag/releases/download/v1.0.0/unsigned-Snipflag_1.0.0_x64.dmg" data-os="mac">macOS Intel <small>.dmg · 5.8 MB</small></a>
+      <a class="btn" href="https://github.com/Razee4315/snipflag/releases/download/v1.0.0/unsigned-Snipflag_1.0.0_amd64.AppImage" data-os="linux">Linux <small>AppImage · 83 MB</small></a>
+      <a class="btn alt" href="https://github.com/Razee4315/snipflag/releases/download/v1.0.0/unsigned-Snipflag_1.0.0_amd64.deb" data-os="linux">Linux <small>.deb · 7.3 MB</small></a>
+    </div>
+    <p class="foot-note">Unsigned preview builds from <a href="https://github.com/Razee4315/snipflag/releases/tag/v1.0.0">GitHub Releases</a>, with <a href="https://github.com/Razee4315/snipflag/releases/download/v1.0.0/SHA256SUMS.txt">SHA-256 checksums</a>. Your OS will ask before opening them.</p>
+    <div class="foot-bottom">
+      <nav aria-label="Product"><h2>Product</h2><a class="wipe" href="../../#how">How it works</a><a class="wipe" href="../../#try">Try it</a><a class="wipe" href="../../#features">Features</a><a class="wipe" href="../../#faq">FAQ</a></nav>
+      <nav aria-label="Compare"><h2>Compare</h2><a class="wipe" href="../../compare/">All alternatives</a><a class="wipe" href="../../compare/screenpresso/">vs Screenpresso</a><a class="wipe" href="../../compare/jam/">vs Jam</a><a class="wipe" href="../../compare/bugshot/">vs BugShot</a><a class="wipe" href="../../compare/sharex-greenshot-flameshot/">vs ShareX, Greenshot, Flameshot</a></nav>
+      <nav aria-label="Project"><h2>Project</h2><a class="wipe" href="https://github.com/Razee4315/snipflag">GitHub</a><a class="wipe" href="https://github.com/Razee4315/snipflag/releases">Releases</a><a class="wipe" href="https://github.com/Razee4315/snipflag/issues">Report a problem</a><a class="wipe" href="https://github.com/Razee4315/snipflag/blob/main/LICENSE">MIT License</a></nav>
+      <p class="fine">© 2026 Snipflag contributors. Snipflag is an independent project and is not affiliated with Linear or any product compared here. Product names belong to their owners.</p>
+    </div>
+  </div>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.3.11/dist/lenis.min.js" defer></script>
+<script src="../../assets/js/site.js" defer></script>
+</body>
+</html>

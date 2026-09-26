@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Snipflag vs ShareX, Greenshot and Flameshot for Linear</title>
+<meta name="description" content="ShareX, Greenshot and Flameshot are great free screenshot tools, but none files Linear issues. See when Snipflag is the better fit.">
+<link rel="canonical" href="https://razee4315.github.io/snipflag/compare/sharex-greenshot-flameshot/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#0B1F1B">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; base-uri 'self'; form-action 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Snipflag">
+<meta property="og:title" content="Snipflag vs ShareX, Greenshot and Flameshot for Linear">
+<meta property="og:description" content="ShareX, Greenshot and Flameshot are great free screenshot tools, but none files Linear issues. See when Snipflag is the better fit.">
+<meta property="og:url" content="https://razee4315.github.io/snipflag/compare/sharex-greenshot-flameshot/">
+<meta property="og:image" content="https://razee4315.github.io/snipflag/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Snipflag vs ShareX, Greenshot and Flameshot for Linear">
+<meta name="twitter:description" content="ShareX, Greenshot and Flameshot are great free screenshot tools, but none files Linear issues. See when Snipflag is the better fit.">
+<meta name="twitter:image" content="https://razee4315.github.io/snipflag/og.png">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<link rel="manifest" href="../../site.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Instrument+Sans:wght@400..600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../../assets/css/site.css">
+<script src="../../assets/js/boot.js"></script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://razee4315.github.io/snipflag/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Compare",
+          "item": "https://razee4315.github.io/snipflag/compare/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "vs ShareX, Greenshot and Flameshot",
+          "item": "https://razee4315.github.io/snipflag/compare/sharex-greenshot-flameshot/"
+        }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Can ShareX upload to Linear?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Not out of the box. ShareX supports custom uploaders, so you could script something against Linear's API, but you would build ordering, drafts and duplicate protection yourself."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does Greenshot integrate with Linear?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Greenshot can upload to Jira. Linear is not a built-in destination."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is Flameshot or Snipflag better on Linux?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Flameshot is a mature, light capture tool. Snipflag runs on Linux too (AppImage and .deb), and adds Linear issues. On some Wayland compositors direct capture is blocked for Snipflag, but importing and pasting images still works."
+          }
+        }
+      ]
+    },
+    {
+      "@type": "WebPage",
+      "name": "Snipflag vs ShareX, Greenshot and Flameshot for Linear",
+      "url": "https://razee4315.github.io/snipflag/compare/sharex-greenshot-flameshot/",
+      "dateModified": "2026-09-26",
+      "description": "ShareX, Greenshot and Flameshot are great free screenshot tools, but none files Linear issues. See when Snipflag is the better fit.",
+      "about": [
+        {
+          "@id": "https://razee4315.github.io/snipflag/#app"
+        },
+        {
+          "@type": "SoftwareApplication",
+          "name": "ShareX"
+        }
+      ]
+    }
+  ]
+}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="cursor" aria-hidden="true"><span class="h"></span><span class="v"></span><span class="dot"></span><span class="xy">0, 0</span></div>
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="../../" aria-label="Snipflag home"><img src="../../favicon.svg" width="30" height="30" alt="">Snipflag</a>
+    <nav class="nav" id="nav" aria-label="Main">
+      <a class="wipe" href="../../#how">How it works</a>
+      <a class="wipe" href="../../#try">Try it</a>
+      <a class="wipe" href="../../#features">Features</a>
+      <a class="wipe" href="../../compare/" aria-current="page">Compare</a>
+      <a class="wipe" href="../../#faq">FAQ</a>
+      <a class="wipe" href="https://github.com/Razee4315/snipflag">GitHub</a>
+    </nav>
+    <a class="btn btn-primary btn-sm nav-cta" href="#download">Download</a>
+    <button class="menu-btn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="nav"><span></span><span></span><span></span></button>
+  </div>
+</header>
+<main id="main">
+<section class="page-hero"><div class="wrap">
+<nav class="crumbs mono" aria-label="Breadcrumb"><ol><li><a class="wipe" href="../../">Home</a></li><li><a class="wipe" href="../">Compare</a></li><li aria-current="page">vs ShareX, Greenshot and Flameshot</li></ol></nav>
+<h1 data-split>Snipflag vs ShareX, Greenshot and Flameshot</h1>
+<p class="lede">ShareX, Greenshot and Flameshot are excellent free, open-source screenshot tools. None of them creates Linear issues. You can script an upload, but you lose drafts, ordering and duplicate protection. Snipflag is built for exactly that last step.</p>
+<p class="checked mono">Last checked 26 September 2026</p>
+</div></section>
+
+<section class="section pt0" aria-labelledby="verdict-title"><div class="wrap">
+<h2 id="verdict-title" class="sr-only">Which should you choose?</h2>
+<div class="verdict">
+<div class="pick us" data-reveal><p class="label">Choose Snipflag if</p><ul><li>Your screenshots end up in Linear issues</li><li>You want several screenshots in one issue, in order, with captions</li><li>You want to sign in to Linear once and pick team, project, labels and priority in the app</li><li>You want drafts that come back after a restart</li></ul></div>
+<div class="pick" data-reveal><p class="label">Choose ShareX, Greenshot and Flameshot if</p><ul><li>You want a general screenshot and screen recording tool (ShareX)</li><li>You upload to image hosts or Jira (Greenshot has a Jira plugin)</li><li>You need workflows, OCR, scrolling capture or GIFs (ShareX)</li><li>You want a very light capture tool on Linux (Flameshot)</li></ul></div>
+</div>
+</div></section>
+
+<section class="section pt0" aria-labelledby="table-title"><div class="wrap">
+<div class="head"><p class="label">Side by side</p><h2 id="table-title" data-split>The details.</h2><p>From each product's own pages. “Not documented” means we could not confirm it.</p></div>
+<div class="table-scroll" data-reveal><table class="matrix">
+<caption>Found a mistake? <a class="inline-link" href="https://github.com/Razee4315/snipflag/issues">Tell us on GitHub</a> and we will fix it.</caption>
+<thead><tr><th scope="col">Feature</th><th scope="col" class="us">Snipflag</th><th scope="col">ShareX, Greenshot and Flameshot</th></tr></thead>
+<tbody>
+<tr><th scope="row">Platforms</th><td class="us">Windows, macOS, Linux</td><td>ShareX: Windows. Greenshot: Windows and Mac. Flameshot: Windows, macOS, Linux</td></tr>
+<tr><th scope="row">Creates Linear issues</th><td class="us"><span class="yes">Yes, OAuth with PKCE</span></td><td><span class="no">No built-in Linear support</span></td></tr>
+<tr><th scope="row">Several screenshots in one issue</th><td class="us"><span class="yes">Up to 10, ordered</span></td><td><span class="no">Not applicable</span></td></tr>
+<tr><th scope="row">Annotation</th><td class="us">Arrow, rectangle, pen, highlighter, text, pixelate</td><td><span class="yes">Rich annotation in all three</span></td></tr>
+<tr><th scope="row">Video or GIF</th><td class="us"><span class="no">No</span></td><td><span class="part">ShareX only</span></td></tr>
+<tr><th scope="row">Drafts and history</th><td class="us"><span class="yes">Auto-saved sessions, History, retention</span></td><td><span class="part">Local files and capture history</span></td></tr>
+<tr><th scope="row">Open source</th><td class="us"><span class="yes">MIT</span></td><td><span class="yes">GPL-3.0</span></td></tr>
+<tr><th scope="row">Price</th><td class="us">Free</td><td>Free</td></tr>
+</tbody></table></div>
+</div></section>
+
+<section class="section" aria-labelledby="diff-title"><div class="wrap two-col">
+<div><p class="label">The main difference</p><h2 id="diff-title" class="diff-title">Different jobs, honestly.</h2></div>
+<div class="prose muted" data-reveal><p>These three tools are the best general-purpose free screenshot apps around, and they are mature. If you just need images on disk or on an image host, keep using them.</p><p>Snipflag starts where they stop: the issue. It keeps a session of screenshots together, lets you order and caption them, reference them with @image in the description, and creates one Linear issue with every image in place. A retry after a failure never creates a duplicate.</p></div>
+</div></section>
+
+<section class="section" aria-labelledby="faq-title"><div class="wrap faq">
+<div class="head-col"><p class="label">FAQ</p><h2 id="faq-title" data-split>Questions.</h2></div>
+<div class="list"><details class="qa"><summary>Can ShareX upload to Linear?</summary><div class="a"><p>Not out of the box. ShareX supports custom uploaders, so you could script something against Linear's API, but you would build ordering, drafts and duplicate protection yourself.</p></div></details>
+<details class="qa"><summary>Does Greenshot integrate with Linear?</summary><div class="a"><p>Greenshot can upload to Jira. Linear is not a built-in destination.</p></div></details>
+<details class="qa"><summary>Is Flameshot or Snipflag better on Linux?</summary><div class="a"><p>Flameshot is a mature, light capture tool. Snipflag runs on Linux too (AppImage and .deb), and adds Linear issues. On some Wayland compositors direct capture is blocked for Snipflag, but importing and pasting images still works.</p></div></details></div>
+</div></section>
+
+<section class="section pt0"><div class="wrap"><p class="sources">Sources: <a href="https://getsharex.com/">ShareX</a> · <a href="https://getgreenshot.org/faq/">Greenshot FAQ (GPL, Jira upload)</a> · <a href="https://github.com/flameshot-org/flameshot/issues/4623">Flameshot upload script discussion</a>. See also <a href="../">all comparisons</a>.</p></div></section>
+<section class="section" aria-label="Download Snipflag"><div class="wrap">
+<div class="cta-band" data-reveal><h2>Screenshots in. One Linear issue out.</h2>
+<div class="hero-actions"><a class="btn btn-primary" data-download href="https://github.com/Razee4315/snipflag/releases/tag/v1.0.0"><svg class="nudge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12m0 0-5-5m5 5 5-5M5 20h14"/></svg><span data-dl-label>Download v1.0.0</span> <small data-dl-meta>Free</small></a>
+<a class="btn btn-ghost" href="../../#try">Try the editor <svg class="nudge-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a></div></div>
+</div></section>
+</main>
+<footer class="site-footer" id="download">
+  <div class="wrap">
+    <p class="label">Download · v1.0.0 preview</p>
+    <p class="display" data-foot-title>One issue.<br>Full story.</p>
+    <div class="foot-dl">
+      <a class="btn" href="https://github.com/Razee4315/snipflag/releases/download/v1.0.0/unsigned-Snipflag_1.0.0_x64-setup.exe" data-os="windows">Windows <small>.exe · 4.4 MB</small></a>
+      <a class="btn alt" href="https://github.com/Razee4315/snipflag/releases/download/v1.0.0/unsigned-Snipflag_1.0.0_x64_en-US.msi" data-os="windows">Windows <small>.msi · 6 MB</small></a>
+      <a class="btn" href="https://github.com/Razee4315/snipflag/releases/download/v1.0.0/unsigned-Snipflag_1.0.0_aarch64.dmg" data-os="mac">macOS Apple silicon <small>.dmg · 5.4 MB</small></a>
+      <a class="btn alt" href="https://github.com/Razee4315/snipflag/releases/download/v1.0.0/unsigned-Snipflag_1.0.0_x64.dmg" data-os="mac">macOS Intel <small>.dmg · 5.8 MB</small></a>
+      <a class="btn" href="https://github.com/Razee4315/snipflag/releases/download/v1.0.0/unsigned-Snipflag_1.0.0_amd64.AppImage" data-os="linux">Linux <small>AppImage · 83 MB</small></a>
+      <a class="btn alt" href="https://github.com/Razee4315/snipflag/releases/download/v1.0.0/unsigned-Snipflag_1.0.0_amd64.deb" data-os="linux">Linux <small>.deb · 7.3 MB</small></a>
+    </div>
+    <p class="foot-note">Unsigned preview builds from <a href="https://github.com/Razee4315/snipflag/releases/tag/v1.0.0">GitHub Releases</a>, with <a href="https://github.com/Razee4315/snipflag/releases/download/v1.0.0/SHA256SUMS.txt">SHA-256 checksums</a>. Your OS will ask before opening them.</p>
+    <div class="foot-bottom">
+      <nav aria-label="Product"><h2>Product</h2><a class="wipe" href="../../#how">How it works</a><a class="wipe" href="../../#try">Try it</a><a class="wipe" href="../../#features">Features</a><a class="wipe" href="../../#faq">FAQ</a></nav>
+      <nav aria-label="Compare"><h2>Compare</h2><a class="wipe" href="../../compare/">All alternatives</a><a class="wipe" href="../../compare/screenpresso/">vs Screenpresso</a><a class="wipe" href="../../compare/jam/">vs Jam</a><a class="wipe" href="../../compare/bugshot/">vs BugShot</a><a class="wipe" href="../../compare/sharex-greenshot-flameshot/">vs ShareX, Greenshot, Flameshot</a></nav>
+      <nav aria-label="Project"><h2>Project</h2><a class="wipe" href="https://github.com/Razee4315/snipflag">GitHub</a><a class="wipe" href="https://github.com/Razee4315/snipflag/releases">Releases</a><a class="wipe" href="https://github.com/Razee4315/snipflag/issues">Report a problem</a><a class="wipe" href="https://github.com/Razee4315/snipflag/blob/main/LICENSE">MIT License</a></nav>
+      <p class="fine">© 2026 Snipflag contributors. Snipflag is an independent project and is not affiliated with Linear or any product compared here. Product names belong to their owners.</p>
+    </div>
+  </div>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.3.11/dist/lenis.min.js" defer></script>
+<script src="../../assets/js/site.js" defer></script>
+</body>
+</html>

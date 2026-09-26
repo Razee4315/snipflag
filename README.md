@@ -21,7 +21,7 @@
 
 Snipflag is a focused desktop app for reporting visual problems. Capture a region of your screen, mark what matters, capture another, add a title, and send everything to Linear as a single issue with the screenshots in order. It runs on Windows (primary), macOS, and Linux, and is built with Tauri 2, Rust, React, and TypeScript.
 
-> **v1.0.0:** [Download the release (unsigned installers)](https://github.com/Razee4315/snipflag/releases/tag/v1.0.0). Native runtime acceptance and signing are still pending; see [verification status](docs/STATUS.md).
+> **Website:** [razee4315.github.io/snipflag](https://razee4315.github.io/snipflag/) · **v1.0.0:** [Download the release (unsigned installers)](https://github.com/Razee4315/snipflag/releases/tag/v1.0.0). Native runtime acceptance and signing are still pending; see [verification status](docs/STATUS.md).
 
 ## Screenshots
 
