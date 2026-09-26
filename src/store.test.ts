@@ -77,4 +77,14 @@ describe('session store', () => {
     expect(state().durable).toBe(true);
     expect(state().session.annotationHistories?.[a.id]).toBeUndefined();
   });
+  it('locks a restored uncertain submission before any edits and unlocks only after reconciliation', () => {
+    state().addImages([image()]);
+    state().hydrate({ ...state().session, submissionLocked: true });
+    state().patch({ title: 'Not sent' }); state().edit([mark()]); state().removeImage(state().activeId);
+    expect(state().session.title).toBe(''); expect(state().session.images).toHaveLength(1);
+    expect(state().session.images[0].annotations).toHaveLength(0);
+    expect(() => state().addImages([image()])).toThrow();
+    state().setSubmissionLocked(false); state().patch({ title: 'Now editable' });
+    expect(state().session.title).toBe('Now editable');
+  });
 });

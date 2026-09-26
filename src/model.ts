@@ -28,6 +28,8 @@ export interface Session {
   /** Optional for v1 drafts. Bounded per-image undo/redo snapshots survive restart. */
   annotationHistories?: Record<string, AnnotationHistory>;
   deletionPending?: boolean;
+  /** Native hydration marks an unresolved attempt before the editor permits mutations. */
+  submissionLocked?: boolean;
 }
 export interface Named { id: string; name: string; displayName?: string; key?: string; color?: string }
 export interface Connection { name: string; workspace: string; workspaceId: string; teams: Named[] }

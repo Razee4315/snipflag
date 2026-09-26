@@ -16,6 +16,7 @@ const TEMPLATE = '## Steps to reproduce\n1. \n\n## Expected result\n\n## Actual 
 
 export default function IssuePanel(p: Props) {
   const session = useStore(s => s.session); const busy = useStore(s => s.busy); const locked = useStore(isLocked);
+  const submissionLocked = useStore(s => s.submissionLocked);
   const { patch } = useStore.getState();
   const [options, setOptions] = useState<TeamOptions | null>(null);
   const [optionsError, setOptionsError] = useState('');
@@ -161,13 +162,13 @@ export default function IssuePanel(p: Props) {
       </div>
 
       <footer className="panel-foot">
-        {p.pendingState === 'creating' && !busy && <p className="small warn">A previous attempt may already have created this issue. Create issue checks Linear before sending anything new.</p>}
+        {submissionLocked && !busy && <p className="small warn">A previous attempt may already have created this issue. This report is locked to the attempted revision. Check its outcome before editing; checking does not upload or create another issue.</p>}
         {p.submitError && <p className="error small" role="alert">{p.submitError}</p>}
         {busy && p.progress && <div role="status" aria-live="polite" className="small progress"><span className="spinner" aria-hidden="true" /> {p.progress}</div>}
         <div className="foot-actions">
           <button type="button" className="button" onClick={p.onNewSession} disabled={busy}><Icon name="plus" size={16} /> New session</button>
           <button type="submit" form="issue-form" className={busy ? 'button primary busy' : 'button primary'} disabled={busy || !count} aria-keyshortcuts="Control+Enter">
-            {busy ? 'Sending…' : p.pendingState ? 'Retry create issue' : 'Create issue'}<Icon name="right" size={16} />
+            {busy ? 'Working…' : submissionLocked ? 'Check previous attempt' : p.pendingState && p.pendingState !== 'retryable' ? 'Retry create issue' : 'Create issue'}<Icon name="right" size={16} />
           </button>
         </div>
       </footer>

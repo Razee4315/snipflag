@@ -179,6 +179,42 @@ test('independent undo and redo histories survive restart', async ({ page }) => 
   await expect(tile(page, 2)).toHaveAccessibleName(/1 mark$/);
 });
 
+test('quit preparation commits an active text annotation before persistence', async ({ page }) => {
+  await addImages(page, [white]);
+  await page.keyboard.press('t');
+  const box = (await page.getByTestId('canvas').boundingBox())!;
+  await page.mouse.click(box.x + box.width * 0.2, box.y + box.height * 0.3);
+  await page.getByLabel('Annotation text', { exact: true }).fill('Keep this edit');
+  // Exercise the renderer commit boundary used by the native quit acknowledgment.
+  await page.evaluate(() => window.dispatchEvent(new Event('snipflag-commit-edit')));
+  await expect(tile(page, 1)).toHaveAccessibleName(/1 mark$/);
+  await expect(page.getByRole('status', { name: 'Saved on this computer' })).toBeVisible();
+  await page.reload(); await expect(tile(page, 1)).toHaveAccessibleName(/1 mark$/);
+});
+
+test('restored uncertain submissions are visibly locked and never fake a browser reconciliation', async ({ page }) => {
+  await addImages(page, [white]);
+  await page.getByLabel('Title', { exact: true }).fill('Original attempted title');
+  await expect(page.getByRole('status', { name: 'Saved on this computer' })).toBeVisible();
+  await page.evaluate(async () => {
+    await new Promise<void>((resolve, reject) => {
+      const request = indexedDB.open('snipflag-preview');
+      request.onsuccess = () => {
+        const db = request.result; const tx = db.transaction('sessions', 'readwrite'); const store = tx.objectStore('sessions');
+        const rows = store.getAll(); rows.onsuccess = () => { const s = rows.result[0]; s.submissionLocked = true; store.put(s); };
+        tx.oncomplete = () => { db.close(); resolve(); }; tx.onerror = () => { db.close(); reject(tx.error); };
+      };
+      request.onerror = () => reject(request.error);
+    });
+  });
+  await page.reload();
+  await expect(page.getByLabel('Title', { exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Remove screenshot 1' })).toBeDisabled();
+  await page.getByRole('button', { name: 'Check previous attempt' }).click();
+  await expect(page.getByRole('alert').filter({ hasText: 'desktop app' })).toBeVisible();
+  await expect(page.getByText('Sent to Linear', { exact: true })).toHaveCount(0);
+});
+
 test('translucent pixelation replaces original detail and protects every thumbnail', async ({ page }) => {
   const patterned = { name: 'private-pattern.png', mimeType: 'image/png', buffer: patternPng(400, 300, x => x % 2 ? [240, 0, 0, 128] : [0, 0, 240, 128]) };
   await addImages(page, [patterned]);

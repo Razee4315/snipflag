@@ -18,6 +18,7 @@ interface State {
   /** Image IDs whose pixels are already durable for the current session. */
   persisted: string[];
   durable: boolean;
+  submissionLocked: boolean; setSubmissionLocked: (locked: boolean) => void;
   hydrate: (session: Session) => void; reset: () => void; patch: (patch: Partial<Session>) => void;
   addImages: (images: CaptureImage[]) => void; select: (id: string) => void;
   updateImage: (id: string, patch: Partial<CaptureImage>) => void;
@@ -27,20 +28,20 @@ interface State {
   setBusy: (busy: boolean) => void; setSelection: (id: string | null) => void; updateAnnotation: (id: string, patch: Partial<Annotation>) => void; removeAnnotation: (id: string) => void; setIssue: (issue: IssueResult) => void;
   setSaveState: (state: SaveState, error?: string) => void; markPersisted: (sessionId: string, ids: string[]) => void;
 }
-const locked = (s: State) => s.busy || !!s.session.issue;
+const locked = (s: State) => s.busy || s.submissionLocked || !!s.session.issue;
 
 export const useStore = create<State>((set, get) => ({
   session: newSession(), activeId: '', tool: 'arrow', color: '#EF4444', stroke: 8, fontSize: 22, highlightColor: '#FDE047', highlightSize: 24,
-  histories: {}, busy: false, selection: null, saveState: 'idle', saveError: '', persisted: [], durable: false,
+  histories: {}, busy: false, selection: null, saveState: 'idle', saveError: '', persisted: [], durable: false, submissionLocked: false,
   hydrate: (session) => {
     const histories = Object.fromEntries(session.images.map(i => [i.id, boundedHistory(session.annotationHistories?.[i.id] ?? { past: [], future: [] })]));
-    set({ session: { ...session, annotationHistories: histories, ...(!session.issue ? { imageReferences: ensureImageReferences(session.images, session.imageReferences) } : {}) }, selection: null, activeId: session.images[0]?.id ?? '', histories, persisted: session.images.map(i => i.id), durable: true, saveState: 'saved', saveError: '' });
+    set({ session: { ...session, annotationHistories: histories, ...(!session.issue ? { imageReferences: ensureImageReferences(session.images, session.imageReferences) } : {}) }, submissionLocked: !!session.submissionLocked, selection: null, activeId: session.images[0]?.id ?? '', histories, persisted: session.images.map(i => i.id), durable: true, saveState: 'saved', saveError: '' });
   },
-  reset: () => set({ session: newSession(), activeId: '', selection: null, histories: {}, persisted: [], durable: false, saveState: 'idle', saveError: '', busy: false }),
+  reset: () => set({ session: newSession(), activeId: '', selection: null, histories: {}, persisted: [], durable: false, submissionLocked: false, saveState: 'idle', saveError: '', busy: false }),
   patch: (patch) => { if (!locked(get())) set(s => ({ session: { ...s.session, ...patch, updatedAt: Date.now() } })); },
   select: (activeId) => set({ activeId, selection: null }),
   addImages: (images) => {
-    const s = get(); if (s.busy) throw new Error('Wait for the current operation to finish.');
+    const s = get(); if (s.busy || s.submissionLocked) throw new Error('Check the previous operation before adding more images.');
     if (!images.length) return;
     // A sent session is immutable; new screenshots start a fresh draft.
     const fresh = !!s.session.issue; const session = fresh ? newSession() : s.session;
@@ -85,6 +86,7 @@ export const useStore = create<State>((set, get) => ({
   setTool: (tool) => set({ tool }),
   setStyle: (style) => set(style),
   setBusy: (busy) => set({ busy, selection: busy ? null : get().selection }),
+  setSubmissionLocked: (submissionLocked) => set({ submissionLocked, selection: null }),
   setSelection: (selection) => set({ selection }),
   updateAnnotation: (id, patch) => {
     const image = activeImage(get()); if (!image) return;

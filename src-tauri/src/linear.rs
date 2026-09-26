@@ -138,12 +138,48 @@ fn complete(app: &AppHandle, workspace: &str, mut session: Value, result: Value)
     Ok(issue)
 }
 
+/// Checks only the immutable attempted revision. A confirmed absence unlocks the draft without sending again.
+async fn reconcile_attempt(app: &AppHandle, session_id: &str, receipt: (String, String, Option<String>)) -> Result<Option<Value>, String> {
+    let token = access_token().await?;
+    let who = identity(&token).await?;
+    let workspace = who["organization"]["id"].as_str().ok_or("Workspace is unavailable.")?;
+    let decision = plan(Some((&receipt.0, &receipt.1, receipt.2.as_deref())), workspace);
+    if decision == Plan::WrongWorkspace { return Err("Reconnect the original workspace to check this report. Nothing new was sent.".into()); }
+    let storage = app.state::<Storage>();
+    let snapshot = storage.snapshot(session_id)?.ok_or("This older uncertain submission has no saved original revision. Review it in Linear before starting a separate report. Nothing new was sent.")?;
+    match decision {
+        Plan::Receipt(result) => complete(app, workspace, snapshot, serde_json::from_str(&result).map_err(|_| "Submission receipt is damaged.")?).map(Some),
+        Plan::Reconcile => {
+            progress(app, "Checking the exact report from the previous attempt…");
+            let body = request(&token, "query($id:String!) { issue(id:$id) { id identifier url } }", json!({"id": session_id})).await?;
+            if !body["data"]["issue"].is_null() { return complete(app, workspace, snapshot, body["data"]["issue"].clone()).map(Some); }
+            if !is_not_found(&body) { return Err(format!("{} The previous attempt is still unconfirmed; nothing new was sent.", describe_error(&body))); }
+            storage.set_submission(session_id, workspace, "retryable", None)?;
+            Ok(None)
+        }
+        _ => Err("There is no uncertain submission to check.".into()),
+    }
+}
+
+#[tauri::command]
+pub async fn reconcile_issue(window: WebviewWindow, app: AppHandle, id: String) -> Result<Option<Value>, String> {
+    main_only(&window)?; let session_id = crate::storage::id(&id)?;
+    let lock = app.state::<NetworkLock>(); let _guard = lock.0.try_lock().map_err(|_| "Another Linear operation is in progress. Please wait.")?;
+    let receipt = app.state::<Storage>().submission(&session_id)?.ok_or("There is no previous submission to check.")?;
+    reconcile_attempt(&app, &session_id, receipt).await
+}
+
 #[tauri::command]
 pub async fn submit_issue(window: WebviewWindow, app: AppHandle, session: Value, exports: Vec<Value>) -> Result<Value, String> {
     main_only(&window)?;
     let lock = app.state::<NetworkLock>();
     let _guard = lock.0.try_lock().map_err(|_| "Another Linear operation is in progress. Please wait.")?;
     let session_id = id(session["id"].as_str().ok_or("Missing session ID.")?)?;
+    if let Some(receipt) = app.state::<Storage>().submission(&session_id)? {
+        if receipt.1 == "creating" || receipt.1 == "sent" {
+            return reconcile_attempt(&app, &session_id, receipt).await?.ok_or_else(|| "Linear confirmed no issue exists. Review the report, then choose Create issue to send it.".into());
+        }
+    }
     let team_id = id(session["teamId"].as_str().filter(|s| !s.is_empty()).ok_or("Choose a Linear team.")?)?;
     let title = session["title"].as_str().map(str::trim).filter(|s| !s.is_empty() && s.chars().count() <= 250).ok_or("Enter a title under 250 characters.")?.to_string();
     let images = session["images"].as_array().ok_or("Missing screenshots.")?.clone();
@@ -172,14 +208,7 @@ pub async fn submit_issue(window: WebviewWindow, app: AppHandle, session: Value,
     let receipt = storage.submission(&session_id)?;
     match plan(receipt.as_ref().map(|(w, s, r)| (w.as_str(), s.as_str(), r.as_deref())), &workspace) {
         Plan::WrongWorkspace => return Err("This draft was previously sent from another workspace. Reconnect that workspace to reconcile it.".into()),
-        Plan::Receipt(result) => return complete(&app, &workspace, session, serde_json::from_str(&result).map_err(|_| "Submission receipt is damaged.")?),
-        Plan::Reconcile => {
-            progress(&app, "Checking whether the previous attempt created the issue…");
-            // A failed check stops here. Never replace the stable issue ID with a new one.
-            let body = request(&token, "query($id:String!) { issue(id:$id) { id identifier url } }", json!({"id": session_id})).await?;
-            if !body["data"]["issue"].is_null() { return complete(&app, &workspace, session, body["data"]["issue"].clone()); }
-            if !is_not_found(&body) { return Err(format!("{} The previous attempt could not be checked; nothing new was sent.", describe_error(&body))); }
-        }
+        Plan::Receipt(_) | Plan::Reconcile => return Err("Check the previous attempt before sending this report.".into()),
         Plan::Fresh => {}
     }
     storage.set_submission(&session_id, &workspace, "uploading", None)?;

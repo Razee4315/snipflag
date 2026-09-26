@@ -10,12 +10,13 @@ import Toolbar, { TOOLS } from './components/Toolbar';
 import { defaults, imageLabel, shortcutLabel, validateSession, type CaptureImage, type Connection, type Settings } from './model';
 import {
   appStatus, cancelLogin, clearHistory, connectLinear, deleteSession, desktop, disconnectLinear, editorWindow, errorText, exportPng, linearConnection, listSessions, loadSession,
-  loadSettings, on, PREVIEW_MESSAGE, readClipboardImage, saveSession, saveSettings, startCapture, submissionStatus, submitIssue, type AppStatus, type RawImage,
+  loadSettings, on, PREVIEW_MESSAGE, readClipboardImage, saveSession, saveSettings, startCapture, submissionStatus, submitIssue, reconcileIssue, finishQuit, type AppStatus, type RawImage,
 } from './native';
 import { fileBaseName, flatten, importImage } from './render';
 import { activeImage, isLocked, useStore } from './store';
 import { missingImageReferences } from './mentions';
 import { play, primeSound, setSoundEnabled } from './sound';
+import { saveBeforeQuit } from './lifecycle';
 
 type Notice = { kind: 'error' | 'info'; text: string; id: number } | null;
 const isTyping = (t: EventTarget | null) => t instanceof HTMLElement && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName));
@@ -45,7 +46,8 @@ export default function App() {
   // Durable drafts: every change is saved shortly after it happens, and immediately before capture or network work.
   const saveNow = useCallback(() => {
     const run = async () => {
-      const { session: s, persisted, durable, setSaveState, markPersisted } = useStore.getState();
+      const { session: s, persisted, durable, submissionLocked, setSaveState, markPersisted } = useStore.getState();
+      if (submissionLocked) { setSaveState('saved'); return; } // The durable attempted revision is immutable until reconciliation.
       if (!durable && !s.images.length && !s.title.trim() && !s.description.trim()) { setSaveState('idle'); return; }
       setSaveState('saving');
       try {
@@ -112,7 +114,9 @@ export default function App() {
   useEffect(() => { if (status?.shortcutError) notify(status.shortcutError, 'error'); }, [status, notify]);
   useEffect(() => {
     setPendingState(null); setSubmitError(''); setProgress('');
-    submissionStatus(session.id).then(s => setPendingState(s?.state ?? null)).catch(() => undefined);
+    let live = true;
+    submissionStatus(session.id).then(s => { if (live) setPendingState(s?.state ?? null); }).catch(() => undefined);
+    return () => { live = false; };
   }, [session.id]);
 
   const addImages = useCallback((images: CaptureImage[]) => {
@@ -143,10 +147,23 @@ export default function App() {
     if (!desktop) { notify(PREVIEW_MESSAGE, 'error'); return; }
     const s = useStore.getState();
     if (s.busy) return;
+    if (s.submissionLocked) { notify('Check the previous submission or start a new session before capturing.', 'error'); return; }
     if (!s.session.issue && s.session.images.length >= 10) { notify('This session already has 10 screenshots. Start a new session to capture more.', 'error'); return; }
     try { await flush(); await startCapture(); } catch (e) { notify(errorText(e), 'error'); }
   }, [flush, notify]);
   const captureRef = useRef(capture); captureRef.current = capture;
+
+  useEffect(() => {
+    const listener = on<string>('quit-requested', requestId => {
+      void saveBeforeQuit({
+        isBusy: () => useStore.getState().busy,
+        commit: () => { (document.activeElement as HTMLElement | null)?.blur(); window.dispatchEvent(new Event('snipflag-commit-edit')); },
+        lock: value => useStore.getState().setBusy(value), save: flush,
+        finish: saved => finishQuit(requestId, saved),
+      }).catch(e => notify(`Snipflag is still open: ${errorText(e)}`, 'error'));
+    });
+    return () => { void listener.then(unlisten => unlisten()); };
+  }, [flush, notify]);
 
   useEffect(() => {
     const subs = [
@@ -189,6 +206,20 @@ export default function App() {
     if (s.busy) return;
     const fail = (message: string) => { setSubmitError(message); play('error'); };
     if (!desktop) { fail(PREVIEW_MESSAGE); return; }
+    if (s.submissionLocked) {
+      s.setBusy(true); setSubmitError(''); setProgress('Checking the previous report…');
+      try {
+        const issue = await reconcileIssue(s.session.id);
+        if (issue) {
+          useStore.getState().hydrate(await loadSession(s.session.id)); setPendingState('sent'); play('success');
+        } else {
+          useStore.getState().setSubmissionLocked(false); setPendingState(null);
+          notify('Linear confirmed no issue exists. You can edit this report and choose Create issue when ready.');
+        }
+      } catch (e) { fail(errorText(e)); }
+      finally { useStore.getState().setBusy(false); setProgress(''); }
+      return;
+    }
     const invalid = validateSession(s.session);
     if (invalid) { fail(invalid); return; }
     const missing = missingImageReferences(s.session.description, s.session.images, s.session.imageReferences ?? {});
@@ -203,14 +234,18 @@ export default function App() {
         setProgress(`Preparing screenshot ${i + 1} of ${snapshot.images.length}…`);
         exports.push({ id: img.id, dataUrl: await flatten(img) });
       }
-      const issue = await submitIssue(snapshot, persisted, exports);
-      useStore.getState().setIssue(issue); setPendingState('sent'); setProgress('');
+      await submitIssue(snapshot, persisted, exports);
+      useStore.getState().hydrate(await loadSession(snapshot.id)); useStore.getState().setBusy(false); setPendingState('sent'); setProgress('');
       play('success');
     } catch (e) {
+      try {
+        const status = await submissionStatus(s.session.id);
+        setPendingState(status?.state ?? null);
+        useStore.getState().setSubmissionLocked(status?.state === 'creating' || status?.state === 'sent');
+      } catch { useStore.getState().setSubmissionLocked(true); }
       useStore.getState().setBusy(false); setProgress(''); fail(errorText(e));
-      submissionStatus(s.session.id).then(x => setPendingState(x?.state ?? null)).catch(() => undefined);
     }
-  }, [connection, flush]);
+  }, [connection, flush, notify]);
 
   const connect = useCallback(async () => {
     setConnectionState('connecting'); setConnectionError('');

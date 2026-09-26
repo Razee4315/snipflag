@@ -106,7 +106,8 @@ impl Storage {
             CREATE TABLE IF NOT EXISTS sessions(id TEXT PRIMARY KEY, updated INTEGER NOT NULL, data TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, data TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS submissions(id TEXT PRIMARY KEY, workspace TEXT NOT NULL, state TEXT NOT NULL, result TEXT);
-            CREATE TABLE IF NOT EXISTS deletions(id TEXT PRIMARY KEY);")
+            CREATE TABLE IF NOT EXISTS deletions(id TEXT PRIMARY KEY);
+            CREATE TABLE IF NOT EXISTS submission_snapshots(id TEXT PRIMARY KEY, data TEXT NOT NULL);")
             .map_err(|_| "Cannot initialize draft database.")?;
         Ok(Self { root, db: Mutex::new(db), mutations: Mutex::new(()) })
     }
@@ -126,6 +127,11 @@ impl Storage {
         if images.len() > MAX_IMAGES { return Err("A session can contain up to 10 images.".into()); }
         for field in ["title", "description"] { if session[field].as_str().unwrap_or("").len() > MAX_TEXT { return Err("Draft text is too long.".into()); } }
         if session["issue"].is_null() && self.stored_issue(&session_id)?.is_some() { return Err("This session was already sent to Linear and cannot be changed.".into()); }
+        if self.submission(&session_id)?.is_some_and(|(_, state, _)| state == "creating" || state == "sent") {
+            if let Some(snapshot) = self.snapshot(&session_id)? {
+                if submission_content(&snapshot) != submission_content(session) { return Err("This report is locked to its submitted revision. Check the previous attempt before editing.".into()); }
+            } else if session["issue"].is_null() { return Err("This older uncertain submission has no saved revision. Check it in Linear before starting a separate report.".into()); }
+        }
         if let Some(histories) = session.get("annotationHistories") {
             let histories = histories.as_object().ok_or("Invalid annotation history.")?;
             if histories.len() > MAX_IMAGES { return Err("Too many image histories.".into()); }
@@ -139,7 +145,9 @@ impl Storage {
                 }
             }
         }
-        let mut data = session.clone(); let mut total = 0usize; let mut unique = HashSet::new();
+        let mut data = session.clone();
+        if let Some(object) = data.as_object_mut() { object.remove("submissionLocked"); object.remove("deletionPending"); }
+        let mut total = 0usize; let mut unique = HashSet::new();
         for (index, img) in images.iter().enumerate() {
             let image_id = id(img["id"].as_str().ok_or("Missing image ID.")?)?;
             if !unique.insert(image_id.clone()) { return Err("Duplicate image ID.".into()); }
@@ -193,6 +201,7 @@ impl Storage {
             let bytes = std::fs::read(self.image_path(&session_id, &image_id)).map_err(|_| "A draft image is missing.")?;
             img["dataUrl"] = json!(png_url(&bytes));
         }
+        session["submissionLocked"] = json!(session["issue"].is_null() && self.submission(&session_id)?.is_some_and(|(_, state, _)| state == "creating" || state == "sent"));
         Ok(session)
     }
     pub fn list(&self) -> Result<Vec<Value>, String> {
@@ -214,7 +223,11 @@ impl Storage {
         self.db.lock().map_err(|_| "Database unavailable.")?.execute("INSERT OR IGNORE INTO deletions(id) VALUES(?1)", [&session_id]).map_err(|_| "Could not begin draft deletion.")?;
         // Keep the history entry until all files are removed so a failed cleanup can be retried.
         self.remove_images(&session_id, |_| true)?;
-        self.db.lock().map_err(|_| "Database unavailable.")?.execute("DELETE FROM sessions WHERE id=?1", [&session_id]).map_err(|_| "Could not finish draft deletion.")?;
+        let mut db = self.db.lock().map_err(|_| "Database unavailable.")?;
+        let tx = db.transaction().map_err(|_| "Could not finish draft deletion.")?;
+        tx.execute("DELETE FROM submission_snapshots WHERE id=?1", [&session_id]).map_err(|_| "Could not delete the submitted revision.")?;
+        tx.execute("DELETE FROM sessions WHERE id=?1", [&session_id]).map_err(|_| "Could not finish draft deletion.")?;
+        tx.commit().map_err(|_| "Could not finish draft deletion.")?;
         // Receipts and tombstones prevent uncertain sends or stale autosaves from being replayed.
         Ok(())
     }
@@ -270,11 +283,34 @@ impl Storage {
         db.query_row("SELECT workspace,state,result FROM submissions WHERE id=?1", [session_id], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?))).optional().map_err(|_| "Cannot inspect previous submission.".into())
     }
     pub fn set_submission(&self, session_id: &str, workspace: &str, state: &str, result: Option<&str>) -> Result<(), String> {
-        self.db.lock().map_err(|_| "Database unavailable.")?
-            .execute("INSERT INTO submissions(id,workspace,state,result) VALUES(?1,?2,?3,?4) ON CONFLICT(id) DO UPDATE SET state=excluded.state,result=COALESCE(excluded.result,submissions.result)", params![session_id, workspace, state, result])
+        let _guard = self.mutations.lock().map_err(|_| "Draft storage unavailable.")?;
+        if self.deleting(session_id)? { return Err("This draft was deleted; nothing new will be sent.".into()); }
+        let mut db = self.db.lock().map_err(|_| "Database unavailable.")?;
+        let tx = db.transaction().map_err(|_| "Cannot save submission state.")?;
+        if state == "creating" {
+            // Snapshot and unknown-outcome marker become durable together before issuing the mutation.
+            let data: String = tx.query_row("SELECT data FROM sessions WHERE id=?1", [session_id], |r| r.get(0)).map_err(|_| "Save the report before submitting.")?;
+            tx.execute("INSERT INTO submission_snapshots(id,data) VALUES(?1,?2) ON CONFLICT(id) DO UPDATE SET data=excluded.data", params![session_id, data]).map_err(|_| "Cannot save submitted revision.")?;
+        }
+        tx.execute("INSERT INTO submissions(id,workspace,state,result) VALUES(?1,?2,?3,?4) ON CONFLICT(id) DO UPDATE SET state=excluded.state,result=COALESCE(excluded.result,submissions.result)", params![session_id, workspace, state, result])
             .map_err(|_| "Cannot save submission state.")?;
+        tx.commit().map_err(|_| "Cannot finish saving submission state.")?;
         Ok(())
     }
+    pub fn snapshot(&self, session_id: &str) -> Result<Option<Value>, String> {
+        let raw: Option<String> = self.db.lock().map_err(|_| "Database unavailable.")?.query_row("SELECT data FROM submission_snapshots WHERE id=?1", [session_id], |r| r.get(0)).optional().map_err(|_| "Cannot read submitted revision.")?;
+        raw.map(|s| serde_json::from_str(&s).map_err(|_| "Submitted revision is damaged.".into())).transpose()
+    }
+}
+
+/// Only report content is immutable; persistence timestamps and local undo history are not sent to Linear.
+fn submission_content(session: &Value) -> Value {
+    let mut content = session.clone();
+    if let Some(object) = content.as_object_mut() {
+        for key in ["updatedAt", "issue", "annotationHistories", "submissionLocked", "deletionPending"] { object.remove(key); }
+    }
+    if let Some(images) = content["images"].as_array_mut() { for image in images { image["dataUrl"] = json!(""); } }
+    content
 }
 
 #[tauri::command]
@@ -377,6 +413,33 @@ mod tests {
         store.save(&s).unwrap();
         assert_eq!(store.load(s["id"].as_str().unwrap()).unwrap()["annotationHistories"], s["annotationHistories"]);
         assert!(store.list().unwrap()[0].get("annotationHistories").is_none());
+    }
+    #[test] fn unknown_create_locks_exact_revision_across_restart_until_confirmed_absent() {
+        let store = temp(); let mut s = session(vec![image(2, 2)]); let sid = s["id"].as_str().unwrap().to_string();
+        store.save(&s).unwrap(); store.set_submission(&sid, "workspace", "creating", None).unwrap();
+        let root = store.root.clone(); drop(store);
+        let store = Storage::open_at(root).unwrap();
+        assert_eq!(store.load(&sid).unwrap()["submissionLocked"], true);
+        s["title"] = json!("Never sent"); assert!(store.save(&s).is_err());
+        assert_eq!(store.snapshot(&sid).unwrap().unwrap()["title"], "t");
+        store.set_submission(&sid, "workspace", "retryable", None).unwrap();
+        store.save(&s).unwrap(); assert_eq!(store.load(&sid).unwrap()["submissionLocked"], false);
+        store.set_submission(&sid, "workspace", "creating", None).unwrap();
+        assert_eq!(store.snapshot(&sid).unwrap().unwrap()["title"], "Never sent");
+    }
+    #[test] fn confirmed_receipt_preserves_snapshot_and_retention_protects_uncertain_sends() {
+        let store = temp(); let s = session(vec![image(2, 2)]); let sid = s["id"].as_str().unwrap();
+        store.save(&s).unwrap(); store.set_submission(sid, "w", "creating", None).unwrap();
+        store.db.lock().unwrap().execute("UPDATE sessions SET updated=0", []).unwrap();
+        assert_eq!(store.prune(1).unwrap(), 0);
+        let issue = json!({"id":sid,"identifier":"TEST-1","url":"https://linear.app/test"});
+        store.set_submission(sid, "w", "sent", Some(&issue.to_string())).unwrap();
+        let mut sent = store.snapshot(sid).unwrap().unwrap(); sent["issue"] = issue;
+        store.save(&sent).unwrap();
+        assert_eq!(store.load(sid).unwrap()["title"], "t");
+        sent["title"] = json!("changed"); assert!(store.save(&sent).is_err());
+        store.delete(sid).unwrap(); assert!(store.snapshot(sid).unwrap().is_none());
+        assert!(store.submission(sid).unwrap().is_some());
     }
     #[test] fn settings_are_validated() {
         assert!(normalize_settings(&json!({"clientId":"abc 123"})).is_err());

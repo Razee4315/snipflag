@@ -58,6 +58,12 @@ export default function Editor({ image, zoom, onZoom, onScale }: Props) {
   const [textEdit, setTextEditState] = useState<TextEdit | null>(null);
   // Mirrors textEdit so blur and pointer handlers commit the same edit at most once.
   const textRef = useRef<TextEdit | null>(null);
+  const commitPending = useRef<() => void>(() => undefined);
+  useEffect(() => {
+    const commit = () => commitPending.current();
+    window.addEventListener('snipflag-commit-edit', commit);
+    return () => window.removeEventListener('snipflag-commit-edit', commit);
+  }, []);
   const setTextEdit = (t: TextEdit | null) => { textRef.current = t; setTextEditState(t); };
   const start = useRef<{ x: number; y: number } | null>(null);
   const textStart = useRef<{ x: number; y: number } | null>(null);
@@ -177,6 +183,7 @@ export default function Editor({ image, zoom, onZoom, onScale }: Props) {
     edit([...image.annotations, d]);
     if (d.kind === 'redact' || d.kind === 'pixelate' || isOutline(d.kind)) setSelection(null);
   };
+  commitPending.current = () => { commitText(); if (draftRef.current) onUp(); };
   const onWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
     if (!e.evt.ctrlKey && !e.evt.metaKey) return;
     e.evt.preventDefault();

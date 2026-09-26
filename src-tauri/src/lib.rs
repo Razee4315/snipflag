@@ -18,6 +18,36 @@ use storage::{main_only, Storage};
 
 /// Last global shortcut registration problem, shown in the editor instead of failing silently.
 struct ShortcutStatus(Mutex<Option<String>>);
+#[derive(Default)]
+struct QuitState { pending: Mutex<Option<String>>, allowed: AtomicBool }
+
+fn request_quit(app: &AppHandle) {
+    show_main(app);
+    let state = app.state::<QuitState>();
+    let Ok(mut pending) = state.pending.lock() else { return };
+    if pending.is_some() { return; }
+    let request = uuid::Uuid::new_v4().to_string();
+    *pending = Some(request.clone());
+    if app.emit_to("main", "quit-requested", &request).is_err() { pending.take(); return; }
+    let handle = app.clone();
+    tauri::async_runtime::spawn(async move {
+        tokio::time::sleep(std::time::Duration::from_secs(15)).await;
+        // A missing renderer acknowledgment must never force an unsafe exit. Allow another attempt.
+        if let Ok(mut pending) = handle.state::<QuitState>().pending.lock() {
+            if pending.as_deref() == Some(&request) { pending.take(); }
+        };
+    });
+}
+#[tauri::command]
+fn finish_quit(window: WebviewWindow, app: AppHandle, request_id: String, saved: bool) -> Result<(), String> {
+    main_only(&window)?;
+    let state = app.state::<QuitState>();
+    let mut pending = state.pending.lock().map_err(|_| "Quit state unavailable.")?;
+    if pending.as_deref() != Some(&request_id) { return Err("Quit request expired. Try Quit again.".into()); }
+    pending.take(); drop(pending);
+    if saved { state.allowed.store(true, Ordering::SeqCst); app.exit(0); }
+    Ok(())
+}
 
 pub fn show_main(app: &AppHandle) {
     REVEALED.store(true, Ordering::SeqCst);
@@ -173,7 +203,7 @@ fn build_tray(app: &AppHandle) -> tauri::Result<()> {
         .on_menu_event(|app, event| match event.id().as_ref() {
             "capture" => request_capture(app),
             "show" => show_main(app),
-            "quit" => app.exit(0),
+            "quit" => request_quit(app),
             _ => {}
         })
         .on_tray_icon_event(|tray, event| {
@@ -200,6 +230,7 @@ pub fn run() {
         .manage(capture::CaptureState(Mutex::new(None)))
         .manage(files::ClipboardState(Mutex::new(None)))
         .manage(ShortcutStatus(Mutex::new(None)))
+        .manage(QuitState::default())
         .setup(|app| {
             let storage = Storage::open(app.handle())?;
             let settings = storage.settings()?;
@@ -234,15 +265,18 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             storage::save_session, storage::load_session, storage::list_sessions, storage::delete_session,
             storage::clear_history, storage::load_settings, storage::submission_status,
-            save_settings, app_status, editor_window,
+            save_settings, app_status, editor_window, finish_quit,
             auth::connect_linear, auth::cancel_login, auth::disconnect_linear,
-            linear::linear_connection, linear::linear_team_options, linear::submit_issue, linear::open_issue, linear::open_linear_setup, linear::open_about_link,
+            linear::linear_connection, linear::linear_team_options, linear::submit_issue, linear::reconcile_issue, linear::open_issue, linear::open_linear_setup, linear::open_about_link,
             capture::start_capture, capture::capture_frame, capture::capture_ready, capture::capture_select, capture::capture_cancel,
             files::export_png, files::read_clipboard_image, files::copy_text,
         ])
         .build(tauri::generate_context!())
         .expect("failed to build Snipflag");
     app.run(|app, event| match event {
+        RunEvent::ExitRequested { api, .. } => {
+            if !app.state::<QuitState>().allowed.load(Ordering::SeqCst) { api.prevent_exit(); request_quit(app); }
+        }
         RunEvent::Exit => {
             // arboard must be dropped before the process exits.
             if let Ok(mut clipboard) = app.state::<files::ClipboardState>().0.lock() { clipboard.take(); }

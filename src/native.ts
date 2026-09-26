@@ -82,12 +82,14 @@ export async function openAboutLink(target: AboutLink) {
 export const submitIssue = (session: Session, persisted: string[], exports: { id: string; dataUrl: string }[]) =>
   native<IssueResult>('submit_issue', { session: forSave(session, persisted), exports });
 export const submissionStatus = (id: string) => desktop ? native<{ state: string } | null>('submission_status', { id }) : Promise.resolve(null);
+export const reconcileIssue = (id: string) => native<IssueResult | null>('reconcile_issue', { id });
 export const openIssue = (url: string) => native<void>('open_issue', { url });
 export async function copyText(text: string) {
   if (desktop) return native<void>('copy_text', { text });
   await navigator.clipboard.writeText(text);
 }
 export const startCapture = () => native<void>('start_capture');
+export const finishQuit = (requestId: string, saved: boolean) => native<void>('finish_quit', { requestId, saved });
 
 export interface RawImage { dataUrl: string; width: number; height: number }
 export async function readClipboardImage(): Promise<RawImage | Blob> {
