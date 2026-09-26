@@ -6,16 +6,18 @@ Tauri 2 / Rust desktop core; React + TypeScript + Vite UI; Konva/react-konva ann
 
 ## Modules
 
-- `src/model.ts`: session/asset/annotation types and pure state operations.
-- `src/store.ts`: editing state, independent undo histories, hydration.
-- `src/components/Editor.tsx`: canvas editing and transforms.
-- `src/render.ts`: authoritative flattened PNG export with redaction last.
-- `src/native.ts`: narrow IPC facade; explicit browser-preview limitations.
-- `src-tauri/src/storage.rs`: schema, atomic draft persistence, bounded assets, retention.
-- `src-tauri/src/capture.rs`: frames, overlays, crop, cancellation, shortcut integration.
-- `src-tauri/src/linear.rs`: metadata, validation, uploads, issue creation/reconciliation.
-- `src-tauri/src/auth.rs`: PKCE loopback flow and credential storage/refresh.
-- `src-tauri/src/lib.rs`: application wiring, tray, single instance, command registration.
+- `src/model.ts`: session/asset/annotation types, limits, and pure helpers (reorder, validation, rect clamping, overlay→frame pixel mapping, shortcut parsing).
+- `src/geometry.ts`: annotation bounds, move, and resize in image coordinates.
+- `src/store.ts`: Zustand editing state, independent per-image undo histories, selection, busy/sent locks, persisted-image tracking.
+- `src/render.ts`: import/conversion to PNG, pixelation, `drawAnnotation`, and the authoritative flattened PNG export with redaction painted last. The editor draws every annotation with the same `drawAnnotation`, so the canvas matches the export.
+- `src/native.ts`: narrow IPC facade; browser preview uses IndexedDB and refuses Linear/capture actions with an explicit message.
+- `src/App.tsx` and `src/components/*`: workspace, toolbar, Konva editor, filmstrip, issue panel, settings/history dialogs, and the per-monitor capture overlay (`index.html?capture=N`).
+- `src-tauri/src/storage.rs`: SQLite schema, atomic image writes by validated UUID, bounded decoding, retention, settings validation, submission receipts.
+- `src-tauri/src/capture.rs`: XCap frames for all monitors (off the UI thread), overlay windows per monitor, crop in Rust, cancel/close handling.
+- `src-tauri/src/linear.rs`: GraphQL metadata with pagination, uploads, ordered Markdown, idempotent issue creation with reconciliation.
+- `src-tauri/src/auth.rs`: PKCE loopback flow with state check, timeout and cancel; keyring credential storage and refresh.
+- `src-tauri/src/files.rs`: clipboard image read/write (arboard) and native save picker export.
+- `src-tauri/src/lib.rs`: plugin wiring (single instance first), tray, global shortcut, close-to-tray, command registration.
 
 ## Data
 
