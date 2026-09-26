@@ -172,7 +172,11 @@ Owner confirmed round two works and requested: better sounds, custom colors with
 
 Implemented: Web Audio bus with compressor and synthesized convolver room; layered shutter/pop/bell/knock cues. `src/color.ts` (hex/HSV, per-device custom colors, unit tests) and `ColorPicker` popover. Tools added: ellipse (E) and numbered steps (N); both render through the shared exporter. Redrawn tool icons with filled accents. Settings → About with creator links; Rust `open_about_link` only opens four fixed URLs (unit test). Text entry box transparent and content-sized. All hover transforms removed. Version 1.1.0 in package, lockfiles, Tauri and Cargo.
 
-Verification: pending on Actions. Release publication needs explicit owner approval.
+Owner mid-round requests also done: transparent, content-sized text entry box; no hover movement anywhere.
+
+Verification: `696d5d9` browser test for steps failed (clicks assumed 100% zoom); investigating the screenshot exposed a real layout jump (tool hint text wrapped the toolbar and moved the canvas), fixed in `1f2dc9f` by removing hint text and asserting the canvas does not move on tool change; the assertion then needed to wait for the canvas fade-in. **Process error:** `git add -A` in `696d5d9` (and `-a` in `664f204`, `1f2dc9f`) committed the separate website agent's in-progress `site/` files. `e0f97ba` untracks `site/` again without touching the files on disk; that workstream should commit its own files. From now on only explicit paths are staged.
+
+Final: [Checks 36234071860](https://github.com/Razee4315/snipflag/actions/runs/36234071860) at `e0f97ba` all green: 23 unit tests, 18/18 browser tests without retries, 22 Rust tests plus all-target check on Windows, macOS and Linux. [Development installers 36234286219](https://github.com/Razee4315/snipflag/actions/runs/36234286219) at `e0f97ba`: all four targets green, version 1.1.0, unsigned. CI screenshots reviewed: custom color picker, About section, redrawn toolbar icons in dark theme. Not published as a release; that needs explicit owner approval. Native gates: sound quality in WebView2, picker drag feel, step/ellipse with a real pointer.
 
 ## Marketing website — 2026-09-26
 
