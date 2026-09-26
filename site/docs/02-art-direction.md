@@ -72,3 +72,12 @@ Every competitor claim was checked on 2026-09-26 against the vendor's own page a
 - Edit the home page in `site/index.html`. Edit the comparison pages only through `site/tools/build_pages.py`, then run `python site/tools/build_pages.py`.
 - When competitor facts change, update the data and `CHECKED` together. A claim without a vendor source becomes "Not documented".
 - Preview locally with `python -m http.server 4173 --directory site`. The 404 page uses `/snipflag/` absolute paths, so it only renders correctly on Pages.
+
+## Revision 2026-09-26: minimal and readable (owner request)
+The owner asked for a cleaner, minimal site with less text, an easy-to-read font, and a retaken hero image. This supersedes the "Capture HUD" details above wherever they conflict.
+- Type: Geist 400/500/600 for everything, Geist Mono 500 for small labels. Body 18px/1.65; h1 up to 4.75rem, h2 up to 3rem, tracking -0.03em.
+- Palette unchanged in spirit: `#0C1F1B` background, `#122A25`/`#1A3731` surfaces, `#EEF2EE` text, `#A7B7B0` muted, `#FFB25B` accent. Radius 14px on cards and pill buttons.
+- Removed: preloader, custom cursor, grain and dot grid, self-capture overlay and arrow, pinned session sequence, tool marquee, problem file pile, curtain footer, scroll word-fade.
+- Kept: Lenis smooth scroll, masked heading reveals, fade-up reveals, gentle hero parallax, and the "Try it" editor (now on the billing sample, 2x pixels, 24px pixelate blocks).
+- Home: centered hero with the product image, 3 steps, try it, 4 features, compare summary, 5 FAQs, download cards (the visitor's OS is highlighted), simple footer.
+- Hero image: `site/tools/hero.shot.ts` renders the real UI (browser-preview build, synthetic content, preview banner hidden) at 1200×760 @2x in the "Website screenshots" workflow. `hero-dark.webp` and the editor's `sample.webp` come from its artifact.

@@ -15,7 +15,7 @@ CHECKED = "26 September 2026"
 CHECKED_ISO = "2026-09-26"
 REL = "https://github.com/Razee4315/snipflag/releases/download/v1.0.0/"
 
-FONTS = "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Instrument+Sans:wght@400..600&family=JetBrains+Mono:wght@400;500&display=swap"
+FONTS = "https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@500&display=swap"
 CSP = ("default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
        "font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; base-uri 'self'; form-action 'none'")
 
@@ -35,7 +35,7 @@ def head(p, title, desc, path, jsonld, noindex=False):
 <meta name="description" content="{escape(desc)}">
 <link rel="canonical" href="{url}">
 <meta name="robots" content="{robots}">
-<meta name="theme-color" content="#0B1F1B">
+<meta name="theme-color" content="#0C1F1B">
 <meta http-equiv="Content-Security-Policy" content="{CSP}">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta property="og:type" content="article">
@@ -65,7 +65,6 @@ def head(p, title, desc, path, jsonld, noindex=False):
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
-<div class="cursor" aria-hidden="true"><span class="h"></span><span class="v"></span><span class="dot"></span><span class="xy">0, 0</span></div>
 """
 
 
@@ -73,42 +72,28 @@ def header(p, current=""):
     cur = ' aria-current="page"' if current == "compare" else ""
     return f"""<header class="site-header">
   <div class="wrap">
-    <a class="brand" href="{p}" aria-label="Snipflag home"><img src="{p}favicon.svg" width="30" height="30" alt="">Snipflag</a>
+    <a class="brand" href="{p}" aria-label="Snipflag home"><img src="{p}favicon.svg" width="28" height="28" alt="">Snipflag</a>
     <nav class="nav" id="nav" aria-label="Main">
       <a class="wipe" href="{p}#how">How it works</a>
       <a class="wipe" href="{p}#try">Try it</a>
-      <a class="wipe" href="{p}#features">Features</a>
       <a class="wipe" href="{p}compare/"{cur}>Compare</a>
       <a class="wipe" href="{p}#faq">FAQ</a>
       <a class="wipe" href="https://github.com/Razee4315/snipflag">GitHub</a>
     </nav>
-    <a class="btn btn-primary btn-sm nav-cta" href="#download">Download</a>
+    <a class="btn btn-primary btn-sm nav-cta" href="{p}#download">Download</a>
     <button class="menu-btn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="nav"><span></span><span></span><span></span></button>
   </div>
 </header>
 """
 
 
-def footer(p, title="One issue.<br>Full story."):
-    return f"""<footer class="site-footer" id="download">
+def footer(p):
+    return f"""<footer class="site-footer">
   <div class="wrap">
-    <p class="label">Download · v1.0.0 preview</p>
-    <p class="display" data-foot-title>{title}</p>
-    <div class="foot-dl">
-      <a class="btn" href="{REL}unsigned-Snipflag_1.0.0_x64-setup.exe" data-os="windows">Windows <small>.exe · 4.4 MB</small></a>
-      <a class="btn alt" href="{REL}unsigned-Snipflag_1.0.0_x64_en-US.msi" data-os="windows">Windows <small>.msi · 6 MB</small></a>
-      <a class="btn" href="{REL}unsigned-Snipflag_1.0.0_aarch64.dmg" data-os="mac">macOS Apple silicon <small>.dmg · 5.4 MB</small></a>
-      <a class="btn alt" href="{REL}unsigned-Snipflag_1.0.0_x64.dmg" data-os="mac">macOS Intel <small>.dmg · 5.8 MB</small></a>
-      <a class="btn" href="{REL}unsigned-Snipflag_1.0.0_amd64.AppImage" data-os="linux">Linux <small>AppImage · 83 MB</small></a>
-      <a class="btn alt" href="{REL}unsigned-Snipflag_1.0.0_amd64.deb" data-os="linux">Linux <small>.deb · 7.3 MB</small></a>
-    </div>
-    <p class="foot-note">Unsigned preview builds from <a href="https://github.com/Razee4315/snipflag/releases/tag/v1.0.0">GitHub Releases</a>, with <a href="{REL}SHA256SUMS.txt">SHA-256 checksums</a>. Your OS will ask before opening them.</p>
-    <div class="foot-bottom">
-      <nav aria-label="Product"><h2>Product</h2><a class="wipe" href="{p}#how">How it works</a><a class="wipe" href="{p}#try">Try it</a><a class="wipe" href="{p}#features">Features</a><a class="wipe" href="{p}#faq">FAQ</a></nav>
-      <nav aria-label="Compare"><h2>Compare</h2><a class="wipe" href="{p}compare/">All alternatives</a><a class="wipe" href="{p}compare/screenpresso/">vs Screenpresso</a><a class="wipe" href="{p}compare/jam/">vs Jam</a><a class="wipe" href="{p}compare/bugshot/">vs BugShot</a><a class="wipe" href="{p}compare/sharex-greenshot-flameshot/">vs ShareX, Greenshot, Flameshot</a></nav>
-      <nav aria-label="Project"><h2>Project</h2><a class="wipe" href="https://github.com/Razee4315/snipflag">GitHub</a><a class="wipe" href="https://github.com/Razee4315/snipflag/releases">Releases</a><a class="wipe" href="https://github.com/Razee4315/snipflag/issues">Report a problem</a><a class="wipe" href="https://github.com/Razee4315/snipflag/blob/main/LICENSE">MIT License</a></nav>
-      <p class="fine">© 2026 Snipflag contributors. Snipflag is an independent project and is not affiliated with Linear or any product compared here. Product names belong to their owners.</p>
-    </div>
+    <div class="fine"><a class="brand" href="{p}"><img src="{p}favicon.svg" width="28" height="28" alt="">Snipflag</a><p>© 2026 Snipflag contributors. Not affiliated with Linear or any product compared here. Product names belong to their owners.</p></div>
+    <nav aria-label="Product"><h2>Product</h2><a href="{p}#how">How it works</a><a href="{p}#try">Try it</a><a href="{p}#download">Download</a></nav>
+    <nav aria-label="Compare"><h2>Compare</h2><a href="{p}compare/">All tools</a><a href="{p}compare/screenpresso/">Screenpresso</a><a href="{p}compare/jam/">Jam</a><a href="{p}compare/bugshot/">BugShot</a><a href="{p}compare/sharex-greenshot-flameshot/">ShareX and others</a></nav>
+    <nav aria-label="Project"><h2>Project</h2><a href="https://github.com/Razee4315/snipflag">GitHub</a><a href="https://github.com/Razee4315/snipflag/releases">Releases</a><a href="https://github.com/Razee4315/snipflag/blob/main/LICENSE">MIT License</a></nav>
   </div>
 </footer>
 """
@@ -177,8 +162,8 @@ def faq_ld(qas):
 def cta(p, text):
     return f"""<section class="section" aria-label="Download Snipflag"><div class="wrap">
 <div class="cta-band" data-reveal><h2>{text}</h2>
-<div class="hero-actions"><a class="btn btn-primary" data-download href="https://github.com/Razee4315/snipflag/releases/tag/v1.0.0">{DL}<span data-dl-label>Download v1.0.0</span> <small data-dl-meta>Free</small></a>
-<a class="btn btn-ghost" href="{p}#try">Try the editor {ARROW}</a></div></div>
+<div class="hero-actions"><a class="btn btn-primary" data-download href="{p}#download">{DL}<span data-dl-label>Download free</span> <small data-dl-meta></small></a>
+<a class="btn btn-ghost" href="{p}#try">Try it in your browser</a></div></div>
 </div></section>"""
 
 
@@ -337,7 +322,7 @@ def hub():
 </div></section>
 
 <section class="section" aria-labelledby="pick-title"><div class="wrap">
-<div class="head"><p class="label">Quick answer</p><h2 id="pick-title" data-split>Pick by where your bugs live.</h2><p>No tool wins everything. This is the short version.</p></div>
+<div class="head"><p class="eyebrow">Quick answer</p><h2 id="pick-title" data-split>Pick by where your bugs live.</h2><p>No tool wins everything. This is the short version.</p></div>
 <div class="verdict">
 <div class="pick us" data-reveal><p class="label">Choose Snipflag if</p><h2>The bug is on your screen, and it belongs in Linear.</h2><ul>
 <li>You need several annotated screenshots in one Linear issue, in order</li>
@@ -353,7 +338,7 @@ def hub():
 </div></section>
 
 <section class="section" aria-labelledby="detail-title"><div class="wrap">
-<div class="head"><p class="label">Detailed comparisons</p><h2 id="detail-title" data-split>One page per tool.</h2><p>Side-by-side tables, when to pick each, and sources.</p></div>
+<div class="head"><p class="eyebrow">Detailed comparisons</p><h2 id="detail-title" data-split>One page per tool.</h2><p>Side-by-side tables, when to pick each, and sources.</p></div>
 <div class="compare-links">{cards}</div>
 <p class="sources mt2">Sources: {src_html}</p>
 </div></section>
@@ -392,7 +377,7 @@ def page(slug, c):
 </div></section>
 
 <section class="section pt0" aria-labelledby="table-title"><div class="wrap">
-<div class="head"><p class="label">Side by side</p><h2 id="table-title" data-split>The details.</h2><p>From each product's own pages. “Not documented” means we could not confirm it.</p></div>
+<div class="head"><p class="eyebrow">Side by side</p><h2 id="table-title" data-split>The details.</h2><p>From each product's own pages. “Not documented” means we could not confirm it.</p></div>
 {table(["Feature", "Snipflag", c['name']], c['rows'], "Found a mistake? <a class=\"inline-link\" href=\"https://github.com/Razee4315/snipflag/issues\">Tell us on GitHub</a> and we will fix it.")}
 </div></section>
 
@@ -418,10 +403,10 @@ def not_found():
     ld = {"@context": "https://schema.org", "@type": "WebPage", "name": "Page not found"}
     html = head(p, "Page not found · Snipflag", "This page does not exist. Go back to Snipflag.", "404.html", ld, noindex=True) + header(p) + f"""<main id="main">
 <section class="hero" aria-labelledby="nf-title"><div class="wrap">
-<p class="hero-hud mono"><span><b>●</b> Capture failed</span><span>404 × 404</span></p>
+<p class="eyebrow">404</p>
 <h1 id="nf-title" data-split>Nothing to capture here.</h1>
-<p class="lede mt2" data-hero-fade>This page does not exist, or it moved.</p>
-<div class="hero-actions" data-hero-fade><a class="btn btn-primary" href="{p}">Back to Snipflag {ARROW}</a><a class="btn btn-ghost" href="{p}compare/">Compare alternatives</a></div>
+<p class="lede" data-hero-fade>This page does not exist, or it moved.</p>
+<div class="hero-actions" data-hero-fade><a class="btn btn-primary" href="{p}">Back to Snipflag</a><a class="btn btn-ghost" href="{p}compare/">Compare alternatives</a></div>
 </div></section>
 </main>
 """ + footer(p) + SCRIPTS.format(p=p)

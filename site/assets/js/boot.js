@@ -1,4 +1,4 @@
-/* Runs in <head>: flags JS and reduced motion before first paint, and never lets the preloader trap the page. */
+/* Runs in <head>: flags JS and reduced motion before first paint and reveals content if the animation libraries fail. */
 (function () {
   var root = document.documentElement;
   root.classList.remove('no-js');
@@ -10,7 +10,5 @@
     if (window.__snipflagReady) return;
     root.classList.remove('js');
     root.classList.add('reduced');
-    var s = document.querySelector('.shutter');
-    if (s) s.remove();
   }, 2500);
 })();

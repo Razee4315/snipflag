@@ -8,7 +8,8 @@
   var status = root.querySelector('[data-editor-status]');
   var hint = root.querySelector('.hint');
   var W = canvas.width, H = canvas.height;
-  var BLOCK = 14;
+  var K = W / 920;            // stroke scale for the 2x sample image
+  var BLOCK = 24;
   var RED = '#EF4444', YELLOW = '#FDE047';
   var names = { arrow: 'Arrow', pen: 'Pen', highlighter: 'Highlighter', pixelate: 'Pixelate' };
 
@@ -23,7 +24,7 @@
   var img = new Image();
   img.decoding = 'async';
   img.onload = function () { bctx.drawImage(img, 0, 0, W, H); baseData = bctx.getImageData(0, 0, W, H); render(); };
-  img.src = 'assets/img/daylight.webp';
+  img.src = 'assets/img/sample.webp';
 
   function setTool(t) {
     tool = t;
@@ -86,7 +87,7 @@
   function finish() {
     if (!draft) return;
     var d = draft; draft = null;
-    var big = d.type === 'pen' || d.type === 'highlighter' ? d.pts.length > 1 : Math.hypot(d.b.x - d.a.x, d.b.y - d.a.y) > 6;
+    var big = d.type === 'pen' || d.type === 'highlighter' ? d.pts.length > 1 : Math.hypot(d.b.x - d.a.x, d.b.y - d.a.y) > 6 * K;
     if (big) marks.push(d);
     render();
   }
@@ -100,10 +101,10 @@
     ctx.putImageData(baseData, 0, 0);
     all.filter(function (m) { return m.type === 'pixelate'; }).forEach(pixelate);
     all.filter(function (m) { return m.type === 'highlighter'; }).forEach(highlight);
-    all.forEach(function (m) { if (m.type === 'pen') stroke(m.pts, RED, 6); if (m.type === 'arrow') arrow(m.a, m.b); });
+    all.forEach(function (m) { if (m.type === 'pen') stroke(m.pts, RED, 6 * K); if (m.type === 'arrow') arrow(m.a, m.b); });
     if (draft && draft.type === 'pixelate') {
       var r = rect(draft);
-      ctx.save(); ctx.setLineDash([8, 6]); ctx.strokeStyle = '#FFB25B'; ctx.lineWidth = 2; ctx.strokeRect(r.x, r.y, r.w, r.h); ctx.restore();
+      ctx.save(); ctx.setLineDash([8 * K, 6 * K]); ctx.strokeStyle = '#FFB25B'; ctx.lineWidth = 2 * K; ctx.strokeRect(r.x, r.y, r.w, r.h); ctx.restore();
     }
   }
   function rect(m) {
@@ -140,11 +141,11 @@
   function highlight(m) {
     if (m.pts.length < 2) return;
     ctx.save(); ctx.globalCompositeOperation = 'multiply'; ctx.globalAlpha = 0.7;
-    ctx.strokeStyle = YELLOW; ctx.lineWidth = 24; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.strokeStyle = YELLOW; ctx.lineWidth = 24 * K; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     path(m.pts); ctx.stroke(); ctx.restore();
   }
   function arrow(a, b) {
-    var ang = Math.atan2(b.y - a.y, b.x - a.x), head = 26, w = 7;
+    var ang = Math.atan2(b.y - a.y, b.x - a.x), head = 26 * K, w = 7 * K;
     ctx.save(); ctx.strokeStyle = RED; ctx.fillStyle = RED; ctx.lineWidth = w; ctx.lineCap = 'round';
     ctx.beginPath(); ctx.moveTo(a.x, a.y);
     ctx.lineTo(b.x - Math.cos(ang) * head * 0.6, b.y - Math.sin(ang) * head * 0.6); ctx.stroke();
