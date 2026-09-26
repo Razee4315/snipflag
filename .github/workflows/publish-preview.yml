@@ -1,0 +1,61 @@
+name: Publish unsigned prerelease
+on:
+  workflow_dispatch:
+    inputs:
+      checks_run:
+        description: Successful Checks run ID for this commit
+        required: true
+      build_run:
+        description: Successful Development installers run ID for this commit
+        required: true
+permissions:
+  contents: write
+  actions: read
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify runs and publish matching unsigned installers
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CHECKS_RUN: ${{ inputs.checks_run }}
+          BUILD_RUN: ${{ inputs.build_run }}
+          EXPECTED_SHA: ${{ github.sha }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os, pathlib, shutil, subprocess
+          def gh(*args):
+              return subprocess.check_output(['gh', *args], text=True)
+          sha = os.environ['EXPECTED_SHA']
+          repo = os.environ['GH_REPO']
+          for key, workflow in [('CHECKS_RUN', 'ci.yml'), ('BUILD_RUN', 'build.yml')]:
+              run_id = os.environ[key]
+              if not run_id.isdigit():
+                  raise SystemExit('Invalid run ID')
+              run = json.loads(gh('api', f'repos/{repo}/actions/runs/{run_id}'))
+              if run['head_sha'] != sha or run['conclusion'] != 'success' or run['path'] != f'.github/workflows/{workflow}':
+                  raise SystemExit('Require successful matching checks and build runs at this exact commit')
+          version = json.loads(pathlib.Path('package.json').read_text())['version']
+          tag = f'v{version}'
+          gh('run', 'download', os.environ['BUILD_RUN'], '--dir', 'downloaded')
+          out = pathlib.Path('release-assets'); out.mkdir()
+          assets = []
+          for path in sorted(pathlib.Path('downloaded').rglob('*')):
+              if path.suffix.lower() in {'.exe', '.msi', '.dmg', '.deb', '.appimage'}:
+                  dest = out / ('unsigned-' + path.name)
+                  if dest.exists():
+                      raise SystemExit('Duplicate asset filename')
+                  shutil.copy2(path, dest); assets.append(dest)
+          if len(assets) != 6:
+              raise SystemExit(f'Expected six installers; found {len(assets)}')
+          checksums = out / 'SHA256SUMS.txt'
+          checksums.write_text(''.join(f'{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.name}\n' for p in assets))
+          notes = pathlib.Path('docs/releases/v1.0.0.md').read_text()
+          notes += f'\n\nSource: `{sha}`\n\n[Checks](https://github.com/{repo}/actions/runs/{os.environ["CHECKS_RUN"]}) · [Builds](https://github.com/{repo}/actions/runs/{os.environ["BUILD_RUN"]})\n'
+          pathlib.Path('release-notes.md').write_text(notes)
+          gh('release', 'create', tag, '--target', sha, '--draft', '--prerelease', '--title', f'Snipflag {tag} — unsigned preview', '--notes-file', 'release-notes.md')
+          gh('release', 'upload', tag, *[str(p) for p in assets], str(checksums))
+          gh('release', 'edit', tag, '--draft=false', '--prerelease', '--latest=false')
+          PY

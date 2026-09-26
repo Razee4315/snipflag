@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/logo.svg" width="112" height="112" alt="Snipflag logo: crop corners framing a flag">
+  <img src="docs/assets/logo.svg" width="112" height="112" alt="Snipflag abstract S logo">
 </p>
 
 <h1 align="center">Snipflag</h1>
@@ -21,7 +21,24 @@
 
 Snipflag is a focused desktop app for reporting visual problems. Capture a region of your screen, mark what matters, capture another, add a title, and send everything to Linear as a single issue with the screenshots in order. It runs on Windows (primary), macOS, and Linux, and is built with Tauri 2, Rust, React, and TypeScript.
 
-> **Status:** development version 0.1.0. Installers are unsigned development builds and native behavior is still being verified on real hardware. See [docs/STATUS.md](docs/STATUS.md) for exactly what is verified.
+> **v1.0.0 preview:** [Download the unsigned prerelease](https://github.com/Razee4315/snipflag/releases/tag/v1.0.0). Native runtime acceptance and signing are still pending; see [verification status](docs/STATUS.md).
+
+## Screenshots
+
+CI-rendered UI previews using synthetic sample images. Native window controls and the connected Linear state differ from browser preview.
+
+![Snipflag daylight workspace with an annotated checkout screenshot](docs/assets/screenshots/daylight.png)
+
+<details>
+<summary>Dark theme, image mentions, and settings</summary>
+
+![Snipflag dark workspace](docs/assets/screenshots/after-hours.png)
+
+![Description image mention picker with screenshot thumbnails](docs/assets/screenshots/image-mentions.png)
+
+![Snipflag appearance settings](docs/assets/screenshots/settings.png)
+
+</details>
 
 ## Features
 
@@ -32,6 +49,7 @@ Snipflag is a focused desktop app for reporting visual problems. Capture a regio
 
 **Annotate**
 - Arrow, rectangle, pen, text, pixelate, and solid redaction.
+- Hold Shift for 15° arrow/pen snapping or square rectangles.
 - Select, move, and resize marks; change color, width, and text size; zoom, fit, and 100%.
 - Each screenshot keeps its own annotations and undo history, so you can move between them freely.
 - Exports keep the original pixel dimensions, and redaction is burned into the pixels.
@@ -39,6 +57,7 @@ Snipflag is a focused desktop app for reporting visual problems. Capture a regio
 **Report**
 - Up to 10 screenshots per session, reorderable and captioned, sent as one issue.
 - Title, description, team, project, assignee, labels, and priority, without leaving the app.
+- Type `@` in Description to choose a screenshot. References survive reordering and become clickable image links in Linear.
 - Safe retries: each session has a stable issue ID, so a retry after a network failure checks Linear first and never creates a duplicate.
 
 **Keep your work**
@@ -59,7 +78,9 @@ Snipflag is a focused desktop app for reporting visual problems. Capture a regio
 
 ## Getting started
 
-Development installers are produced by the [Development installers](https://github.com/Razee4315/snipflag/actions/workflows/build.yml) workflow:
+Download [v1.0.0 preview installers](https://github.com/Razee4315/snipflag/releases/tag/v1.0.0) from GitHub Releases. All installers are built on GitHub Actions.
+
+Additional development installers are produced by the [Development installers](https://github.com/Razee4315/snipflag/actions/workflows/build.yml) workflow:
 
 | Platform | Artifact | Formats |
 |---|---|---|
@@ -68,7 +89,7 @@ Development installers are produced by the [Development installers](https://gith
 | macOS Intel | `snipflag-development-unsigned-x86_64-apple-darwin` | `.dmg` |
 | Linux x64 | `snipflag-development-unsigned-x86_64-unknown-linux-gnu` | `.deb`, `.AppImage` |
 
-These builds are not code-signed, so Windows SmartScreen and macOS Gatekeeper will warn before opening them. Artifacts expire after 7 days.
+These builds are not code-signed, so Windows SmartScreen and macOS Gatekeeper will warn before opening them. Actions artifacts expire after 7 days; the release downloads remain available.
 
 On macOS, grant Screen Recording permission when asked. On Linux Wayland, some compositors block direct capture; adding or pasting images still works.
 

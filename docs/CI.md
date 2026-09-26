@@ -8,6 +8,6 @@ Linux packages include WebKitGTK 4.1, appindicator, librsvg, patchelf, XCB/RandR
 
 Release policy differs from the sample guide: no automatic stable release or patch bump on every main push. Publish development artifacts first. Tagged releases use matching package/Tauri/Cargo versions and require tests for that exact commit. Keep unsigned artifacts explicitly labeled. Windows signing certificate and Apple Developer signing/notarization are needed for a polished public distribution. Tauri updater signing needs a separately generated secret key/public key; keep private material in GitHub Secrets, never commit it.
 
-Build matrix: Windows x64 first; macOS Apple Silicon and Intel; Linux x64. Runtime test matrix is distinct from compilation. Version 0.1.0 is development until acceptance is complete.
+Build matrix: Windows x64 first; macOS Apple Silicon and Intel; Linux x64. Runtime test matrix is distinct from compilation. Version 1.0.0 is an unsigned prerelease until acceptance is complete. The Publish unsigned prerelease workflow verifies that the supplied Checks and installer runs succeeded at its exact commit, attaches six installers and SHA256 checksums, then publishes with prerelease status. It never marks a stable/latest release.
 
 Commands allowed locally: git, gh run list/view, gh run download with a named small artifact, source validation scripts without dependency installation. All npm/cargo tests and builds belong in workflow steps.

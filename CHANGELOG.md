@@ -2,9 +2,9 @@
 
 All notable changes to Snipflag are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.0] - 2026-09-26
 
-Development version 0.1.0. Not yet released; installers are unsigned development builds.
+First v1 preview. Published as an unsigned prerelease; runtime acceptance and signing remain pending.
 
 ### Added
 

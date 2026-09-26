@@ -104,3 +104,7 @@ Production source: `6041c74` (includes UI redesign, owner's clutter removal, abs
 - **Local constraints:** no local build, dependency installation, Rust compilation, browser installation or packaging. Only source/git work, CI inspection and downloaded CI screenshots.
 
 Next: install the Windows development artifact and verify frameless drag/resize/compact/expand/tray, DPI capture, Shift interactions and @ picker in WebView2. With explicit approval for a real test issue, verify repeated image-reference links resolve to the correct final annotated/redacted images after reorder. Actual Linear rendering, native window/capture behavior, macOS/Linux runtime and signing are still manual gates. No stable release published.
+
+## v1 release preparation — 2026-09-26
+
+Owner requested v1 on GitHub Releases and screenshots in README. Prepared matching 1.0.0 package/Tauri/Cargo versions and root lockfile metadata, README gallery from verified synthetic CI screenshots, and release notes. Release remains explicitly unsigned/prerelease under the existing acceptance gate; no runtime/signing claims changed. New publication workflow requires successful checks and four-platform installer runs at its exact SHA, publishes six installers with SHA256 checksums, and never marks stable/latest. Next: push release preparation, run CI and packaging, publish only after both succeed, then record the release URL. No local build or installation.
