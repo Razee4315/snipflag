@@ -2,6 +2,21 @@
 
 All notable changes to Snipflag are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Brand: restored the original capture mark (corner brackets and arrow) in black and white across the app, tray, taskbar and installers. The Windows installer now uses the Snipflag icon.
+- The editor opens at the full workspace size at launch and after every capture; the expand/compact control is gone. It reveals after its first paint instead of flashing an empty window.
+- Redesigned the utility bar (in layout flow, so the composer never scrolls under it), the composer footer with a labeled New session button, the workspace chip, and the empty state for light and dark themes.
+- Themed dropdown pickers, switches and scrollbars; fixed-size Settings and History dialogs; removed the green status dots.
+- Texture, motion and micro-interactions throughout, with an Interface animations switch that respects reduced motion.
+- Faster: capture overlays load a small separate bundle, overlay previews for all monitors are encoded in parallel right after the grab, and startup reads run together.
+
+### Added
+
+- Synthesized sound effects for captures, added images, created issues and failures, with a Play sound effects switch and preview.
+
 ## [1.0.0] - 2026-09-26
 
 First v1 release. Promoted to the latest regular release at the explicit request of the owner after they confirmed the app is working well. Installers remain unsigned; the detailed runtime acceptance matrix and signing remain pending.

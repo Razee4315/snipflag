@@ -203,7 +203,7 @@ export default function Editor({ image, zoom, onZoom, onScale }: Props) {
 
   return (
     <div className="canvas-scroll" ref={wrap}>
-      <div className="canvas-frame" style={{ width: stageWidth, height: stageHeight, cursor }} data-testid="canvas">
+      <div key={image.id} className="canvas-frame" style={{ width: stageWidth, height: stageHeight, cursor }} data-testid="canvas">
         <Stage width={stageWidth} height={stageHeight} scaleX={scale} scaleY={scale}
           onPointerDown={onDown} onPointerMove={e => updateDrawing.current(e.evt.shiftKey)} onPointerUp={onUp} onPointerLeave={() => { textStart.current = null; if (draftRef.current) onUp(); }} onWheel={onWheel}>
           <Layer ref={layer}>
@@ -212,7 +212,7 @@ export default function Editor({ image, zoom, onZoom, onScale }: Props) {
             {draft && renderShape(draft, false)}
             <Transformer ref={transformer} rotateEnabled={false} flipEnabled={false} ignoreStroke keepRatio={selected?.kind === 'text'}
               enabledAnchors={selected?.kind === 'text' ? ['top-left', 'top-right', 'bottom-left', 'bottom-right'] : undefined}
-              anchorSize={9} anchorCornerRadius={2} borderStroke="#116D65" anchorStroke="#116D65"
+              anchorSize={9} anchorCornerRadius={3} borderStroke="#14B8A6" anchorStroke="#0F766E" anchorFill="#FFFFFF"
               boundBoxFunc={(oldBox, newBox) => (Math.abs(newBox.width) < 4 || Math.abs(newBox.height) < 4 ? oldBox : newBox)} />
           </Layer>
         </Stage>

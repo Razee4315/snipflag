@@ -58,7 +58,7 @@ export default function DescriptionEditor({ value, images, references, disabled,
     {query && !disabled && <div className="mention-menu" id={`${id}-images`} role="listbox" aria-label="Mention an image">
       {choices.map(({ image, key }, index) => <button key={image.id} id={`${id}-image-${index}`} type="button" role="option" aria-selected={selected === index}
         className={selected === index ? 'active' : ''} onMouseDown={e => e.preventDefault()} onClick={() => choose(key)}>
-        <img src={image.dataUrl} alt="" /><span><strong>@{key}</strong>{image.name && <small>{image.name}</small>}</span>
+        <img src={image.dataUrl} alt="" decoding="async" /><span><strong>@{key}</strong>{image.name && <small>{image.name}</small>}</span>
       </button>)}
       {!choices.length && <span className="muted small">{images.length ? 'No matching images.' : 'Add an image first.'}</span>}
     </div>}

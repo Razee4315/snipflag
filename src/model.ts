@@ -19,6 +19,10 @@ export interface Connection { name: string; workspace: string; workspaceId: stri
 export interface TeamOptions { projects: Named[]; members: Named[]; labels: Named[] }
 export interface Settings {
   clientId: string; shortcut: string; theme: 'system' | 'light' | 'dark'; retentionDays: number; launchAtLogin: boolean;
+  /** Short synthesized cues for capture, success and failure. */
+  sounds: boolean;
+  /** Interface animations; the system reduced-motion preference always wins. */
+  motion: boolean;
   teamMemory: Record<string, string>;
 }
 
@@ -26,7 +30,7 @@ export const LIMITS = { images: 10, imageBytes: 20 * 1024 * 1024, sessionBytes: 
 export const PRIORITIES = [
   { value: 0, label: 'No priority' }, { value: 1, label: 'Urgent' }, { value: 2, label: 'High' }, { value: 3, label: 'Medium' }, { value: 4, label: 'Low' },
 ];
-export const defaults: Settings = { clientId: '', shortcut: 'CommandOrControl+Shift+Digit2', theme: 'system', retentionDays: 30, launchAtLogin: false, teamMemory: {} };
+export const defaults: Settings = { clientId: '', shortcut: 'CommandOrControl+Shift+Digit2', theme: 'system', retentionDays: 30, launchAtLogin: false, sounds: true, motion: true, teamMemory: {} };
 export const REDIRECT_URI = 'http://127.0.0.1:47839/callback';
 
 export function newSession(): Session {

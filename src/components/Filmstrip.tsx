@@ -18,7 +18,7 @@ export default function Filmstrip({ onCapture, onAdd, canCapture }: { onCapture:
               <button type="button" className="tile-select" aria-current={image.id === activeId ? 'true' : undefined}
                 aria-label={`Screenshot ${index + 1}: ${label}, ${marks} ${marks === 1 ? 'mark' : 'marks'}`} onClick={() => select(image.id)}>
                 <span className="tile-number" aria-hidden="true" title={`@${imageReference(image.id, references ?? {}) ?? `image${index + 1}`}`}>{(imageReference(image.id, references ?? {}) ?? `image${index + 1}`).slice(5)}</span>
-                <img src={image.dataUrl} alt="" draggable={false} />
+                <img src={image.dataUrl} alt="" draggable={false} decoding="async" />
                 <span className="tile-caption" aria-hidden="true">{label}</span>
                 {marks > 0 && <span className="tile-marks" aria-hidden="true">{marks}</span>}
               </button>

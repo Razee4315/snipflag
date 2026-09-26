@@ -10,6 +10,7 @@ export default function CaptureOverlay() {
   const [error, setError] = useState('');
   const [drag, setDrag] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
   const done = useRef(false);
+  const guides = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     document.documentElement.classList.add('capture-mode');
@@ -34,7 +35,11 @@ export default function CaptureOverlay() {
   return (
     <div className="capture" role="application" aria-label="Select an area to capture"
       onPointerDown={e => { if (e.button === 0 && frame) { (e.target as HTMLElement).setPointerCapture?.(e.pointerId); setDrag({ x0: e.clientX, y0: e.clientY, x1: e.clientX, y1: e.clientY }); } else if (e.button === 2) cancel(); }}
-      onPointerMove={e => { if (drag) setDrag({ ...drag, x1: e.clientX, y1: e.clientY }); }}
+      onPointerMove={e => {
+        // Guides follow the pointer without re-rendering the frozen frame.
+        guides.current?.style.setProperty('--x', `${e.clientX}px`); guides.current?.style.setProperty('--y', `${e.clientY}px`);
+        if (drag) setDrag({ ...drag, x1: e.clientX, y1: e.clientY });
+      }}
       onPointerUp={() => { if (rect && rect.width >= 4 && rect.height >= 4) select(rect); setDrag(null); }}
       onContextMenu={e => e.preventDefault()}>
       {frame && <img className="capture-frame" src={frame.dataUrl} alt="" draggable={false} onLoad={() => { void native('capture_ready').catch(() => undefined); }} />}
@@ -43,6 +48,7 @@ export default function CaptureOverlay() {
           <span className="capture-size">{toFramePixels(rect, { width: window.innerWidth, height: window.innerHeight }, frame ?? { width: 1, height: 1 }).width} × {toFramePixels(rect, { width: window.innerWidth, height: window.innerHeight }, frame ?? { width: 1, height: 1 }).height}</span>
         </div>
       ) : <div className="capture-dim" />}
+      {frame && !rect && <div className="capture-guides" ref={guides} aria-hidden="true" />}
       <div className="capture-hint" role="status">
         {error ? <>{error} <button type="button" onClick={cancel}>Close</button></> : 'Drag to capture · Enter for the whole screen · Esc to cancel'}
       </div>

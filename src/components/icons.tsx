@@ -29,8 +29,9 @@ const paths = {
   check: 'M5 12l5 5L20 7',
   close: 'M6 6l12 12M18 6L6 18',
   minus: 'M5 12h14',
-  expand: 'M14 4h6v6M20 4l-6 6M4 14v6h6M4 20l6-6',
-  compact: 'M20 4l-6 6M14 4v6h6M4 20l6-6M4 14h6v6',
+  refresh: 'M20 11a8 8 0 00-14.6-4.5M4 4v4h4M4 13a8 8 0 0014.6 4.5M20 20v-4h-4',
+  alert: 'M12 8v5M12 16.5v.01M10.3 3.9L2.4 18a2 2 0 001.7 3h15.8a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z',
+  drop: 'M12 3v12M7 10l5 5 5-5M4 17v3h16v-3',
   file: 'M6 3h9l4 4v14H6zM14 3v5h5',
 } as const;
 export type IconName = keyof typeof paths;
@@ -43,7 +44,7 @@ export function Icon({ name, size = 18, ...rest }: { name: IconName; size?: numb
     </svg>
   );
 }
-/** The same vector source drives the header, installer and tray artwork. */
-export function Logo({ size = 30 }: { size?: number }) {
-  return <img src="/icon.svg" width={size} height={size} alt="" draggable={false} />;
+/** The same vector source (public/icon.svg) drives the in-app mark, installer, taskbar and tray artwork. */
+export function Logo({ size = 30, className = 'mark' }: { size?: number; className?: string }) {
+  return <img className={className} src="/icon.svg" width={size} height={size} alt="" draggable={false} />;
 }

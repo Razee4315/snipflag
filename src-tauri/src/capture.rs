@@ -1,10 +1,12 @@
 use serde_json::{json, Value};
-use std::{sync::Mutex, time::Duration};
+use std::{sync::{Arc, Mutex}, time::Duration};
+use tokio::sync::OnceCell;
 use tauri::{AppHandle, Emitter, Manager, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 use xcap::{image::{imageops, RgbaImage}, Monitor};
 use crate::storage::{encode_png, main_only, png_url, MAX_IMAGE_BYTES};
 
-pub struct Frame { x: i32, y: i32, width: u32, height: u32, image: RgbaImage }
+type Preview = Arc<OnceCell<Result<Value, String>>>;
+pub struct Frame { x: i32, y: i32, width: u32, height: u32, image: Arc<RgbaImage>, preview: Preview }
 /// `Some` while a capture is in progress; holds the frozen frame of every monitor.
 pub struct CaptureState(pub Mutex<Option<Vec<Frame>>>);
 
@@ -20,7 +22,7 @@ fn grab() -> Result<Vec<Frame>, String> {
     for monitor in monitors {
         let image = monitor.capture_image().map_err(|_| unavailable())?;
         if image.width() < 2 || image.height() < 2 { continue; }
-        frames.push(Frame { x: monitor.x().unwrap_or(0), y: monitor.y().unwrap_or(0), width: monitor.width().unwrap_or(image.width()), height: monitor.height().unwrap_or(image.height()), image });
+        frames.push(Frame { x: monitor.x().unwrap_or(0), y: monitor.y().unwrap_or(0), width: monitor.width().unwrap_or(image.width()), height: monitor.height().unwrap_or(image.height()), image: Arc::new(image), preview: Arc::default() });
     }
     if frames.is_empty() { return Err(unavailable()); }
     Ok(frames)
@@ -28,10 +30,24 @@ fn grab() -> Result<Vec<Frame>, String> {
 fn capture_index(window: &WebviewWindow) -> Result<usize, String> {
     window.label().strip_prefix("capture-").and_then(|i| i.parse().ok()).ok_or_else(|| "This action is only available while capturing.".into())
 }
+/// Encodes a monitor's frozen frame for its overlay once. Started for every monitor right after the grab,
+/// so encoding runs in parallel with overlay creation instead of after each overlay asks for it.
+async fn preview(image: Arc<RgbaImage>, cell: Preview) -> Result<Value, String> {
+    cell.get_or_init(|| async move {
+        let (width, height) = (image.width(), image.height());
+        match tauri::async_runtime::spawn_blocking(move || encode_png(&image, true)).await {
+            Ok(Ok(bytes)) => Ok(json!({"dataUrl": png_url(&bytes), "width": width, "height": height})),
+            Ok(Err(e)) => Err(e),
+            Err(_) => Err("Could not prepare the capture.".to_string()),
+        }
+    }).await.clone()
+}
 /// Closes every overlay, forgets frozen frames, and restores the editor.
 fn finish(app: &AppHandle) {
     if let Ok(mut state) = app.state::<CaptureState>().0.lock() { state.take(); }
     for (label, window) in app.webview_windows() { if label.starts_with("capture-") { let _ = window.destroy(); } }
+    // A capture always returns to the full workspace; a larger size the user chose is kept.
+    if let Some(main) = app.get_webview_window("main") { let _ = crate::fit_workspace(&main, false); }
     crate::show_main(app);
 }
 pub fn cancel(app: &AppHandle) {
@@ -65,6 +81,7 @@ pub async fn begin(app: AppHandle) -> Result<(), String> {
         Err(_) => { finish(&app); return Err("Capture stopped unexpectedly.".into()); }
     };
     let geometry: Vec<(i32, i32, u32, u32)> = frames.iter().map(|f| (f.x, f.y, f.width, f.height)).collect();
+    for frame in &frames { tauri::async_runtime::spawn(preview(frame.image.clone(), frame.preview.clone())); }
     if let Ok(mut state) = app.state::<CaptureState>().0.lock() { *state = Some(frames); }
     for (index, (x, y, width, height)) in geometry.into_iter().enumerate() {
         let built = WebviewWindowBuilder::new(&app, format!("capture-{index}"), WebviewUrl::App(format!("index.html?capture={index}").into()))
@@ -91,13 +108,11 @@ pub async fn start_capture(window: WebviewWindow, app: AppHandle) -> Result<(), 
 #[tauri::command]
 pub async fn capture_frame(window: WebviewWindow, app: AppHandle) -> Result<Value, String> {
     let index = capture_index(&window)?;
-    let image = {
+    let (image, cell) = {
         let state = app.state::<CaptureState>(); let guard = state.0.lock().map_err(|_| "Capture is unavailable.")?;
-        guard.as_ref().and_then(|frames| frames.get(index)).map(|f| f.image.clone()).ok_or("This capture has ended.")?
+        guard.as_ref().and_then(|frames| frames.get(index)).map(|f| (f.image.clone(), f.preview.clone())).ok_or("This capture has ended.")?
     };
-    let (width, height) = (image.width(), image.height());
-    let bytes = tauri::async_runtime::spawn_blocking(move || encode_png(&image, true)).await.map_err(|_| "Could not prepare the capture.")??;
-    Ok(json!({"dataUrl": png_url(&bytes), "width": width, "height": height}))
+    preview(image, cell).await
 }
 #[tauri::command]
 pub fn capture_ready(window: WebviewWindow) -> Result<(), String> {

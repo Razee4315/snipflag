@@ -2,13 +2,13 @@
 
 ## Main workspace
 
-Top-aligned screenshot canvas + nearby issue composer → small image filmstrip. The draggable utility controls occupy the composer corner, leaving no empty strip above the screenshot. The first image sizes the editor to a bounded compact window; expand/compact is explicit. Save-and-hide flushes the draft before returning to the tray. Keep the screenshot dominant. Composer-corner utilities: accessible save-state indicator, New session, History, Settings, and custom window controls. No repeated title, logo or slogans. Canvas toolbar: select, arrow, rectangle, pen, text, pixelate, redact, color, thickness, undo/redo. Image controls: fit/zoom, copy, save.
+Full-height screenshot stage + issue composer → small image filmstrip. Launch and every capture open the full workspace size (no expand/compact control). A draggable utility bar above the composer holds the Snipflag mark, History, Settings and window controls; it is in layout flow, so the scrolling composer never slides under it. Save state is announced to assistive technology; only save failures are shown visually. New session is a labeled button in the composer footer next to Create issue. Save-and-hide flushes the draft before returning to the tray. Keep the screenshot dominant. No repeated title or slogans. Canvas toolbar: select, arrow, rectangle, pen, text, pixelate, redact, color, thickness, undo/redo. Image controls: fit/zoom, copy, save.
 
-Empty state: “Capture a screenshot”. Primary Capture screen; secondary Add images and Paste. No fake sample screenshot in the working app.
+Empty state: the floating brand mark in a marching selection frame, “Capture a screenshot”, a one-line shortcut/drop hint, primary Capture screen and secondary Add images and Paste. The empty area also drags the window. No fake sample screenshot in the working app.
 
 Filmstrip: stable image-alias numbered thumbnails, captions, selected outline, add button. Each tile has accessible move earlier/later and remove actions. The filmstrip exposes its image count and one-issue grouping to assistive technology. Selection does not mutate any other image.
 
-Issue panel: connection/workspace, title, description, team, optional reproduction-steps scaffold and collapsed project/assignee/labels/priority, primary “Create issue”. Keep the panel disabled only when genuinely unavailable and explain why. No redirect to Linear to fill the issue form.
+Issue panel: workspace chip (initial, workspace, account, refresh), title, description, team, optional reproduction-steps scaffold and collapsed project/assignee/labels/priority, primary “Create issue”. Keep the panel disabled only when genuinely unavailable and explain why. No redirect to Linear to fill the issue form.
 
 ## Repeated capture
 
@@ -20,7 +20,7 @@ Validate form → save snapshot → flatten ordered images → show upload progr
 
 ## Other surfaces
 
-- Settings: five sections (Connection, Capture, Appearance, Privacy, Shortcuts). Preferences remain in one draft while navigating; Save settings persists them. Connection retains OAuth setup; Privacy explains the upload boundary and solid redaction alongside retention/delete controls. Appearance shows daylight/after-hours samples; Shortcuts provides a keyboard reference.
+- Settings: five sections (Connection, Capture, Appearance, Privacy, Shortcuts) in a fixed-size dialog with a sliding tab indicator. Appearance also holds Play sound effects (with Preview sound) and Interface animations. Preferences remain in one draft while navigating; Save settings persists them. Connection retains OAuth setup; Privacy explains the upload boundary and solid redaction alongside retention/delete controls. Appearance shows daylight/after-hours samples; Shortcuts provides a keyboard reference.
 - History: draft/submitted state, image count, timestamp, resume/open/delete.
 - First connection: explanation → browser OAuth → local callback → workspace identity. Provide useful setup guidance if no OAuth client ID is configured.
 

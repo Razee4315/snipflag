@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { acceleratorFromEvent, REDIRECT_URI, shortcutLabel, type Connection, type Settings } from '../model';
 import { clearHistory, copyText, desktop, errorText, openLinearSetup, type AppStatus } from '../native';
 import Dialog from './Dialog';
+import { Logo } from './icons';
+import { play } from '../sound';
 import type { ConnectionState } from './IssuePanel';
 
 interface Props {
@@ -31,7 +33,7 @@ export default function SettingsDialog(p: Props) {
       <button type="button" className="button primary" disabled={!dirty} onClick={() => void save()}>Save settings</button>
     </>}>
 
-      <nav className="settings-nav" aria-label="Settings sections">
+      <nav className="settings-nav" aria-label="Settings sections" style={{ '--i': SECTIONS.indexOf(section), '--n': SECTIONS.length } as CSSProperties}>
         {SECTIONS.map(name => <button key={name} type="button" className={section === name ? 'active' : ''} aria-pressed={section === name} onClick={() => setSection(name)}>{name}</button>)}
       </nav>
       {error && <p className="error" role="alert">{error}</p>}
@@ -66,7 +68,7 @@ export default function SettingsDialog(p: Props) {
         )}
       </section>
 
-      <section className="settings-section" hidden={section !== 'Capture'}><h3>Capture</h3><p className="small muted">Your first screenshot opens a compact editor. Expand it anytime from the header. Closing saves your draft and tucks Snipflag into the tray.</p>
+      <section className="settings-section" hidden={section !== 'Capture'}><h3>Capture</h3><p className="small muted">Every capture opens the full editor. Closing saves your draft and tucks Snipflag into the tray.</p>
         <label className="field">
           <span>Global capture shortcut</span>
           <input readOnly value={recording ? 'Press the new shortcut…' : shortcutLabel(draft.shortcut)} aria-describedby="shortcut-help"
@@ -81,8 +83,8 @@ export default function SettingsDialog(p: Props) {
           <small id="shortcut-help" className="muted">Focus the field and press a combination with Ctrl, Alt, or Shift. It captures even when Snipflag is in the tray.</small>
         </label>
         {p.status?.shortcutError && <p className="warn small">{p.status.shortcutError}</p>}
-        <label className="check">
-          <input type="checkbox" checked={draft.launchAtLogin} disabled={!desktop} onChange={e => setDraft({ ...draft, launchAtLogin: e.target.checked })} />
+        <label className="check switch">
+          <input type="checkbox" role="switch" checked={draft.launchAtLogin} disabled={!desktop} onChange={e => setDraft({ ...draft, launchAtLogin: e.target.checked })} />
           Start Snipflag in the tray when I sign in
         </label>
       </section>
@@ -94,6 +96,20 @@ export default function SettingsDialog(p: Props) {
             <option value="system">Match system</option><option value="light">Light</option><option value="dark">Dark</option>
           </select>
         </label>
+        <h3 className="subhead">Sound and motion</h3>
+        <div className="row between">
+          <label className="check switch">
+            <input type="checkbox" role="switch" checked={draft.sounds} onChange={e => setDraft({ ...draft, sounds: e.target.checked })} />
+            Play sound effects
+          </label>
+          <button type="button" className="button small-button" onClick={() => play('success', true)}>Preview sound</button>
+        </div>
+        <small className="muted">A soft shutter when a capture lands, and a chime when Linear confirms the issue.</small>
+        <label className="check switch">
+          <input type="checkbox" role="switch" checked={draft.motion} onChange={e => setDraft({ ...draft, motion: e.target.checked })} />
+          Interface animations
+        </label>
+        <small className="muted">Your system's reduce-motion setting is always respected.</small>
       </section>
 
       <section className="settings-section" hidden={section !== 'Privacy'}><h3>Privacy</h3><div className="privacy-card"><strong>Only shared when you choose Create issue.</strong><p className="small muted">Use solid redaction to remove private details before sending. Pixelation is cosmetic.</p></div>
@@ -119,7 +135,7 @@ export default function SettingsDialog(p: Props) {
         </dl>
         <p className="small muted">Tool shortcuts pause while you type. Each screenshot keeps its own undo history.</p>
       </section>
-      <p className="small muted">Snipflag {p.status?.version ?? ''} · {p.status?.platform ?? ''} · development build</p>
+      <p className="about small muted"><Logo size={18} /> Snipflag {p.status?.version ?? ''} · {p.status?.platform ?? ''} · development build</p>
     </Dialog>
   );
 }

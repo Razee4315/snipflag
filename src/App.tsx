@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
 import EmptyState from './components/EmptyState';
 import Editor, { type Zoom } from './components/Editor';
 import Filmstrip from './components/Filmstrip';
 import HistoryDialog from './components/HistoryDialog';
-import { Icon } from './components/icons';
+import { Icon, Logo } from './components/icons';
 import IssuePanel, { type ConnectionState } from './components/IssuePanel';
 import SettingsDialog from './components/SettingsDialog';
 import Toolbar, { TOOLS } from './components/Toolbar';
@@ -15,8 +15,9 @@ import {
 import { fileBaseName, flatten, importImage } from './render';
 import { activeImage, isLocked, useStore } from './store';
 import { missingImageReferences } from './mentions';
+import { play, primeSound, setSoundEnabled } from './sound';
 
-type Notice = { kind: 'error' | 'info'; text: string } | null;
+type Notice = { kind: 'error' | 'info'; text: string; id: number } | null;
 const isTyping = (t: EventTarget | null) => t instanceof HTMLElement && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName));
 
 export default function App() {
@@ -33,12 +34,12 @@ export default function App() {
   const [progress, setProgress] = useState(''); const [submitError, setSubmitError] = useState('');
   const [pendingState, setPendingState] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
-  const [expanded, setExpanded] = useState(false);
+  const [flash, setFlash] = useState(0);
   const fileInput = useRef<HTMLInputElement>(null);
   const saveChain = useRef<Promise<void>>(Promise.resolve());
   const saveTimer = useRef<number | undefined>(undefined);
 
-  const notify = useCallback((text: string, kind: 'error' | 'info' = 'info') => setNotice({ kind, text }), []);
+  const notify = useCallback((text: string, kind: 'error' | 'info' = 'info') => setNotice({ kind, text, id: Date.now() }), []);
   useEffect(() => { if (!notice) return; const t = window.setTimeout(() => setNotice(null), notice.kind === 'error' ? 9000 : 3500); return () => window.clearTimeout(t); }, [notice]);
 
   // Durable drafts: every change is saved shortly after it happens, and immediately before capture or network work.
@@ -78,20 +79,30 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    primeSound();
     (async () => {
       try {
-        const loaded = await loadSettings(); setSettings(loaded); setStatus(await appStatus());
-        const sessions = await listSessions();
+        // Independent startup reads run together.
+        const [loaded, appState, sessions] = await Promise.all([loadSettings(), appStatus(), listSessions()]);
+        setSettings(loaded); setStatus(appState);
         if (sessions[0] && !sessions[0].issue) useStore.getState().hydrate(await loadSession(sessions[0].id));
       } catch (e) { notify(`Could not restore your last draft: ${errorText(e)}`, 'error'); }
       setReady(true);
       void refreshConnection();
     })();
   }, [notify, refreshConnection]);
+  // Show the native window only after the restored workspace has painted.
+  useEffect(() => {
+    if (!ready) return;
+    const frame = requestAnimationFrame(() => requestAnimationFrame(() => { void editorWindow('reveal').catch(() => undefined); }));
+    return () => cancelAnimationFrame(frame);
+  }, [ready]);
   useEffect(() => {
     const root = document.documentElement;
     if (settings.theme === 'system') delete root.dataset.theme; else root.dataset.theme = settings.theme;
-  }, [settings.theme]);
+    if (settings.motion) delete root.dataset.motion; else root.dataset.motion = 'off';
+    setSoundEnabled(settings.sounds);
+  }, [settings.theme, settings.motion, settings.sounds]);
   useEffect(() => { if (status?.shortcutError) notify(status.shortcutError, 'error'); }, [status, notify]);
   useEffect(() => {
     setPendingState(null); setSubmitError(''); setProgress('');
@@ -102,22 +113,22 @@ export default function App() {
     try {
       const first = !useStore.getState().session.images.length || !!useStore.getState().session.issue;
       useStore.getState().addImages(images); setZoom('fit');
-      if (first && images[0]) {
-        setExpanded(false);
-        void editorWindow('compact', images[0].width, images[0].height).catch(e => notify(errorText(e), 'error'));
-      }
-    } catch (e) { notify(errorText(e), 'error'); }
+      // The first screenshot opens the full workspace (it only grows a smaller window).
+      if (first && images[0]) void editorWindow('workspace').catch(e => notify(errorText(e), 'error'));
+      return true;
+    } catch (e) { notify(errorText(e), 'error'); play('error'); return false; }
   }, [notify]);
   const importFiles = useCallback(async (files: File[]) => {
     const images: CaptureImage[] = [];
-    try { for (const f of files) images.push(await importImage(f, fileBaseName(f.name))); addImages(images); }
+    try { for (const f of files) images.push(await importImage(f, fileBaseName(f.name))); if (addImages(images)) play('add'); }
     catch (e) { notify(errorText(e), 'error'); }
   }, [addImages, notify]);
   const pasteImage = useCallback(async () => {
     try {
       const data = await readClipboardImage();
-      if (data instanceof Blob) addImages([await importImage(data, '')]);
-      else { const raw = data as RawImage; addImages([{ id: crypto.randomUUID(), name: '', width: raw.width, height: raw.height, dataUrl: raw.dataUrl, annotations: [] }]); }
+      const added = data instanceof Blob ? addImages([await importImage(data, '')])
+        : addImages([{ id: crypto.randomUUID(), name: '', width: (data as RawImage).width, height: (data as RawImage).height, dataUrl: (data as RawImage).dataUrl, annotations: [] }]);
+      if (added) play('add');
     } catch (e) { notify(errorText(e), 'error'); }
   }, [addImages, notify]);
 
@@ -133,8 +144,10 @@ export default function App() {
   useEffect(() => {
     const subs = [
       on('capture-requested', () => { void captureRef.current(); }),
-      on<RawImage>('capture-complete', p => addImages([{ id: crypto.randomUUID(), name: '', width: p.width, height: p.height, dataUrl: p.dataUrl, annotations: [] }])),
-      on<string>('capture-failed', m => notify(m, 'error')),
+      on<RawImage>('capture-complete', p => {
+        if (addImages([{ id: crypto.randomUUID(), name: '', width: p.width, height: p.height, dataUrl: p.dataUrl, annotations: [] }])) { play('capture'); setFlash(f => f + 1); }
+      }),
+      on<string>('capture-failed', m => { notify(m, 'error'); play('error'); }),
       on<string>('submission-progress', m => setProgress(m)),
     ];
     return () => { subs.forEach(p => p.then(u => u())); };
@@ -153,12 +166,13 @@ export default function App() {
   const submit = useCallback(async () => {
     const s = useStore.getState();
     if (s.busy) return;
-    if (!desktop) { setSubmitError(PREVIEW_MESSAGE); return; }
+    const fail = (message: string) => { setSubmitError(message); play('error'); };
+    if (!desktop) { fail(PREVIEW_MESSAGE); return; }
     const invalid = validateSession(s.session);
-    if (invalid) { setSubmitError(invalid); return; }
+    if (invalid) { fail(invalid); return; }
     const missing = missingImageReferences(s.session.description, s.session.images, s.session.imageReferences ?? {});
-    if (missing.length) { setSubmitError(`Fix the missing image reference: @${missing[0]}.`); return; }
-    if (!connection) { setSubmitError('Connect Linear before creating the issue.'); return; }
+    if (missing.length) { fail(`Fix the missing image reference: @${missing[0]}.`); return; }
+    if (!connection) { fail('Connect Linear before creating the issue.'); return; }
     s.setBusy(true); setSubmitError(''); setProgress('Saving draft…');
     try {
       await flush();
@@ -170,16 +184,16 @@ export default function App() {
       }
       const issue = await submitIssue(snapshot, persisted, exports);
       useStore.getState().setIssue(issue); setPendingState('sent'); setProgress('');
-      notify(`Created ${issue.identifier}.`);
+      play('success');
     } catch (e) {
-      useStore.getState().setBusy(false); setProgress(''); setSubmitError(errorText(e));
+      useStore.getState().setBusy(false); setProgress(''); fail(errorText(e));
       submissionStatus(s.session.id).then(x => setPendingState(x?.state ?? null)).catch(() => undefined);
     }
-  }, [connection, flush, notify]);
+  }, [connection, flush]);
 
   const connect = useCallback(async () => {
     setConnectionState('connecting'); setConnectionError('');
-    try { await connectLinear(); await refreshConnection(); notify('Linear connected.'); }
+    try { await connectLinear(); await refreshConnection(); notify('Linear connected.'); play('success'); }
     catch (e) { setConnectionState('error'); setConnectionError(errorText(e)); }
   }, [notify, refreshConnection]);
   const disconnect = useCallback(async () => {
@@ -226,71 +240,70 @@ export default function App() {
   }, [dialog, submit, importFiles, pasteImage]);
 
   const count = session.images.length; const index = image ? session.images.indexOf(image) : -1;
-  const resizeEditor = async () => {
-    try { await editorWindow(expanded ? 'compact' : 'expand', image?.width, image?.height); setExpanded(!expanded); setZoom('fit'); }
-    catch (e) { notify(errorText(e), 'error'); }
+  const dragWindow = (e: MouseEvent) => {
+    if (e.button === 0 && !(e.target as HTMLElement).closest('button, input, select, textarea, a, label')) void editorWindow('drag').catch(err => notify(errorText(err), 'error'));
   };
   const tuckAway = async () => {
     try { await flush(); await editorWindow('hide'); } catch (e) { notify(errorText(e), 'error'); }
   };
   const saveText = saveState === 'saving' ? 'Saving…' : saveState === 'saved' ? 'Saved on this computer' : saveState === 'error' ? `Not saved: ${saveError}` : 'Nothing to save yet';
   return (
-    <div className={`app ${expanded ? 'expanded' : 'compact'}`} onDragOver={e => { if ([...e.dataTransfer.types].includes('Files')) e.preventDefault(); }}
+    <div className="app" onDragOver={e => { if ([...e.dataTransfer.types].includes('Files')) e.preventDefault(); }}
       onDrop={e => { const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/')); if (files.length) { e.preventDefault(); void importFiles(files); } }}>
-      <header className="topbar" onMouseDown={e => {
-        if (e.button === 0 && !(e.target as HTMLElement).closest('button, input, a')) void editorWindow('drag').catch(err => notify(errorText(err), 'error'));
-      }}>
-        <span className={`save-indicator visually-hidden ${saveState}`} role="status" aria-label={saveText} title={saveText} />
-        {saveState === 'error' && <span className="save-error" role="alert">{saveText}</span>}
+      <header className="titlebar" onMouseDown={dragWindow}>
+        <Logo size={22} />
+        <span className="visually-hidden" role="status" aria-label={saveText}>{saveText}</span>
+        {saveState === 'error' && <span className="save-error" role="alert" title={saveText}><Icon name="alert" size={14} /> {saveText}</span>}
         <div className="drag-space" aria-hidden="true" />
         <div className="top-actions">
-          <button type="button" className="icon-button" aria-label="New session" title="New session" onClick={() => void newSession()} disabled={busy}><Icon name="plus" /></button>
           <button type="button" className="icon-button" aria-label="History" title="History" disabled={busy} onClick={() => setDialog('history')}><Icon name="history" /></button>
           <button type="button" className="icon-button" aria-label="Settings" title="Settings" disabled={busy} onClick={() => setDialog('settings')}><Icon name="settings" /></button>
         </div>
-        <div className="window-actions">
-          <button type="button" className="icon-button" aria-label={expanded ? 'Compact workspace' : 'Expand workspace'} title={expanded ? 'Compact workspace' : 'Expand workspace'} onClick={() => void resizeEditor()}><Icon name={expanded ? 'compact' : 'expand'} /></button>
-          {desktop && <><button type="button" className="icon-button" aria-label="Minimize" title="Minimize" onClick={() => void editorWindow('minimize').catch(e => notify(errorText(e), 'error'))}><Icon name="minus" /></button>
-          <button type="button" className="icon-button" aria-label="Save and hide to tray" title="Save and hide to tray" disabled={busy} onClick={() => void tuckAway()}><Icon name="close" /></button></>}
-        </div>
+        {desktop && <div className="window-actions">
+          <button type="button" className="window-button" aria-label="Minimize" title="Minimize" onClick={() => void editorWindow('minimize').catch(e => notify(errorText(e), 'error'))}><Icon name="minus" size={16} /></button>
+          <button type="button" className="window-button close" aria-label="Save and hide to tray" title="Save and hide to tray" disabled={busy} onClick={() => void tuckAway()}><Icon name="close" size={16} /></button>
+        </div>}
       </header>
-      <main className="workspace">
-        <section className="stage-area" aria-label="Screenshot editor">
-          {image ? (
-            <>
-              <Toolbar />
-              <Editor image={image} zoom={zoom} onZoom={setZoom} onScale={setScale} />
-              <div className="image-bar">
-                <label className="caption-field">
-                  <span className="visually-hidden">Caption for screenshot {index + 1}</span>
-                  <input value={image.name} placeholder={`Screenshot ${index + 1} caption`} disabled={locked} maxLength={200}
-                    onChange={e => useStore.getState().updateImage(image.id, { name: e.target.value })} />
-                </label>
-                <span className="small muted dims">{image.width} × {image.height}</span>
-                <div className="zoom" role="group" aria-label="Zoom">
-                  <button type="button" className="tool" aria-label="Zoom out" title="Zoom out" onClick={() => setZoom(Math.max(0.1, scale / 1.25))}><Icon name="zoomOut" /></button>
-                  <button type="button" className="zoom-value" aria-label="Actual size" title="Actual size (100%)" onClick={() => setZoom(1)}>{Math.round(scale * 100)}%</button>
-                  <button type="button" className="tool" aria-label="Zoom in" title="Zoom in" onClick={() => setZoom(Math.min(8, scale * 1.25))}><Icon name="zoomIn" /></button>
-                  <button type="button" className={zoom === 'fit' ? 'tool active' : 'tool'} aria-label="Fit to window" title="Fit to window" onClick={() => setZoom('fit')}><Icon name="fit" /></button>
-                </div>
-                <button type="button" className="button" onClick={() => void exportActive(true)}><Icon name="copy" /> Copy image</button>
-                <button type="button" className="button" onClick={() => void exportActive(false)}><Icon name="save" /> Save image</button>
+      <main className="stage-area" aria-label="Screenshot editor">
+        {image ? (
+          <>
+            <Toolbar />
+            <Editor image={image} zoom={zoom} onZoom={setZoom} onScale={setScale} />
+            <div className="image-bar">
+              <label className="caption-field">
+                <span className="visually-hidden">Caption for screenshot {index + 1}</span>
+                <input value={image.name} placeholder={`Screenshot ${index + 1} caption`} disabled={locked} maxLength={200}
+                  onChange={e => useStore.getState().updateImage(image.id, { name: e.target.value })} />
+              </label>
+              <span className="dims">{image.width} × {image.height}</span>
+              <div className="zoom" role="group" aria-label="Zoom">
+                <button type="button" className="tool" aria-label="Zoom out" title="Zoom out" onClick={() => setZoom(Math.max(0.1, scale / 1.25))}><Icon name="zoomOut" /></button>
+                <button type="button" className="zoom-value" aria-label="Actual size" title="Actual size (100%)" onClick={() => setZoom(1)}>{Math.round(scale * 100)}%</button>
+                <button type="button" className="tool" aria-label="Zoom in" title="Zoom in" onClick={() => setZoom(Math.min(8, scale * 1.25))}><Icon name="zoomIn" /></button>
+                <button type="button" className={zoom === 'fit' ? 'tool active' : 'tool'} aria-label="Fit to window" title="Fit to window" onClick={() => setZoom('fit')}><Icon name="fit" /></button>
               </div>
-            </>
-          ) : (
-            <EmptyState shortcut={shortcutLabel(settings.shortcut)} onCapture={() => void capture()} onAdd={() => fileInput.current?.click()} onPaste={() => void pasteImage()} />
-          )}
-          {count > 0 && <Filmstrip canCapture={desktop} onCapture={() => void capture()} onAdd={() => fileInput.current?.click()} />}
-        </section>
-        <IssuePanel connection={connection} connectionState={connectionState} connectionError={connectionError} hasClientId={!!settings.clientId}
-          progress={progress} submitError={submitError} pendingState={pendingState}
-          onConnect={() => void connect()} onCancelConnect={() => void cancelLogin().catch(() => undefined)} onRetryConnection={() => void refreshConnection()}
-          onOpenSettings={() => setDialog('settings')} onSubmit={() => void submit()} onNewSession={() => void newSession()} onTeamChosen={rememberTeam} notify={notify} />
+              <button type="button" className="button subtle" onClick={() => void exportActive(true)}><Icon name="copy" size={16} /> Copy image</button>
+              <button type="button" className="button subtle" onClick={() => void exportActive(false)}><Icon name="save" size={16} /> Save image</button>
+            </div>
+            {flash > 0 && <div key={flash} className="capture-flash" aria-hidden="true" />}
+          </>
+        ) : (
+          <EmptyState shortcut={shortcutLabel(settings.shortcut)} onCapture={() => void capture()} onAdd={() => fileInput.current?.click()} onPaste={() => void pasteImage()} onDragWindow={dragWindow} />
+        )}
+        {count > 0 && <Filmstrip canCapture={desktop} onCapture={() => void capture()} onAdd={() => fileInput.current?.click()} />}
       </main>
+      <IssuePanel connection={connection} connectionState={connectionState} connectionError={connectionError} hasClientId={!!settings.clientId}
+        progress={progress} submitError={submitError} pendingState={pendingState}
+        onConnect={() => void connect()} onCancelConnect={() => void cancelLogin().catch(() => undefined)} onRetryConnection={() => void refreshConnection()}
+        onOpenSettings={() => setDialog('settings')} onSubmit={() => void submit()} onNewSession={() => void newSession()} onTeamChosen={rememberTeam} notify={notify} />
       <input ref={fileInput} type="file" accept="image/png,image/jpeg,image/webp" multiple hidden aria-label="Add images"
         onChange={e => { const files = [...(e.target.files ?? [])]; e.target.value = ''; if (files.length) void importFiles(files); }} />
-      <div className={notice ? `toast ${notice.kind}` : 'toast'} role={notice?.kind === 'error' ? 'alert' : 'status'} aria-live="polite">
-        {notice && <><span>{notice.text}</span><button type="button" className="icon-button" aria-label="Dismiss" onClick={() => setNotice(null)}><Icon name="close" size={14} /></button></>}
+      <div className="toast-region" role={notice?.kind === 'error' ? 'alert' : 'status'} aria-live="polite">
+        {notice && <div key={notice.id} className={`toast ${notice.kind}`}>
+          <Icon name={notice.kind === 'error' ? 'alert' : 'check'} size={16} />
+          <span>{notice.text}</span>
+          <button type="button" className="icon-button" aria-label="Dismiss" onClick={() => setNotice(null)}><Icon name="close" size={14} /></button>
+        </div>}
       </div>
       {dialog === 'settings' && (
         <SettingsDialog settings={settings} status={status} connection={connection} connectionState={connectionState} connectionError={connectionError}

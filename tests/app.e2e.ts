@@ -139,7 +139,7 @@ test('tools are reachable by keyboard and named', async ({ page }) => {
 });
 
 
-test('compact composer preserves evidence and provides a QA report scaffold', async ({ page }, testInfo) => {
+test('workspace composer preserves evidence and provides a QA report scaffold', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 920, height: 680 });
   // Synthetic local fixture: no customer screenshots or external network content.
   const fixture = await page.context().newPage();
@@ -157,12 +157,16 @@ test('compact composer preserves evidence and provides a QA report scaffold', as
   await expect(page.getByRole('button', { name: 'Create issue', exact: true })).toBeInViewport();
   await expect(page.getByTestId('canvas')).toBeInViewport();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await page.getByRole('button', { name: 'Expand workspace' }).click();
-  await page.getByRole('button', { name: 'Compact workspace' }).click();
+  // Window sizing is automatic; there is no expand/compact control anymore.
+  await expect(page.getByRole('button', { name: /Expand workspace|Compact workspace/ })).toHaveCount(0);
+  // Utility controls sit above the composer and never overlap its scrolling content.
+  const bar = (await page.getByRole('button', { name: 'Settings', exact: true }).boundingBox())!;
+  const panel = (await page.getByRole('complementary', { name: 'Linear issue' }).boundingBox())!;
+  expect(bar.y + bar.height).toBeLessThanOrEqual(panel.y);
   await expect(page.getByTestId('tile')).toHaveCount(2);
   await expect(page.getByLabel('Title', { exact: true })).toHaveValue('Checkout total does not update');
   await expect(page.getByRole('status', { name: 'Saved on this computer' })).toBeVisible();
-  await page.screenshot({ path: testInfo.outputPath('compact-daylight.png'), fullPage: true, animations: 'disabled' });
+  await page.screenshot({ path: testInfo.outputPath('workspace-daylight.png'), fullPage: true, animations: 'disabled' });
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Settings' });
   for (const section of ['Capture', 'Privacy', 'Shortcuts', 'Appearance']) {
@@ -173,7 +177,11 @@ test('compact composer preserves evidence and provides a QA report scaffold', as
   await dialog.getByRole('button', { name: 'Save settings' }).click();
   await page.screenshot({ path: testInfo.outputPath('settings-after-hours.png'), animations: 'disabled' });
   await page.keyboard.press('Escape');
-  await page.screenshot({ path: testInfo.outputPath('compact-after-hours.png'), fullPage: true, animations: 'disabled' });
+  await page.screenshot({ path: testInfo.outputPath('workspace-after-hours.png'), fullPage: true, animations: 'disabled' });
+  await page.getByText('Issue details').click();
+  await page.getByLabel('Priority').click();
+  await page.screenshot({ path: testInfo.outputPath('priority-picker-after-hours.png'), animations: 'disabled' });
+  await page.keyboard.press('Escape');
   await page.setViewportSize({ width: 860, height: 620 });
   await expect(page.getByRole('button', { name: 'Create issue', exact: true })).toBeInViewport();
   await expect(page.getByTestId('canvas')).toBeInViewport();
@@ -280,4 +288,40 @@ test('image mentions support keyboard selection, undo, reordering and missing-im
   await expect(page.getByRole('listbox')).toHaveCount(0);
   await description.fill('Code `@ima');
   await expect(page.getByRole('listbox')).toHaveCount(0);
+});
+
+test('sound and animation preferences persist and apply', async ({ page }, testInfo) => {
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Settings' });
+  await dialog.getByRole('button', { name: 'Appearance', exact: true }).click();
+  const sounds = dialog.getByRole('switch', { name: 'Play sound effects' });
+  const motion = dialog.getByRole('switch', { name: 'Interface animations' });
+  await expect(sounds).toBeChecked();
+  await expect(motion).toBeChecked();
+  await expect(dialog.getByRole('button', { name: 'Preview sound' })).toBeEnabled();
+  await page.screenshot({ path: testInfo.outputPath('settings-appearance-daylight.png'), animations: 'disabled' });
+  await sounds.click();
+  await motion.click();
+  await dialog.getByRole('button', { name: 'Save settings' }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-motion', 'off');
+  await page.keyboard.press('Escape');
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('data-motion', 'off');
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Appearance', exact: true }).click();
+  await expect(dialog.getByRole('switch', { name: 'Play sound effects' })).not.toBeChecked();
+  await expect(dialog.getByRole('switch', { name: 'Interface animations' })).not.toBeChecked();
+});
+
+test('settings dialog keeps a fixed size and scrolls long sections inside', async ({ page }) => {
+  await page.setViewportSize({ width: 920, height: 680 });
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Settings' });
+  const heights: number[] = [];
+  for (const section of ['Connection', 'Capture', 'Appearance', 'Privacy', 'Shortcuts']) {
+    await dialog.getByRole('button', { name: section, exact: true }).click();
+    heights.push(Math.round((await dialog.boundingBox())!.height));
+  }
+  expect(new Set(heights).size).toBe(1);
+  await expect(dialog.getByRole('button', { name: 'Save settings' })).toBeInViewport();
 });

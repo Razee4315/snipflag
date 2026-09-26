@@ -6,7 +6,7 @@ mod mentions;
 mod storage;
 
 use serde_json::{json, Value};
-use std::sync::Mutex;
+use std::sync::{atomic::{AtomicBool, Ordering}, Mutex};
 use tauri::{
     menu::{Menu, MenuItem, PredefinedMenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
@@ -20,6 +20,7 @@ use storage::{main_only, Storage};
 struct ShortcutStatus(Mutex<Option<String>>);
 
 pub fn show_main(app: &AppHandle) {
+    REVEALED.store(true, Ordering::SeqCst);
     if let Some(window) = app.get_webview_window("main") { let _ = window.unminimize(); let _ = window.show(); let _ = window.set_focus(); }
 }
 fn request_capture(app: &AppHandle) {
@@ -65,41 +66,53 @@ fn app_status(window: WebviewWindow, app: AppHandle) -> Result<Value, String> {
     Ok(json!({"version": app.package_info().version.to_string(), "platform": std::env::consts::OS, "shortcutError": shortcut_error}))
 }
 
-fn editor_size(expanded: bool, image: (u32, u32), scale: f64, available: (f64, f64)) -> (f64, f64) {
-    let width = if expanded { 1280.0 } else { (image.0 as f64 / scale + 370.0).clamp(860.0, 1040.0) };
-    let height = if expanded { 840.0 } else { (image.1 as f64 / scale + 260.0).clamp(620.0, 760.0) };
-    (width.min(available.0 - 32.0).max(640.0), height.min(available.1 - 32.0).max(480.0))
+/// Comfortable full workspace in logical pixels: large, never fullscreen, always inside the work area.
+fn workspace_size(available: (f64, f64)) -> (f64, f64) {
+    let width = (available.0 * 0.84).clamp(960.0, 1440.0).min(available.0 - 24.0).max(640.0);
+    let height = (available.1 * 0.88).clamp(640.0, 920.0).min(available.1 - 24.0).max(480.0);
+    (width, height)
+}
+
+/// Sizes and centers the editor on its display. Without `force`, only grows a window smaller than the workspace
+/// and leaves maximized windows alone, so a larger size the user chose is kept.
+pub fn fit_workspace(window: &WebviewWindow, force: bool) -> tauri::Result<()> {
+    if !force && window.is_maximized().unwrap_or(false) { return Ok(()); }
+    let monitor = match window.current_monitor()? { Some(m) => Some(m), None => window.primary_monitor()? };
+    let Some(monitor) = monitor else { return window.center(); };
+    let scale = monitor.scale_factor();
+    let area = monitor.work_area();
+    let logical = area.size.to_logical::<f64>(scale);
+    let (width, height) = workspace_size((logical.width, logical.height));
+    if !force {
+        let current = window.inner_size()?.to_logical::<f64>(window.scale_factor()?);
+        if current.width + 1.0 >= width && current.height + 1.0 >= height { return Ok(()); }
+    }
+    window.unmaximize()?;
+    window.set_size(tauri::LogicalSize::new(width, height))?;
+    // Physical work-area origin preserves negative-origin displays and excludes taskbars.
+    window.set_position(tauri::PhysicalPosition::new(
+        area.position.x + ((area.size.width as f64 - width * scale) / 2.0).max(0.0) as i32,
+        area.position.y + ((area.size.height as f64 - height * scale) / 2.0).max(0.0) as i32,
+    ))
+}
+
+/// The editor stays hidden until its first paint so it never flashes an empty frame.
+static REVEALED: AtomicBool = AtomicBool::new(false);
+static STARTED_MINIMIZED: AtomicBool = AtomicBool::new(false);
+fn reveal(app: &AppHandle) {
+    if !REVEALED.swap(true, Ordering::SeqCst) && !STARTED_MINIMIZED.load(Ordering::SeqCst) { show_main(app); }
 }
 
 /// Only the main editor may move or hide itself. Capture overlays have no access.
 #[tauri::command]
-fn editor_window(window: WebviewWindow, action: String, image_width: Option<u32>, image_height: Option<u32>) -> Result<(), String> {
+fn editor_window(window: WebviewWindow, app: AppHandle, action: String) -> Result<(), String> {
     main_only(&window)?;
     let result = match action.as_str() {
         "hide" => window.hide(),
         "minimize" => window.minimize(),
         "drag" => window.start_dragging(),
-        "compact" | "expand" => {
-            let expanded = action == "expand";
-            let monitor = window.current_monitor().map_err(|_| "Could not locate the current display.")?;
-            let scale = monitor.as_ref().map(|m| m.scale_factor()).unwrap_or(1.0);
-            let available = monitor.as_ref().map(|m| {
-                let size = m.work_area().size.to_logical::<f64>(scale);
-                (size.width, size.height)
-            }).unwrap_or((1920.0, 1080.0));
-            let (width, height) = editor_size(expanded, (image_width.unwrap_or(500), image_height.unwrap_or(350)), scale, available);
-            window.unmaximize().map_err(|_| "Could not restore the editor window.")?;
-            window.set_size(tauri::LogicalSize::new(width, height))
-                .map_err(|_| "Could not resize the editor window.")?;
-            if let Some(monitor) = monitor {
-                // Physical work-area origin preserves negative-origin displays and excludes taskbars.
-                let area = monitor.work_area();
-                window.set_position(tauri::PhysicalPosition::new(
-                    area.position.x + ((area.size.width as f64 - width * scale) / 2.0).max(0.0) as i32,
-                    area.position.y + ((area.size.height as f64 - height * scale) / 2.0).max(0.0) as i32,
-                ))
-            } else { window.center() }
-        }
+        "workspace" => fit_workspace(&window, false),
+        "reveal" => { reveal(&app); Ok(()) }
         _ => return Err("Unknown editor window action.".into()),
     };
     result.map_err(|_| "Could not update the editor window.".into())
@@ -107,16 +120,16 @@ fn editor_window(window: WebviewWindow, action: String, image_width: Option<u32>
 
 #[cfg(test)]
 mod editor_window_tests {
-    use super::editor_size;
+    use super::workspace_size;
     #[test]
-    fn same_capture_at_different_dpi_has_same_logical_workspace() {
-        let normal = editor_size(false, (600, 400), 1.0, (1920.0, 1040.0));
-        let hidpi = editor_size(false, (1200, 800), 2.0, (1920.0, 1040.0));
-        assert_eq!(normal, hidpi);
+    fn workspace_is_large_on_common_displays() {
+        let (width, height) = workspace_size((1920.0, 1040.0));
+        assert!(width >= 1400.0 && height >= 880.0);
+        assert!(width <= 1896.0 && height <= 1016.0);
     }
     #[test]
-    fn expanded_workspace_leaves_space_inside_monitor_work_area() {
-        let (width, height) = editor_size(true, (8000, 8000), 2.0, (960.0, 520.0));
+    fn workspace_stays_inside_small_work_areas() {
+        let (width, height) = workspace_size((960.0, 520.0));
         assert!(width < 960.0 && height < 520.0);
         assert!(width >= 640.0 && height >= 480.0);
     }
@@ -167,7 +180,15 @@ pub fn run() {
             let status = register_shortcut(app.handle(), settings["shortcut"].as_str().unwrap_or_default()).err();
             set_shortcut_status(app.handle(), status);
             if let Err(error) = build_tray(app.handle()) { eprintln!("tray unavailable: {error}"); }
-            if !std::env::args().any(|a| a == "--minimized") { show_main(app.handle()); }
+            let minimized = std::env::args().any(|a| a == "--minimized");
+            STARTED_MINIMIZED.store(minimized, Ordering::SeqCst);
+            if let Some(main) = app.get_webview_window("main") { let _ = fit_workspace(&main, true); }
+            // The editor reveals itself after its first paint; never leave the user without a window.
+            let handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                tokio::time::sleep(std::time::Duration::from_secs(4)).await;
+                reveal(&handle);
+            });
             Ok(())
         })
         .on_window_event(|window, event| {
