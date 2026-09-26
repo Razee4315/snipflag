@@ -52,7 +52,10 @@ jobs:
           HAS_SIGNING_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY != '' }}
         run: |
           if [ -n "$SNIPFLAG_UPDATER_PUBKEY" ] && [ "$HAS_SIGNING_KEY" = "true" ]; then
-            echo 'UPDATER_ARGS=--config src-tauri/tauri.updater.conf.json' >> "$GITHUB_ENV"
+            # The bundler checks the signing key against the configured public key, so both come from this build's settings.
+            config="$RUNNER_TEMP/tauri.updater.conf.json"
+            python3 -c 'import json, os, sys; json.dump({"bundle": {"createUpdaterArtifacts": True}, "plugins": {"updater": {"pubkey": os.environ["SNIPFLAG_UPDATER_PUBKEY"].strip()}}}, open(sys.argv[1], "w"))' "$config"
+            echo "UPDATER_ARGS=--config $config" >> "$GITHUB_ENV"
             echo 'Signed updater artifacts enabled. Update installation still requires runtime verification.' >> "$GITHUB_STEP_SUMMARY"
           elif [ -z "$SNIPFLAG_UPDATER_PUBKEY" ] && [ "$HAS_SIGNING_KEY" != "true" ]; then
             echo 'Updater key not configured: this build cannot offer or install updates.' >> "$GITHUB_STEP_SUMMARY"
