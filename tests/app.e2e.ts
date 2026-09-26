@@ -373,6 +373,8 @@ test('the interface behaves like a desktop app, not a web page', async ({ page }
 
 test('numbered steps count up per image and ellipses draw', async ({ page }) => {
   await addImages(page, [white]);
+  // Measure after the canvas fade-in settles.
+  await page.getByTestId('canvas').evaluate(el => Promise.all(el.getAnimations().map(a => a.finished)));
   const before = (await page.getByTestId('canvas').boundingBox())!;
   await page.keyboard.press('n');
   // Choosing a tool never moves the canvas.
