@@ -74,17 +74,12 @@ for (const theme of ['Dark', 'Light'] as const) {
     await page.keyboard.press('Escape');
     await expect(dialog).toHaveCount(0);
 
-    await page.addStyleTag({ content: '.ws-text { visibility: hidden !important; } *, *::before, *::after { caret-color: transparent !important; }' });
+    await page.addStyleTag({ content: '.connection:has(.workspace-chip.preview) { display: none !important; } *, *::before, *::after { caret-color: transparent !important; }' });
 
     await page.keyboard.press('b');
     await dragImg(page, [400, 118], [622, 150]);   // pixelate the email
     await page.keyboard.press('r');
-    await dragImg(page, [520, 236], [626, 280]);   // box the wrong total
-    await page.keyboard.press('a');
-    await dragImg(page, [360, 330], [506, 268]);   // arrow to it
-    await page.keyboard.press('n');
-    const step = await toPage(page, 300, 330);
-    await page.mouse.click(step.x, step.y);         // numbered step
+    await dragImg(page, [516, 234], [628, 280]);   // box the wrong total
     await page.keyboard.press('v');
     await page.keyboard.press('Escape');
 
