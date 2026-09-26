@@ -1,5 +1,9 @@
 # Current state / handoff
 
+### Fix-first final hardening — 2026-09-26
+
+Recovery commit `776cc31`: [Checks 36240959516](https://github.com/Razee4315/snipflag/actions/runs/36240959516) passed all jobs. Final refinements pending CI: keep mutations frozen after quit acknowledgment, mark capture busy through completion so Quit cannot discard an in-flight capture, serialize thumbnail rendering to limit concurrent full-size canvases, preserve saving state for emptied drafts, surface retention cleanup failures, and cover fractional/transparent/legacy privacy boundaries. Updated SECURITY, TESTING and ARCHITECTURE to match the new behavior. Next: verify the final refinement on all remote checks and record exact evidence. Version 1.1.0 and published release remain unchanged.
+
 ### Fix-first submission and quit checkpoint — 2026-09-26
 
 Persistence commit `ae51c04`: [Checks 36240649340](https://github.com/Razee4315/snipflag/actions/runs/36240649340) passed all jobs. Implemented next, verification pending: submission state and immutable report snapshot commit together before issueCreate; unknown outcomes lock the report across restart; explicit Check previous attempt reconciles only, and confirmed absence unlocks without creating/uploading again. Rust rejects edits against a locked snapshot; success reloads the actual stored submitted revision. Old unknown submissions without a snapshot stop with an explicit review message rather than inventing a revision. Deleting local history removes content snapshots but retains minimal deduplication receipts.

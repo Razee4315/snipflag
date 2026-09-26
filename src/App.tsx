@@ -39,6 +39,7 @@ export default function App() {
   const fileInput = useRef<HTMLInputElement>(null);
   const saveChain = useRef<Promise<void>>(Promise.resolve());
   const saveTimer = useRef<number | undefined>(undefined);
+  const saveAttempts = useRef(new Set<string>());
 
   const notify = useCallback((text: string, kind: 'error' | 'info' = 'info') => setNotice({ kind, text, id: Date.now() }), []);
   useEffect(() => { if (!notice) return; const t = window.setTimeout(() => setNotice(null), notice.kind === 'error' ? 9000 : 3500); return () => window.clearTimeout(t); }, [notice]);
@@ -48,7 +49,8 @@ export default function App() {
     const run = async () => {
       const { session: s, persisted, durable, submissionLocked, setSaveState, markPersisted } = useStore.getState();
       if (submissionLocked) { setSaveState('saved'); return; } // The durable attempted revision is immutable until reconciliation.
-      if (!durable && !s.images.length && !s.title.trim() && !s.description.trim()) { setSaveState('idle'); return; }
+      if (!durable && !saveAttempts.current.has(s.id) && !s.images.length && !s.title.trim() && !s.description.trim()) { setSaveState('idle'); return; }
+      saveAttempts.current.add(s.id); // A failed save can have committed metadata before cleanup failed.
       setSaveState('saving');
       try {
         await saveSession(s, persisted); markPersisted(s.id, s.images.map(i => i.id));
@@ -61,8 +63,8 @@ export default function App() {
   useEffect(() => {
     if (!ready) return;
     // Pending edits are never reported as saved: the status only returns to "saved" after this change is durable.
-    const { session: s, saveState: current, setSaveState } = useStore.getState();
-    if (current === 'saved' && (s.images.length || s.title.trim() || s.description.trim())) setSaveState('saving');
+    const { session: s, durable, saveState: current, setSaveState } = useStore.getState();
+    if (current === 'saved' && (durable || s.images.length || s.title.trim() || s.description.trim())) setSaveState('saving');
     window.clearTimeout(saveTimer.current);
     saveTimer.current = window.setTimeout(() => { saveNow().catch(() => undefined); }, 400);
     return () => window.clearTimeout(saveTimer.current);
@@ -149,7 +151,8 @@ export default function App() {
     if (s.busy) return;
     if (s.submissionLocked) { notify('Check the previous submission or start a new session before capturing.', 'error'); return; }
     if (!s.session.issue && s.session.images.length >= 10) { notify('This session already has 10 screenshots. Start a new session to capture more.', 'error'); return; }
-    try { await flush(); await startCapture(); } catch (e) { notify(errorText(e), 'error'); }
+    s.setBusy(true);
+    try { await flush(); await startCapture(); } catch (e) { useStore.getState().setBusy(false); notify(errorText(e), 'error'); }
   }, [flush, notify]);
   const captureRef = useRef(capture); captureRef.current = capture;
 
@@ -169,9 +172,11 @@ export default function App() {
     const subs = [
       on('capture-requested', () => { void captureRef.current(); }),
       on<RawImage>('capture-complete', p => {
+        useStore.getState().setBusy(false);
         if (addImages([{ id: crypto.randomUUID(), name: '', width: p.width, height: p.height, dataUrl: p.dataUrl, annotations: [] }])) { play('capture'); setFlash(f => f + 1); }
       }),
-      on<string>('capture-failed', m => { notify(m, 'error'); play('error'); }),
+      on('capture-cancelled', () => useStore.getState().setBusy(false)),
+      on<string>('capture-failed', m => { useStore.getState().setBusy(false); notify(m, 'error'); play('error'); }),
       on<string>('submission-progress', m => setProgress(m)),
     ];
     return () => { subs.forEach(p => p.then(u => u())); };
@@ -198,6 +203,7 @@ export default function App() {
     } finally {
       if (!id || useStore.getState().session.id === id) useStore.getState().reset();
       else useStore.getState().setBusy(false);
+      void appStatus().then(setStatus).catch(() => undefined);
     }
   }, []);
 
@@ -311,6 +317,7 @@ export default function App() {
         <span className="grip" aria-hidden="true" />
         <span className="visually-hidden" role="status" aria-label={saveText}>{saveText}</span>
         {saveState === 'error' && <span className="save-error" role="alert" title={saveText}><Icon name="alert" size={14} /> {saveText}</span>}
+        {status?.cleanupError && <span className="save-error" role="alert" title={status.cleanupError}><Icon name="alert" size={14} /> Local cleanup incomplete. Retry in History or Settings.</span>}
         <div className="drag-space" aria-hidden="true" />
         <div className="top-actions">
           <button type="button" className="icon-button" aria-label="History" title="History" disabled={busy} onClick={() => setDialog('history')}><Icon name="history" /></button>

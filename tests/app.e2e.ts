@@ -251,6 +251,38 @@ test('translucent pixelation replaces original detail and protects every thumbna
   await expect(tile(page, 1).locator('img')).toHaveAttribute('src', protectedUrl!);
 });
 
+test('privacy exports cover fractional edges, transparent areas and legacy redactions', async ({ page }) => {
+  const patterned = { name: 'edge-pattern.png', mimeType: 'image/png', buffer: patternPng(400, 300, (x, y) => y >= 180 ? [0, 0, 0, 0] : x % 2 ? [240, 0, 0, 255] : [0, 0, 240, 255]) };
+  await addImages(page, [patterned]);
+  await expect(page.getByRole('status', { name: 'Saved on this computer' })).toBeVisible();
+  await page.evaluate(async () => {
+    await new Promise<void>((resolve, reject) => {
+      const request = indexedDB.open('snipflag-preview');
+      request.onsuccess = () => {
+        const db = request.result; const tx = db.transaction('sessions', 'readwrite'); const store = tx.objectStore('sessions');
+        const rows = store.getAll(); rows.onsuccess = () => {
+          const s = rows.result[0];
+          const base = { points: [], color: '#EF4444', stroke: 8, text: '', fontSize: 22 };
+          s.images[0].annotations = [
+            { ...base, id: 'legacy', kind: 'redact', x: 18, y: 18, width: 8, height: 8 },
+            { ...base, id: 'fractional', kind: 'pixelate', x: 10.75, y: 10.75, width: 24.5, height: 24.5 },
+            { ...base, id: 'transparent', kind: 'pixelate', x: 40, y: 195, width: 100, height: 70 },
+            { ...base, id: 'later-mark', kind: 'rectangle', x: 55, y: 210, width: 60, height: 30 },
+          ]; store.put(s);
+        };
+        tx.oncomplete = () => { db.close(); resolve(); }; tx.onerror = () => { db.close(); reject(tx.error); };
+      }; request.onerror = () => reject(request.error);
+    });
+  });
+  await page.reload();
+  const result = await exportPixels(page, [[10, 14], [11, 14], [35, 14], [9, 14], [36, 14], [20, 20], [70, 210]]);
+  expect(result.pixels[0]).toEqual([120, 0, 120, 255]);
+  expect(result.pixels[1]).toEqual(result.pixels[0]); expect(result.pixels[2]).toEqual(result.pixels[0]);
+  expect(result.pixels[3]).toEqual([240, 0, 0, 255]); expect(result.pixels[4]).toEqual([0, 0, 240, 255]);
+  expect(result.pixels[5]).toEqual([0, 0, 0, 255]);
+  expect(result.pixels[6]).toEqual([0, 0, 0, 0]);
+});
+
 test('tools are reachable by keyboard and named', async ({ page }) => {
   await addImages(page, [white]);
   for (const [key, name] of [['v', 'Select'], ['a', 'Arrow'], ['r', 'Rectangle'], ['e', 'Ellipse'], ['p', 'Pen'], ['h', 'Highlighter'], ['t', 'Text'], ['n', 'Numbered step'], ['b', 'Pixelate']]) {

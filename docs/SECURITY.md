@@ -7,9 +7,11 @@
 - Asset IDs are UUIDs; resolve paths from app-controlled roots. Import/export uses a native picker or bounded image bytes; no general frontend filesystem/shell permission.
 - Validate image formats, dimensions, encoded size, session count, and total data before persistence. Decode with allocation limits. Reject malformed drafts.
 - Network endpoints are fixed for OAuth/GraphQL; upload targets originate only from authenticated Linear API responses and must be HTTPS. Do not forward bearer tokens to storage.
-- Use opaque redaction for secrets. Export flattens redaction pixels last. Pixelation is not a guarantee against recovery. Original local drafts retain original pixels until deleted.
+- Pixelation uses true block averages (at least 12px), replaces covered pixels rather than blending over the original, and renders after ordinary marks. Legacy solid redactions remain last. The solid-redaction tool is no longer offered. Pixelation is not a guarantee against recovery. Original local drafts retain original pixels until deleted. Filmstrip and mention previews use flattened, protected revisions.
 - No screenshot analytics, crash screenshot capture, remote fonts, or automatic upload queue.
-- Delete session removes its image files and submission records. No promise of forensic secure deletion from SSDs/backups.
+- Delete session removes managed image files, report metadata and submission-content snapshots; failures are reported and remain retryable. Minimal submission receipts and deletion tombstones remain to prevent replay and stale-save resurrection. No promise of forensic secure deletion from SSDs/backups.
+- Unknown issue-create outcomes preserve a durable immutable report revision and lock edits across restart. Reconciliation never silently uploads or creates; a confirmed absence unlocks the draft for a separately requested send. Old unknown attempts without a stored revision require manual review instead of guessing what was submitted.
+- App-initiated quit requires a successful renderer save acknowledgment, including active text/drawing. Busy operations, errors and timeout keep the app open; forced termination and power loss cannot promise the same behavior.
 - Release signing and signed updater verification are separate from HTTPS. Do not enable an updater with a placeholder key.
 
-Review release capabilities against actual permission IDs, not their comments. Tests must cover path containment, window roles, malformed input, duplicate sends, and exported redaction.
+Review release capabilities against actual permission IDs, not their comments. Tests cover persistence/deletion failure paths, submission revisions and privacy exports; native window roles, real Linear recovery and platform runtime gates still require the recorded verification in TESTING.md.

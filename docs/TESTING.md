@@ -1,5 +1,13 @@
 # Test and release gates
 
+## Fix-first regressions (1.1.0 source update, no new release)
+
+Remote suites now cover persisted empty image/text drafts, independent undo/redo across restart, legacy drafts without histories, bounded history, retryable failed deletion, orphan cleanup, stale-save rejection after delete, immutable submission snapshots across restart, retention protection, renderer pending-report locks, and quit acknowledgment ordering/failure. Privacy fixtures include alternating patterned semitransparent pixels, protected bounded thumbnails after reload, fractional region boundaries, fully transparent regions, marks added after masks, and legacy redactions drawn last.
+
+Native follow-up: type into an active annotation and immediately choose tray Quit; repeat with ordinary form edits, failed disk writes, slow saves, busy submission and repeated Quit. Verify the app remains open on failure and the last edit returns after a successful quit/relaunch. Forced process termination/power loss is not covered by the quit handshake. With explicitly authorized synthetic Linear content, lose the response after create, restart, verify the report is locked, and use Check previous attempt to restore the exact submitted content without duplicate upload/create. A confirmed missing issue must unlock for a separate user-requested send. Old uncertain submissions without snapshots must fail visibly. Exercise locked-file deletion and retry on Windows; verify no success indication before cleanup finishes.
+
+History is bounded to 100 undo/redo snapshots and approximately 512 KiB of serialized history per image (character count); older history can be evicted. Current annotations and original dimensions remain intact. Existing v1 drafts without history remain readable, with undo available for new edits.
+
 ## Automated on GitHub Actions
 
 - TypeScript strict typecheck and production frontend build.

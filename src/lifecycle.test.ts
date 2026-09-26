@@ -9,7 +9,7 @@ describe('save-before-quit handshake', () => {
       save: async () => { calls.push('save'); await pending; }, finish: async saved => { calls.push(`exit:${saved}`); } });
     expect(calls).toEqual(['commit', 'lock:true', 'save']);
     release(); await quit;
-    expect(calls).toEqual(['commit', 'lock:true', 'save', 'exit:true', 'lock:false']);
+    expect(calls).toEqual(['commit', 'lock:true', 'save', 'exit:true']);
   });
   it('keeps the app open after a disk failure or during submission', async () => {
     const results: boolean[] = [];

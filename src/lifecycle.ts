@@ -6,6 +6,6 @@ export async function saveBeforeQuit(actions: {
   if (actions.isBusy()) { await actions.finish(false); throw new Error('Wait for the current operation to finish before quitting.'); }
   actions.commit(); actions.lock(true);
   try { await actions.save(); await actions.finish(true); }
-  catch (error) { await actions.finish(false).catch(() => undefined); throw error; }
-  finally { actions.lock(false); }
+  catch (error) { await actions.finish(false).catch(() => undefined); actions.lock(false); throw error; }
+  // Keep mutations frozen after acknowledgment until the native process actually exits.
 }

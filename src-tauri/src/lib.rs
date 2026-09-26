@@ -86,14 +86,15 @@ fn save_settings(window: WebviewWindow, app: AppHandle, storage: State<Storage>,
         result.map_err(|_| "Could not change the launch at login setting.")?;
     }
     storage.write_settings(&next)?;
-    if next["retentionDays"] != previous["retentionDays"] { let _ = storage.prune(next["retentionDays"].as_u64().unwrap_or(0)); }
+    if next["retentionDays"] != previous["retentionDays"] { storage.record_cleanup(storage.prune(next["retentionDays"].as_u64().unwrap_or(0)))?; }
     Ok(next)
 }
 #[tauri::command]
 fn app_status(window: WebviewWindow, app: AppHandle) -> Result<Value, String> {
     main_only(&window)?;
     let shortcut_error = app.state::<ShortcutStatus>().0.lock().ok().and_then(|s| s.clone());
-    Ok(json!({"version": app.package_info().version.to_string(), "platform": std::env::consts::OS, "shortcutError": shortcut_error}))
+    let cleanup_error = app.state::<Storage>().cleanup_error.lock().ok().and_then(|s| s.clone());
+    Ok(json!({"version": app.package_info().version.to_string(), "platform": std::env::consts::OS, "shortcutError": shortcut_error, "cleanupError": cleanup_error}))
 }
 
 /// Comfortable full workspace in logical pixels: large, never fullscreen, always inside the work area.
@@ -234,7 +235,7 @@ pub fn run() {
         .setup(|app| {
             let storage = Storage::open(app.handle())?;
             let settings = storage.settings()?;
-            let _ = storage.prune(settings["retentionDays"].as_u64().unwrap_or(30));
+            let _ = storage.record_cleanup(storage.prune(settings["retentionDays"].as_u64().unwrap_or(30)));
             app.manage(storage);
             let status = register_shortcut(app.handle(), settings["shortcut"].as_str().unwrap_or_default()).err();
             set_shortcut_status(app.handle(), status);

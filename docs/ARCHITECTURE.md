@@ -21,7 +21,7 @@ Tauri 2 / Rust desktop core; React + TypeScript + Vite UI; Konva/react-konva ann
 
 ## Data
 
-Session: schemaVersion, id (UUID), createdAt, updatedAt, title, description, teamId, projectId, assigneeId, labelIds, priority, ordered images, issueId/identifier/url, submission status. Image: UUID, name/caption, native width/height, original PNG data loaded on demand, annotation list. Annotations use IMAGE coordinates, never viewport coordinates.
+Session: schemaVersion, id (UUID), createdAt, updatedAt, title, description, teamId, projectId, assigneeId, labelIds, priority, ordered images, issueId/identifier/url, submission status. Optional annotationHistories stores bounded per-image undo/redo; old v1 drafts remain readable. Image: UUID, name/caption, native width/height, original PNG data, annotation list. Current hydration loads all session images; thumbnails are bounded flattened revisions. Annotations use IMAGE coordinates, never viewport coordinates.
 
 Persist image files by validated UUID inside app data and store JSON metadata in SQLite. Do not persist tokens in the database or source images in logs. Hydration restores the JSON plus image data. Cache bounded thumbnails in UI; never create files at arbitrary frontend-supplied paths.
 
@@ -36,5 +36,7 @@ No private client secret in distributed apps. OAuth is a public client using S25
 Native monitor frame acquisition runs off the UI thread. Hide editor before acquisition. Overlay per monitor uses physical bounds and maps pointer positions to image pixels; crop original frame in Rust. Restrict region to one monitor. Close/cancel all overlays together. XCap is behind our adapter; Wayland failures show a useful import/paste fallback and remain a platform acceptance item.
 
 ## Error model
+
+Before issueCreate, the exact report metadata snapshot and creating state commit in one SQLite transaction. Unknown outcomes lock editing across restart; reconciliation reads that snapshot, never the caller's later edits. A confirmed absence unlocks for a separate explicit submission. Deletion removes content snapshots but retains minimal receipts and tombstones. App-initiated quit waits for a renderer save acknowledgment; errors/timeouts keep the process open.
 
 Actionable user messages, no raw tokens or upload URLs. Save errors remain visible and prevent workflows that rely on durability. Upload failure retains session. Unknown create outcome is a separate state from confirmed failure. No success display until confirmed server response/reconciliation.

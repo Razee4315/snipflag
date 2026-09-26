@@ -13,7 +13,7 @@ pub const MAX_PIXELS: u64 = 40_000_000;
 const MAX_ANNOTATIONS: usize = 2000;
 const MAX_TEXT: usize = 100_000;
 
-pub struct Storage { pub root: PathBuf, pub db: Mutex<Connection>, mutations: Mutex<()> }
+pub struct Storage { pub root: PathBuf, pub db: Mutex<Connection>, mutations: Mutex<()>, pub cleanup_error: Mutex<Option<String>> }
 
 pub fn main_only(window: &WebviewWindow) -> Result<(), String> {
     if window.label() != "main" { return Err("This action is restricted to the editor.".into()); }
@@ -96,6 +96,10 @@ pub fn normalize_settings(input: &Value) -> Result<Value, String> {
 }
 
 impl Storage {
+    pub fn record_cleanup<T>(&self, result: Result<T, String>) -> Result<T, String> {
+        if let Ok(mut warning) = self.cleanup_error.lock() { *warning = result.as_ref().err().cloned(); }
+        result
+    }
     pub fn open(app: &AppHandle) -> Result<Self, String> {
         Self::open_at(app.path().app_data_dir().map_err(|_| "Cannot locate app data.")?)
     }
@@ -109,7 +113,7 @@ impl Storage {
             CREATE TABLE IF NOT EXISTS deletions(id TEXT PRIMARY KEY);
             CREATE TABLE IF NOT EXISTS submission_snapshots(id TEXT PRIMARY KEY, data TEXT NOT NULL);")
             .map_err(|_| "Cannot initialize draft database.")?;
-        Ok(Self { root, db: Mutex::new(db), mutations: Mutex::new(()) })
+        Ok(Self { root, db: Mutex::new(db), mutations: Mutex::new(()), cleanup_error: Mutex::new(None) })
     }
     fn image_path(&self, session_id: &str, image_id: &str) -> PathBuf { self.root.join("images").join(format!("{session_id}-{image_id}.png")) }
     fn stored_issue(&self, session_id: &str) -> Result<Option<Value>, String> {
@@ -320,9 +324,9 @@ pub fn load_session(window: WebviewWindow, state: State<Storage>, id: String) ->
 #[tauri::command]
 pub fn list_sessions(window: WebviewWindow, state: State<Storage>) -> Result<Vec<Value>, String> { main_only(&window)?; state.list() }
 #[tauri::command]
-pub fn delete_session(window: WebviewWindow, state: State<Storage>, id: String) -> Result<(), String> { main_only(&window)?; state.delete(&id) }
+pub fn delete_session(window: WebviewWindow, state: State<Storage>, id: String) -> Result<(), String> { main_only(&window)?; state.record_cleanup(state.delete(&id)) }
 #[tauri::command]
-pub fn clear_history(window: WebviewWindow, state: State<Storage>) -> Result<(), String> { main_only(&window)?; state.clear() }
+pub fn clear_history(window: WebviewWindow, state: State<Storage>) -> Result<(), String> { main_only(&window)?; state.record_cleanup(state.clear()) }
 #[tauri::command]
 pub fn load_settings(window: WebviewWindow, state: State<Storage>) -> Result<Value, String> { main_only(&window)?; state.settings() }
 #[tauri::command]

@@ -159,17 +159,19 @@ export async function flattenedCanvas(image: CaptureImage): Promise<HTMLCanvasEl
 export async function flatten(image: CaptureImage): Promise<string> { return (await flattenedCanvas(image)).toDataURL('image/png'); }
 
 const thumbnails = new WeakMap<Annotation[], { source: string; result: Promise<string> }>();
+let thumbnailQueue: Promise<void> = Promise.resolve();
 /** Bounded previews of exactly the exported revision. Never fall back to the original. */
 export function thumbnail(image: CaptureImage): Promise<string> {
   const cached = thumbnails.get(image.annotations);
   if (cached?.source === image.dataUrl) return cached.result;
-  const result = flattenedCanvas(image).then(source => {
+  const result = thumbnailQueue.then(() => flattenedCanvas(image)).then(source => {
     const scale = Math.min(1, 160 / Math.max(image.width, image.height));
     const out = canvas(Math.max(1, Math.round(image.width * scale)), Math.max(1, Math.round(image.height * scale)));
     out.getContext('2d')!.drawImage(source, 0, 0, out.width, out.height);
     const url = out.toDataURL('image/png'); source.width = 0; source.height = 0;
     return url;
   });
+  thumbnailQueue = result.then(() => undefined, () => undefined);
   thumbnails.set(image.annotations, { source: image.dataUrl, result });
   return result;
 }
