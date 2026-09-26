@@ -1,0 +1,33 @@
+{
+  "name": "clipsenda",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 1420",
+    "typecheck": "tsc --noEmit",
+    "build": "npm run typecheck && vite build",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "2.11.1",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "konva": "10.7.0",
+    "react-konva": "19.3.0",
+    "zustand": "5.0.15",
+    "lucide-react": "1.48.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.11.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.1",
+    "vite": "8.3.1",
+    "typescript": "7.0.2",
+    "vitest": "5.0.2",
+    "@playwright/test": "1.63.0"
+  }
+}

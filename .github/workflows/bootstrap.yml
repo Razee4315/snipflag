@@ -1,0 +1,22 @@
+name: Bootstrap dependency locks
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  locks:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: dtolnay/rust-toolchain@stable
+      - run: npm install --package-lock-only --ignore-scripts
+      - run: cargo generate-lockfile --manifest-path src-tauri/Cargo.toml
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dependency-locks
+          path: |
+            package-lock.json
+            src-tauri/Cargo.lock
+          retention-days: 7
