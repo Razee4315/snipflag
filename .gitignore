@@ -1,0 +1,14 @@
+node_modules/
+dist/
+target/
+src-tauri/target/
+src-tauri/gen/
+src-tauri/icons/
+playwright-report/
+test-results/
+coverage/
+.env
+.env.*.local
+*.log
+.DS_Store
+Thumbs.db
