@@ -1,5 +1,6 @@
-import { useEffect, useState, type CSSProperties } from 'react';
-import { LIMITS, PRIORITIES, type Connection, type TeamOptions } from '../model';
+import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
+import { LIMITS, PRIORITIES, type Connection, type Named, type TeamDefaults, type TeamOptions, type Template } from '../model';
+import { detailsToFill } from '../templates';
 import { copyText, desktop, errorText, openIssue, teamOptions } from '../native';
 import { isLocked, useStore } from '../store';
 import { Icon } from './icons';
@@ -10,10 +11,28 @@ export type ConnectionState = 'idle' | 'loading' | 'connecting' | 'error';
 interface Props {
   connection: Connection | null; connectionState: ConnectionState; connectionError: string; hasClientId: boolean;
   progress: string; submitError: string; pendingState: string | null;
+  templates: Template[]; teamMemory: Record<string, string>; teamDefaults: Record<string, TeamDefaults>;
   onConnect: () => void; onCancelConnect: () => void; onRetryConnection: () => void; onOpenSettings: () => void;
   onSubmit: (report?: PreparedReport) => void; onNewSession: () => void; onTeamChosen: (teamId: string) => void; notify: (text: string) => void;
 }
-const TEMPLATE = '## Steps to reproduce\n1. \n\n## Expected result\n\n## Actual result\n\n## Environment\n';
+/** A select with a filter for long Linear lists. The chosen item always stays listed. */
+function Picker({ label, value, disabled, items, none, missing, onChange }: { label: string; value: string; disabled: boolean; items: { id: string; label: string }[]; none: string; missing: string; onChange: (id: string) => void }) {
+  const id = useId(); const [query, setQuery] = useState('');
+  const q = query.trim().toLowerCase();
+  const shown = items.filter(x => x.id === value || x.label.toLowerCase().includes(q));
+  return (
+    <div className="field picker">
+      <label htmlFor={id} className="picker-label">{label}</label>
+      {items.length > 8 && <input className="filter" autoComplete="off" placeholder={`Search ${items.length}`} aria-label={`Search ${label.toLowerCase()}`} value={query} disabled={disabled} onChange={e => setQuery(e.target.value)} />}
+      <select id={id} value={value} disabled={disabled} onChange={e => onChange(e.target.value)}>
+        <option value="">{none}</option>
+        {shown.map(x => <option key={x.id} value={x.id}>{x.label}</option>)}
+        {value && !items.some(x => x.id === value) && <option value={value}>{missing}</option>}
+      </select>
+    </div>
+  );
+}
+const named = (list: Named[] | undefined) => list?.map(x => ({ id: x.id, label: x.displayName || x.name })) ?? [];
 
 export default function IssuePanel(p: Props) {
   const session = useStore(s => s.session); const busy = useStore(s => s.busy); const locked = useStore(isLocked);
@@ -23,7 +42,27 @@ export default function IssuePanel(p: Props) {
   const [optionsError, setOptionsError] = useState('');
   const [labelFilter, setLabelFilter] = useState('');
   const [previewing, setPreviewing] = useState(false);
+  const [attempt, setAttempt] = useState(0); const [filledFor, setFilledFor] = useState('');
   const teamId = session.teamId; const connected = !!p.connection;
+  const teamDefaults = useRef(p.teamDefaults); teamDefaults.current = p.teamDefaults;
+
+  // Drafts without a team start with the one last chosen in this workspace, once per draft.
+  const autoTeam = useRef(new Set<string>());
+  useEffect(() => {
+    const c = p.connection;
+    if (!c || session.issue || teamId || locked || autoTeam.current.has(session.id)) return;
+    autoTeam.current.add(session.id);
+    const team = c.teams.find(t => t.id === p.teamMemory[c.workspaceId]) ?? (c.teams.length === 1 ? c.teams[0] : undefined);
+    if (team) patch({ teamId: team.id });
+  }, [p.connection, p.teamMemory, session.id, session.issue, teamId, locked, patch]);
+  // Remembered details apply only when a draft's team changes, never to a restored draft.
+  const pendingDetails = useRef<{ sessionId: string; teamId: string } | null>(null);
+  const previous = useRef({ sessionId: session.id, teamId });
+  useEffect(() => {
+    const before = previous.current; previous.current = { sessionId: session.id, teamId };
+    if (before.sessionId !== session.id || before.teamId === teamId) return;
+    pendingDetails.current = teamId ? { sessionId: session.id, teamId } : null; setFilledFor('');
+  }, [session.id, teamId]);
 
   useEffect(() => {
     setOptions(null); setOptionsError('');
@@ -38,10 +77,15 @@ export default function IssuePanel(p: Props) {
       if (s.assigneeId && !o.members.some(x => x.id === s.assigneeId)) fix.assigneeId = '';
       const labels = s.labelIds.filter(id => o.labels.some(x => x.id === id));
       if (labels.length !== s.labelIds.length) fix.labelIds = labels;
-      if (Object.keys(fix).length) useStore.getState().patch(fix);
+      const pending = pendingDetails.current;
+      const due = pending?.sessionId === s.id && pending.teamId === teamId;
+      if (due) pendingDetails.current = null;
+      const fill = due ? detailsToFill({ ...s, ...fix }, teamDefaults.current[teamId], o) : null;
+      if (Object.keys(fix).length || fill) useStore.getState().patch({ ...fix, ...fill });
+      if (fill) setFilledFor(s.id);
     }).catch(e => { if (live) setOptionsError(errorText(e)); });
     return () => { live = false; };
-  }, [teamId, connected]);
+  }, [teamId, connected, attempt]);
 
   if (session.issue) {
     const issue = session.issue;
@@ -109,40 +153,26 @@ export default function IssuePanel(p: Props) {
             <input value={session.title} maxLength={LIMITS.title} disabled={locked} autoComplete="off" placeholder="What needs fixing?" onChange={e => patch({ title: e.target.value })} />
           </label>
           <DescriptionEditor key={session.id} value={session.description} images={session.images} references={session.imageReferences ?? {}} disabled={locked} onChange={description => patch({ description })} />
-          {!session.description && <button type="button" className="template-button" disabled={locked} onClick={() => patch({ description: TEMPLATE })}><Icon name="plus" size={14} /> Add reproduction steps</button>}
-          <label className="field">
-            <span>Team</span>
-            <select value={teamId} disabled={locked || !connected} onChange={e => setTeam(e.target.value)}>
-              <option value="">{connected ? 'Choose a team' : 'Connect Linear to choose'}</option>
-              {p.connection?.teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-              {teamId && connected && !p.connection?.teams.some(t => t.id === teamId) && <option value={teamId}>Unavailable team</option>}
-            </select>
-          </label>
+          {!session.description && p.templates.length > 0 && (
+            <div className="templates" role="group" aria-label="Start from a template">
+              {p.templates.map(t => <button key={t.id} type="button" className="template-button" disabled={locked} onClick={() => patch({ description: t.body })}><Icon name="plus" size={14} /> {t.name}</button>)}
+            </div>
+          )}
+          <Picker label="Team" value={teamId} disabled={locked || !connected} items={named(p.connection?.teams)} none={connected ? 'Choose a team' : 'Connect Linear to choose'} missing={connected ? 'Unavailable team' : 'Saved team'} onChange={setTeam} />
           {connected && p.connection?.teams.length === 0 && <p className="error small">This Linear account has no teams you can post to.</p>}
           <details className="more" open={!!(session.projectId || session.assigneeId || session.labelIds.length || session.priority)}>
             <summary><Icon name="right" size={14} /> Issue details</summary>
             <div className="more-body">
-              {optionsError && <p className="error small" role="alert">{optionsError}</p>}
+              {optionsError && <div className="row between"><p className="error small" role="alert">{optionsError}</p><button type="button" className="button small-button" onClick={() => setAttempt(n => n + 1)}>Retry</button></div>}
+              {filledFor === session.id && <p className="small muted">Filled in from your last issue for this team.</p>}
               <label className="field">
                 <span>Priority</span>
                 <select value={session.priority} disabled={locked} onChange={e => patch({ priority: Number(e.target.value) })}>
                   {PRIORITIES.map(x => <option key={x.value} value={x.value}>{x.label}</option>)}
                 </select>
               </label>
-              <label className="field">
-                <span>Project</span>
-                <select value={session.projectId} disabled={locked || !options} onChange={e => patch({ projectId: e.target.value })}>
-                  <option value="">No project</option>
-                  {options?.projects.map(x => <option key={x.id} value={x.id}>{x.name}</option>)}
-                </select>
-              </label>
-              <label className="field">
-                <span>Assignee</span>
-                <select value={session.assigneeId} disabled={locked || !options} onChange={e => patch({ assigneeId: e.target.value })}>
-                  <option value="">Unassigned</option>
-                  {options?.members.map(x => <option key={x.id} value={x.id}>{x.displayName || x.name}</option>)}
-                </select>
-              </label>
+              <Picker label="Project" value={session.projectId} disabled={locked || !options} items={named(options?.projects)} none="No project" missing={options ? 'Unavailable project' : 'Loading…'} onChange={projectId => patch({ projectId })} />
+              <Picker label="Assignee" value={session.assigneeId} disabled={locked || !options} items={named(options?.members)} none="Unassigned" missing={options ? 'Unavailable member' : 'Loading…'} onChange={assigneeId => patch({ assigneeId })} />
               <fieldset className="field labels" disabled={locked || !options}>
                 <legend>Labels{session.labelIds.length ? ` (${session.labelIds.length})` : ''}</legend>
                 {(options?.labels.length ?? 0) > 8 && <input className="filter" autoComplete="off" placeholder="Filter labels" aria-label="Filter labels" value={labelFilter} onChange={e => setLabelFilter(e.target.value)} />}

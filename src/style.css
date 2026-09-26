@@ -185,8 +185,8 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 0.85; 
 /* Form */
 .issue-form { display: flex; flex-direction: column; gap: 12px; }
 .field { display: flex; flex-direction: column; gap: 6px; border: 0; margin: 0; padding: 0; min-width: 0; }
-.field > span, .field legend { font-size: 11.5px; font-weight: 650; color: var(--text); padding: 0; letter-spacing: 0.01em; }
-.field input, .field select, .field textarea, .description-editor > textarea, .caption-field input, .labels .filter {
+.field > span, .field legend, .field > .picker-label { font-size: 11.5px; font-weight: 650; color: var(--text); padding: 0; letter-spacing: 0.01em; }
+.field input, .field select, .field textarea, .description-editor > textarea, .caption-field input, .labels .filter, .picker .filter {
   width: 100%; min-height: 38px; border: 1px solid transparent; border-radius: var(--radius); background: var(--surface-2); padding: 8px 11px; font-size: 12.5px;
   transition: border-color 160ms var(--ease), background 160ms var(--ease), box-shadow 180ms var(--ease);
 }
@@ -230,7 +230,10 @@ option { background: var(--surface); color: var(--text); }
 .more[open] summary svg { transform: rotate(90deg); }
 .more-body { display: flex; flex-direction: column; gap: 12px; padding-top: 12px; }
 .more[open] .more-body { animation: reveal 260ms var(--ease); }
-.labels .filter { margin-bottom: 6px; min-height: 32px; }
+.labels .filter, .picker .filter { min-height: 32px; }
+.labels .filter { margin-bottom: 6px; }
+.templates { display: flex; flex-wrap: wrap; gap: 2px 8px; margin-top: -4px; }
+.templates .template-button { margin-top: 0; }
 .label-list { display: flex; flex-direction: column; gap: 2px; max-height: 190px; overflow-y: auto; padding: 4px; border-radius: var(--radius); background: var(--surface-2); }
 .check { display: flex; align-items: center; gap: 9px; font-size: 12.5px; cursor: pointer; }
 .label-row { padding: 6px 8px; border-radius: 7px; transition: background 120ms; }
@@ -431,6 +434,10 @@ option { background: var(--surface); color: var(--text); }
 .settings-section > small { margin-top: -8px; font-size: 11.5px; }
 .setup { border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; background: var(--surface-2); }
 .setup summary { cursor: pointer; font-weight: 650; font-size: 12.5px; }
+.template-list { display: flex; flex-direction: column; gap: 8px; }
+.template-fields { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; margin-top: 10px; }
+.template-fields .field { align-self: stretch; }
+.template-fields textarea { resize: vertical; font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 12px; line-height: 1.5; }
 .setup ol { padding-left: 18px; display: flex; flex-direction: column; gap: 6px; margin: 10px 0 12px; }
 .theme-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .theme-option { position: relative; display: flex; flex-direction: column; gap: 8px; padding: 8px 8px 10px; border-radius: 14px; border: 1.5px solid var(--border); background: var(--surface-2); cursor: pointer; transition: border-color 160ms, transform 200ms var(--ease), box-shadow 200ms; }

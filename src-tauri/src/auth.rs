@@ -137,7 +137,7 @@ pub async fn disconnect_linear(window: WebviewWindow, app: AppHandle) -> Result<
     forget()?;
     // Disconnecting also clears remembered workspace selections.
     let storage = app.state::<Storage>();
-    let mut settings = storage.settings()?; settings["teamMemory"] = serde_json::json!({});
+    let mut settings = storage.settings()?; settings["teamMemory"] = serde_json::json!({}); settings["teamDefaults"] = serde_json::json!({});
     storage.write_settings(&settings)
 }
 

@@ -1,5 +1,6 @@
 import { useState, type CSSProperties } from 'react';
-import { acceleratorFromEvent, REDIRECT_URI, shortcutLabel, type Connection, type Settings } from '../model';
+import { acceleratorFromEvent, REDIRECT_URI, shortcutLabel, type Connection, type Settings, type Template } from '../model';
+import { TEMPLATE_LIMITS, templatesOf, tidyTemplates } from '../templates';
 import { copyText, desktop, errorText, openAboutLink, openLinearSetup, type AboutLink, type AppStatus } from '../native';
 import Dialog from './Dialog';
 import { Icon, Mark, type IconName } from './icons';
@@ -11,7 +12,7 @@ interface Props {
   onSave: (settings: Settings) => Promise<void>; onConnect: () => void; onCancelConnect: () => void; onDisconnect: () => Promise<void>;
   onClearHistory: () => Promise<void>; onClose: () => void;
 }
-const SECTIONS = ['Connection', 'Capture', 'Appearance', 'Privacy', 'Shortcuts', 'About'] as const;
+const SECTIONS = ['Connection', 'Capture', 'Templates', 'Appearance', 'Privacy', 'Shortcuts', 'About'] as const;
 const CREATOR: { target: AboutLink; label: string; detail: string; icon: IconName }[] = [
   { target: 'github', label: 'GitHub', detail: 'Razee4315', icon: 'github' },
   { target: 'linkedin', label: 'LinkedIn', detail: 'saqlainrazee', icon: 'linkedin' },
@@ -24,12 +25,19 @@ export default function SettingsDialog(p: Props) {
   const [draft, setDraft] = useState<Settings>(p.settings);
   const [error, setError] = useState(''); const [saved, setSaved] = useState('');
   const [recording, setRecording] = useState(false); const [confirmClear, setConfirmClear] = useState(false);
+  const [added, setAdded] = useState('');
   const builtin = !!p.status?.builtinLinearClient;
   const dirty = JSON.stringify(draft) !== JSON.stringify(p.settings);
   const save = async (next = draft) => {
     setError(''); setSaved('');
-    try { await p.onSave(next); setSaved('Settings saved.'); return true; } catch (e) { setError(errorText(e)); return false; }
+    const tidy = { ...next, templates: tidyTemplates(next.templates) }; setDraft(tidy);
+    try { await p.onSave(tidy); setSaved('Settings saved.'); return true; } catch (e) { setError(errorText(e)); return false; }
   };
+  const templates = templatesOf(draft);
+  const setTemplates = (next: Template[]) => setDraft({ ...draft, templates: next });
+  const changeTemplate = (id: string, change: Partial<Template>) => setTemplates(templates.map(t => t.id === id ? { ...t, ...change } : t));
+  const addTemplate = () => { const id = crypto.randomUUID(); setAdded(id); setTemplates([...templates, { id, name: 'New template', body: '' }]); };
+  const remembered = Object.keys(draft.teamDefaults).length;
   const connect = async () => { if (dirty && !(await save())) return; p.onConnect(); };
 
   return (
@@ -77,6 +85,39 @@ export default function SettingsDialog(p: Props) {
             {!desktop && <p className="small muted">Connecting works in the installed desktop app.</p>}
           </>
         )}
+        {remembered > 0 && (
+          <div className="row between">
+            <p className="small muted">New drafts reuse the project, assignee, labels and priority last sent to {remembered === 1 ? 'a team' : `${remembered} teams`}.</p>
+            <button type="button" className="button small-button" onClick={() => setDraft({ ...draft, teamDefaults: {} })}>Forget</button>
+          </div>
+        )}
+      </section>
+
+      <section className="settings-section" hidden={section !== 'Templates'}><h3>Description templates</h3>
+        <p className="small muted">Offered under an empty description. A template fills the description; it never replaces text you wrote.</p>
+        <div className="template-list">
+          {templates.map(t => (
+            <details key={t.id} className="setup" open={t.id === added || undefined}>
+              <summary>{t.name.trim() || 'Untitled template'}</summary>
+              <div className="template-fields">
+                <label className="field">
+                  <span>Template name</span>
+                  <input value={t.name} maxLength={TEMPLATE_LIMITS.name} autoComplete="off" onChange={e => changeTemplate(t.id, { name: e.target.value })} />
+                </label>
+                <label className="field">
+                  <span>Template text</span>
+                  <textarea rows={7} value={t.body} maxLength={TEMPLATE_LIMITS.body} spellCheck={false} onChange={e => changeTemplate(t.id, { body: e.target.value })} />
+                </label>
+                <button type="button" className="button danger-outline small-button" onClick={() => setTemplates(templates.filter(x => x.id !== t.id))}>Remove template</button>
+              </div>
+            </details>
+          ))}
+          {!templates.length && <p className="small muted">No templates. The description starts empty.</p>}
+        </div>
+        <div className="row">
+          <button type="button" className="button" disabled={templates.length >= TEMPLATE_LIMITS.count} onClick={addTemplate}><Icon name="plus" size={16} /> Add template</button>
+          {draft.templates && <button type="button" className="link-button" onClick={() => setDraft({ ...draft, templates: null })}>Restore built-in templates</button>}
+        </div>
       </section>
 
       <section className="settings-section" hidden={section !== 'Capture'}><h3>Capture</h3><p className="small muted">Every capture opens the full editor. Closing saves your draft and tucks Snipflag into the tray.</p>

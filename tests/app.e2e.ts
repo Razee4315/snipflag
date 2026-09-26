@@ -318,9 +318,9 @@ test('workspace composer preserves evidence and provides a QA report scaffold', 
   await page.keyboard.press('r');
   await drag(page, [0.76, 0.6], [0.97, 0.75]);
   await page.getByLabel('Title', { exact: true }).fill('Checkout total does not update');
-  await page.getByRole('button', { name: 'Add reproduction steps' }).click();
+  await page.getByRole('group', { name: 'Start from a template' }).getByRole('button', { name: 'Bug report' }).click();
   await expect(page.getByLabel('Description', { exact: true })).toHaveValue(/## Expected result/);
-  await expect(page.getByRole('button', { name: 'Add reproduction steps' })).toHaveCount(0);
+  await expect(page.getByRole('group', { name: 'Start from a template' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Create issue', exact: true })).toBeInViewport();
   await expect(page.getByTestId('canvas')).toBeInViewport();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -487,7 +487,7 @@ test('settings dialog keeps a fixed size and scrolls long sections inside', asyn
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Settings' });
   const heights: number[] = [];
-  for (const section of ['Connection', 'Capture', 'Appearance', 'Privacy', 'Shortcuts', 'About']) {
+  for (const section of ['Connection', 'Capture', 'Templates', 'Appearance', 'Privacy', 'Shortcuts', 'About']) {
     await dialog.getByRole('button', { name: section, exact: true }).click();
     heights.push(Math.round((await dialog.boundingBox())!.height));
   }
@@ -616,4 +616,52 @@ test('report preview shows the exact outgoing report with protected images', asy
   await page.getByLabel('Caption for screenshot 2').fill('Checkout');
   await page.getByRole('button', { name: 'Preview report' }).click();
   await expect(report.getByRole('heading', { level: 4 })).toHaveText(['1. @image2 · blue', '2. @image1 · Checkout']);
+});
+
+test('description templates are editable, persist, and never replace written text', async ({ page }, testInfo) => {
+  await addImages(page, [white]);
+  const description = page.getByLabel('Description', { exact: true });
+  const templates = page.getByRole('group', { name: 'Start from a template' });
+  await expect(templates.getByRole('button')).toHaveText(['Bug report', 'Visual defect', 'Regression', 'Design feedback']);
+  await templates.getByRole('button', { name: 'Regression' }).click();
+  await expect(description).toHaveValue(/^## Previously worked in\n\n## Fails in\n\n## Reproduction/);
+  await expect(templates).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Settings' });
+  await dialog.getByRole('button', { name: 'Templates', exact: true }).click();
+  const design = dialog.locator('details', { hasText: 'Design feedback' });
+  await design.getByText('Design feedback', { exact: true }).click();
+  await design.getByLabel('Template text').fill('## Screen\n');
+  await design.getByLabel('Template name').fill('UI review');
+  const visual = dialog.locator('details', { hasText: 'Visual defect' });
+  await visual.getByText('Visual defect', { exact: true }).click();
+  await visual.getByRole('button', { name: 'Remove template' }).click();
+  await dialog.getByRole('button', { name: 'Add template' }).click();
+  const added = dialog.locator('details').last();
+  await added.getByLabel('Template text').fill('## Assistive technology\n');
+  await added.getByLabel('Template name').fill('  Accessibility  ');
+  await page.screenshot({ path: testInfo.outputPath('settings-templates.png'), animations: 'disabled' });
+  await dialog.getByRole('button', { name: 'Save settings' }).click();
+  await expect(dialog.getByText('Settings saved.', { exact: true })).toBeVisible();
+  await page.keyboard.press('Escape');
+
+  await description.fill('My own notes');
+  await expect(templates).toHaveCount(0);
+  await description.fill('');
+  await expect(templates.getByRole('button')).toHaveText(['Bug report', 'Regression', 'UI review', 'Accessibility']);
+  await expect(page.getByRole('status', { name: 'Saved on this computer' })).toBeVisible();
+  await page.reload();
+  await expect(templates.getByRole('button')).toHaveText(['Bug report', 'Regression', 'UI review', 'Accessibility']);
+  await templates.getByRole('button', { name: 'Accessibility' }).click();
+  await expect(description).toHaveValue('## Assistive technology\n');
+
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Templates', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Restore built-in templates' }).click();
+  await dialog.getByRole('button', { name: 'Save settings' }).click();
+  await expect(dialog.getByText('Settings saved.', { exact: true })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await description.fill('');
+  await expect(templates.getByRole('button')).toHaveText(['Bug report', 'Visual defect', 'Regression', 'Design feedback']);
 });

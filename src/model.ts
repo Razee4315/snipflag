@@ -41,13 +41,19 @@ export interface Settings {
   /** Interface animations; the system reduced-motion preference always wins. */
   motion: boolean;
   teamMemory: Record<string, string>;
+  /** Null means the built-in templates; an array is the user's edited list. */
+  templates: Template[] | null;
+  /** Issue details last sent to each Linear team, keyed by team ID. */
+  teamDefaults: Record<string, TeamDefaults>;
 }
+export interface Template { id: string; name: string; body: string }
+export type TeamDefaults = Pick<Session, 'projectId' | 'assigneeId' | 'labelIds' | 'priority'>;
 
 export const LIMITS = { images: 10, imageBytes: 20 * 1024 * 1024, sessionBytes: 100 * 1024 * 1024, pixels: 40_000_000, title: 250 };
 export const PRIORITIES = [
   { value: 0, label: 'No priority' }, { value: 1, label: 'Urgent' }, { value: 2, label: 'High' }, { value: 3, label: 'Medium' }, { value: 4, label: 'Low' },
 ];
-export const defaults: Settings = { clientId: '', shortcut: 'CommandOrControl+Shift+Digit2', theme: 'system', retentionDays: 30, launchAtLogin: false, sounds: true, motion: true, teamMemory: {} };
+export const defaults: Settings = { clientId: '', shortcut: 'CommandOrControl+Shift+Digit2', theme: 'system', retentionDays: 30, launchAtLogin: false, sounds: true, motion: true, teamMemory: {}, templates: null, teamDefaults: {} };
 export const REDIRECT_URI = 'http://127.0.0.1:47839/callback';
 
 export function newSession(): Session {

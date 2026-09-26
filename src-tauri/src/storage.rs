@@ -59,7 +59,7 @@ fn write_atomic(path: &Path, bytes: &[u8]) -> Result<(), String> {
 
 pub fn default_settings() -> Value {
     // Empty means use this build's public client. Never persist a build default as a user override.
-    json!({"clientId": "", "shortcut": "CommandOrControl+Shift+Digit2", "theme": "system", "retentionDays": 30, "launchAtLogin": false, "sounds": true, "motion": true, "teamMemory": {}})
+    json!({"clientId": "", "shortcut": "CommandOrControl+Shift+Digit2", "theme": "system", "retentionDays": 30, "launchAtLogin": false, "sounds": true, "motion": true, "teamMemory": {}, "templates": null, "teamDefaults": {}})
 }
 /// Returns a complete, validated settings object. Unknown keys are dropped.
 pub fn normalize_settings(input: &Value) -> Result<Value, String> {
@@ -91,6 +91,30 @@ pub fn normalize_settings(input: &Value) -> Result<Value, String> {
         let mut clean = Map::new();
         for (workspace, team) in map.iter().take(50) { clean.insert(id(workspace)?, json!(id(team.as_str().ok_or("Invalid team memory.")?)?)); }
         out["teamMemory"] = Value::Object(clean);
+    }
+    // Null keeps the built-in templates, so later versions can improve them for people who never edited them.
+    if let Some(v) = input.get("templates").filter(|v| !v.is_null()) {
+        let list = v.as_array().filter(|a| a.len() <= 20).ok_or("Keep up to 20 templates.")?;
+        let mut clean = Vec::new();
+        for t in list {
+            let tid = t["id"].as_str().filter(|s| !s.is_empty() && s.len() <= 40 && s.chars().all(|c| c.is_ascii_alphanumeric() || c == '-')).ok_or("Invalid template.")?;
+            let name = t["name"].as_str().map(str::trim).filter(|s| !s.is_empty() && s.chars().count() <= 60).ok_or("Give each template a name of up to 60 characters.")?;
+            let body = t["body"].as_str().filter(|s| s.chars().count() <= 5000).ok_or("Keep each template under 5,000 characters.")?;
+            clean.push(json!({"id": tid, "name": name, "body": body}));
+        }
+        out["templates"] = json!(clean);
+    }
+    // Issue details remembered per Linear team. The editor checks them against current team metadata before use.
+    if let Some(v) = input.get("teamDefaults") {
+        let map = v.as_object().ok_or("Invalid remembered issue details.")?;
+        let mut clean = Map::new();
+        for (team, d) in map.iter().take(100) {
+            let optional = |key: &str| match d[key].as_str() { None | Some("") => Ok(String::new()), Some(s) => id(s) };
+            let labels = match d["labelIds"].as_array() { Some(a) => a.iter().take(50).map(|l| id(l.as_str().unwrap_or(""))).collect::<Result<Vec<_>, _>>()?, None => Vec::new() };
+            let priority = d["priority"].as_u64().filter(|p| *p <= 4).unwrap_or(0);
+            clean.insert(id(team)?, json!({"projectId": optional("projectId")?, "assigneeId": optional("assigneeId")?, "labelIds": labels, "priority": priority}));
+        }
+        out["teamDefaults"] = Value::Object(clean);
     }
     Ok(out)
 }
@@ -449,6 +473,14 @@ mod tests {
         assert!(normalize_settings(&json!({"clientId":"abc 123"})).is_err());
         assert!(normalize_settings(&json!({"theme":"neon"})).is_err());
         assert!(normalize_settings(&json!({"teamMemory":{"../x":"y"}})).is_err());
+        let team = "00000000-0000-4000-8000-000000000001"; let label = "00000000-0000-4000-8000-000000000002";
+        let kept = normalize_settings(&json!({"templates":[{"id":"bug","name":"  Bug  ","body":"## Steps"}],"teamDefaults":{team:{"projectId":"","labelIds":[label],"priority":2,"extra":1}}})).unwrap();
+        assert_eq!(kept["templates"], json!([{"id":"bug","name":"Bug","body":"## Steps"}]));
+        assert_eq!(kept["teamDefaults"][team], json!({"projectId":"","assigneeId":"","labelIds":[label],"priority":2}));
+        assert!(normalize_settings(&json!({})).unwrap()["templates"].is_null());
+        assert!(normalize_settings(&json!({"templates":[{"id":"x","name":" ","body":""}]})).is_err());
+        assert!(normalize_settings(&json!({"templates":[{"id":"../x","name":"A","body":""}]})).is_err());
+        assert!(normalize_settings(&json!({"teamDefaults":{team:{"projectId":"../p"}}})).is_err());
         let ok = normalize_settings(&json!({"clientId":"abc123","retentionDays":7,"extra":true})).unwrap();
         assert_eq!(ok["retentionDays"], 7); assert!(ok.get("extra").is_none());
         assert_eq!(ok["sounds"], true); assert_eq!(ok["motion"], true);

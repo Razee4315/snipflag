@@ -18,6 +18,7 @@ import { activeImage, isLocked, useStore } from './store';
 import { missingImageReferences } from './mentions';
 import { play, primeSound, setSoundEnabled } from './sound';
 import { saveBeforeQuit } from './lifecycle';
+import { rememberDetails, templatesOf } from './templates';
 
 type Notice = { kind: 'error' | 'info'; text: string; id: number } | null;
 const isTyping = (t: EventTarget | null) => t instanceof HTMLElement && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName));
@@ -26,6 +27,9 @@ export default function App() {
   const session = useStore(s => s.session); const image = useStore(activeImage); const busy = useStore(s => s.busy);
   const saveState = useStore(s => s.saveState); const saveError = useStore(s => s.saveError); const locked = useStore(isLocked);
   const [settings, setSettings] = useState<Settings>(defaults);
+  const settingsRef = useRef(settings); settingsRef.current = settings;
+  /** Background preference updates build on the latest saved settings. */
+  const updateSettings = useCallback((change: (s: Settings) => Settings) => saveSettings(change(settingsRef.current)).then(setSettings), []);
   const [status, setStatus] = useState<AppStatus | null>(null);
   const [connection, setConnection] = useState<Connection | null>(null);
   const [connectionState, setConnectionState] = useState<ConnectionState>('idle');
@@ -80,15 +84,9 @@ export default function App() {
     setConnectionState('loading');
     try {
       const c = await linearConnection(); setConnection(c); setConnectionError(''); setConnectionState('idle');
+      // The issue panel picks the remembered team for drafts without one.
       const { session: s, patch } = useStore.getState();
-      if (c && !s.issue) {
-        if (s.teamId && !c.teams.some(t => t.id === s.teamId)) patch({ teamId: '', projectId: '', assigneeId: '', labelIds: [] });
-        if (!useStore.getState().session.teamId) {
-          const remembered = (await loadSettings()).teamMemory[c.workspaceId];
-          const team = c.teams.find(t => t.id === remembered) ?? (c.teams.length === 1 ? c.teams[0] : undefined);
-          if (team) patch({ teamId: team.id });
-        }
-      }
+      if (c && !s.issue && s.teamId && !c.teams.some(t => t.id === s.teamId)) patch({ teamId: '', projectId: '', assigneeId: '', labelIds: [] });
     } catch (e) { setConnection(null); setConnectionError(errorText(e)); setConnectionState('error'); }
   }, []);
 
@@ -223,6 +221,7 @@ export default function App() {
         const issue = await reconcileIssue(s.session.id);
         if (issue) {
           useStore.getState().hydrate(await loadSession(s.session.id)); setPendingState('sent'); play('success');
+          void updateSettings(v => ({ ...v, teamDefaults: rememberDetails(v.teamDefaults, useStore.getState().session) })).catch(() => undefined);
         } else {
           useStore.getState().setSubmissionLocked(false); setPendingState(null);
           notify('Linear confirmed no issue exists. You can edit this report and choose Create issue when ready.');
@@ -249,6 +248,8 @@ export default function App() {
       await submitIssue(snapshot, persisted, exports);
       useStore.getState().hydrate(await loadSession(snapshot.id)); useStore.getState().setBusy(false); setPendingState('sent'); setProgress('');
       play('success');
+      // New drafts for this team start from what was just sent; failing to remember never affects the sent issue.
+      void updateSettings(v => ({ ...v, teamDefaults: rememberDetails(v.teamDefaults, snapshot) })).catch(() => undefined);
     } catch (e) {
       try {
         const status = await submissionStatus(s.session.id);
@@ -257,7 +258,7 @@ export default function App() {
       } catch { useStore.getState().setSubmissionLocked(true); }
       useStore.getState().setBusy(false); setProgress(''); fail(errorText(e));
     }
-  }, [connection, flush, notify]);
+  }, [connection, flush, notify, updateSettings]);
 
   const connect = useCallback(async () => {
     setConnectionState('connecting'); setConnectionError('');
@@ -270,9 +271,8 @@ export default function App() {
   }, [notify]);
   const rememberTeam = useCallback((teamId: string) => {
     if (!connection) return;
-    const next = { ...settings, teamMemory: { ...settings.teamMemory, [connection.workspaceId]: teamId } };
-    saveSettings(next).then(setSettings).catch(() => undefined);
-  }, [connection, settings]);
+    updateSettings(v => ({ ...v, teamMemory: { ...v.teamMemory, [connection.workspaceId]: teamId } })).catch(() => undefined);
+  }, [connection, updateSettings]);
 
   const exportActive = useCallback(async (clipboard: boolean) => {
     const s = useStore.getState(); const img = activeImage(s); if (!img) return;
@@ -364,6 +364,7 @@ export default function App() {
       </main>
       <IssuePanel connection={connection} connectionState={connectionState} connectionError={connectionError} hasClientId={!!settings.clientId || !!status?.builtinLinearClient}
         progress={progress} submitError={submitError} pendingState={pendingState}
+        templates={templatesOf(settings)} teamMemory={settings.teamMemory} teamDefaults={settings.teamDefaults}
         onConnect={() => void connect()} onCancelConnect={() => void cancelLogin().catch(() => undefined)} onRetryConnection={() => void refreshConnection()}
         onOpenSettings={() => setDialog('settings')} onSubmit={report => void submit(report)} onNewSession={() => void newSession()} onTeamChosen={rememberTeam} notify={notify} />
       <input ref={fileInput} type="file" accept="image/png,image/jpeg,image/webp" multiple hidden aria-label="Add images"
