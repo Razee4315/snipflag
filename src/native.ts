@@ -5,8 +5,9 @@ import { defaults, type Connection, type IssueResult, type Session, type Setting
 /** Browser preview (used by automated tests) stores drafts in IndexedDB and never contacts Linear. */
 export const desktop = isTauri();
 export const PREVIEW_MESSAGE = 'This action is available in the installed desktop app.';
-export async function editorWindow(action: 'hide' | 'minimize' | 'drag' | 'workspace' | 'reveal') {
-  if (desktop) await native<void>('editor_window', { action });
+/** `workspace` with image dimensions maximizes the editor when that screenshot cannot fit the normal workspace. */
+export async function editorWindow(action: 'hide' | 'minimize' | 'drag' | 'workspace' | 'reveal', imageWidth?: number, imageHeight?: number) {
+  if (desktop) await native<void>('editor_window', { action, imageWidth, imageHeight });
 }
 export async function native<T>(command: string, args?: Record<string, unknown>): Promise<T> {
   if (!desktop) throw new Error(PREVIEW_MESSAGE);

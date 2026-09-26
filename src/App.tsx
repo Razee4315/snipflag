@@ -114,10 +114,11 @@ export default function App() {
 
   const addImages = useCallback((images: CaptureImage[]) => {
     try {
-      const first = !useStore.getState().session.images.length || !!useStore.getState().session.issue;
       useStore.getState().addImages(images); setZoom('fit');
-      // The first screenshot opens the full workspace (it only grows a smaller window).
-      if (first && images[0]) void editorWindow('workspace').catch(e => notify(errorText(e), 'error'));
+      // Screenshots open in the full workspace (it only grows a smaller window); one too large for it maximizes the editor.
+      if (!images.length) return false;
+      const largest = images.reduce((a, b) => (b.width * b.height > a.width * a.height ? b : a));
+      void editorWindow('workspace', largest.width, largest.height).catch(e => notify(errorText(e), 'error'));
       return true;
     } catch (e) { notify(errorText(e), 'error'); play('error'); return false; }
   }, [notify]);

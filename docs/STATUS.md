@@ -160,4 +160,6 @@ Implemented (frontend only; Rust unchanged):
 - Pixelate uses alpha-weighted block averages on a grid (at least 12 px). Redact removed from the toolbar and shortcuts; `redact` stays a renderable legacy kind. AGENTS.md privacy line updated to reflect the owner's decision.
 - Tests: pixelation burn-in export test replaces the redaction test; new highlighter layering/export test; theme radio cards; desktop-behavior test.
 
-Verification: pending on Actions for this commit.
+Verification: `6b96365` failed the strict typecheck (`isFreehand` called with a Tool) in Checks 36231986950; fixed in `5b4d7ae`. [Checks 36232028660](https://github.com/Razee4315/snipflag/actions/runs/36232028660) at `5b4d7ae`: 21 unit tests, 15/15 browser tests with no retries, 20 Rust tests plus all-target check on Windows, macOS and Linux. CI screenshots reviewed: light/dark empty state with the static line mark, title-bar drag card, size circles, theme cards (the Match system preview was then simplified to a straight split).
+
+Owner follow-up in the same round: screenshots too large for the workspace maximize the editor. Rust `needs_full_screen` (image logical size + 400 × 250 chrome vs. workspace) with a unit test; `editor_window` `workspace` accepts optional image dimensions and the frontend sends the largest added image. Verification for this follow-up is recorded below.

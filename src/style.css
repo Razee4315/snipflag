@@ -438,9 +438,9 @@ option { background: var(--surface); color: var(--text); }
 .theme-swatch.dark { background: #111C1A; }
 .theme-swatch.dark i { background: #1A2A27; }
 .theme-swatch.dark b { background: #8CDCC1; }
-.theme-swatch.system { background: linear-gradient(115deg, #EFEEE8 50%, #111C1A 50%); }
-.theme-swatch.system i { background: linear-gradient(115deg, #FCFBF8 50%, #1A2A27 50%); }
-.theme-swatch.system b { background: linear-gradient(90deg, #0F6B62, #8CDCC1); }
+.theme-swatch.system { background: linear-gradient(90deg, #EFEEE8 50%, #111C1A 50%); }
+.theme-swatch.system i { background: #FCFBF8; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); }
+.theme-swatch.system b { background: #8CDCC1; }
 .privacy-card { padding: 14px; border-radius: 12px; background: color-mix(in srgb, var(--primary) 8%, var(--surface-2)); border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent); font-size: 12.5px; }
 .privacy-card p { margin-top: 5px; }
 .shortcut-list { margin: 0; }

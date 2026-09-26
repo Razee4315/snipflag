@@ -73,6 +73,23 @@ fn workspace_size(available: (f64, f64)) -> (f64, f64) {
     (width, height)
 }
 
+/// Room the editor chrome needs around a screenshot shown at 100% (composer column, toolbar, image bar, filmstrip).
+const CHROME: (f64, f64) = (400.0, 250.0);
+/// Whether a screenshot of `image` physical pixels cannot be shown at 100% inside the normal workspace.
+fn needs_full_screen(image: (u32, u32), scale: f64, available: (f64, f64)) -> bool {
+    let (width, height) = workspace_size(available);
+    image.0 as f64 / scale + CHROME.0 > width || image.1 as f64 / scale + CHROME.1 > height
+}
+/// Grows the editor for a screenshot: maximized when it cannot fit the workspace at 100%, otherwise the workspace.
+pub fn fit_image(window: &WebviewWindow, image: (u32, u32)) -> tauri::Result<()> {
+    if let Some(monitor) = window.current_monitor()? {
+        let scale = monitor.scale_factor();
+        let logical = monitor.work_area().size.to_logical::<f64>(scale);
+        if needs_full_screen(image, scale, (logical.width, logical.height)) { return window.maximize(); }
+    }
+    fit_workspace(window, false)
+}
+
 /// Sizes and centers the editor on its display. Without `force`, only grows a window smaller than the workspace
 /// and leaves maximized windows alone, so a larger size the user chose is kept.
 pub fn fit_workspace(window: &WebviewWindow, force: bool) -> tauri::Result<()> {
@@ -105,13 +122,16 @@ fn reveal(app: &AppHandle) {
 
 /// Only the main editor may move or hide itself. Capture overlays have no access.
 #[tauri::command]
-fn editor_window(window: WebviewWindow, app: AppHandle, action: String) -> Result<(), String> {
+fn editor_window(window: WebviewWindow, app: AppHandle, action: String, image_width: Option<u32>, image_height: Option<u32>) -> Result<(), String> {
     main_only(&window)?;
     let result = match action.as_str() {
         "hide" => window.hide(),
         "minimize" => window.minimize(),
         "drag" => window.start_dragging(),
-        "workspace" => fit_workspace(&window, false),
+        "workspace" => match (image_width, image_height) {
+            (Some(width), Some(height)) => fit_image(&window, (width, height)),
+            _ => fit_workspace(&window, false),
+        },
         "reveal" => { reveal(&app); Ok(()) }
         _ => return Err("Unknown editor window action.".into()),
     };
@@ -120,12 +140,20 @@ fn editor_window(window: WebviewWindow, app: AppHandle, action: String) -> Resul
 
 #[cfg(test)]
 mod editor_window_tests {
-    use super::workspace_size;
+    use super::{needs_full_screen, workspace_size};
     #[test]
     fn workspace_is_large_on_common_displays() {
         let (width, height) = workspace_size((1920.0, 1040.0));
         assert!(width >= 1400.0 && height >= 880.0);
         assert!(width <= 1896.0 && height <= 1016.0);
+    }
+    #[test]
+    fn only_screenshots_too_large_for_the_workspace_go_full_screen() {
+        assert!(!needs_full_screen((800, 500), 1.0, (1920.0, 1040.0)));
+        assert!(needs_full_screen((1920, 1080), 1.0, (1920.0, 1040.0)));
+        // A full 4K monitor at 200% is 1920 x 1080 logical pixels: too large for the workspace.
+        assert!(needs_full_screen((3840, 2160), 2.0, (1920.0, 1040.0)));
+        assert!(!needs_full_screen((1600, 1000), 2.0, (1920.0, 1040.0)));
     }
     #[test]
     fn workspace_stays_inside_small_work_areas() {
