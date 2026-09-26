@@ -362,6 +362,7 @@ test('workspace composer preserves evidence and provides a QA report scaffold', 
 test('settings keep unsaved preferences when switching sections', async ({ page }) => {
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Settings' });
+  await dialog.getByText('Advanced: custom Linear application', { exact: true }).click();
   await dialog.getByLabel('Linear OAuth client ID').fill('public-client-id');
   await dialog.getByRole('button', { name: 'Privacy', exact: true }).click();
   await dialog.getByLabel('Delete drafts not opened for').selectOption('90');

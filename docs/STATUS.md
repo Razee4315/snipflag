@@ -2,6 +2,8 @@
 
 ## Add next: Linear onboarding implementation — 2026-09-26
 
+Implementation `504df63`: [Checks 36242360013](https://github.com/Razee4315/snipflag/actions/runs/36242360013) passed typecheck/build and 31 unit tests, but one of 24 browser tests timed out trying to fill the now-collapsed advanced client field; native jobs were skipped. Corrected that existing test to open Advanced before editing (no assertion removed). [Development installers 36242368649](https://github.com/Razee4315/snipflag/actions/runs/36242368649) still running at this checkpoint; all four configuration preflights passed. Next: rerun Checks with the test correction and record final packaging evidence.
+
 Started from `19a41d1477cbb01993d28586456cf3baeb8a3e37`; remote main matched, prior final checks/installers were green, only unrelated `.claude/` content was untracked. Owner supplied the public OAuth client ID; repository variable `SNIPFLAG_LINEAR_CLIENT_ID` is now configured. No secret requested or stored.
 
 Implemented in this checkpoint, remote verification pending: direct Connect Linear with a built-in public client; custom IDs under collapsed Advanced settings; empty saved IDs resolve to the current build default without overwriting existing custom IDs; explicit return to built-in connection; truthful loopback receipt copy; build-time ID validation and installer preflight with an explicit custom-client-only option. Added Rust selection/upgrade and frontend availability/persistence regressions. Version remains 1.1.0; no release/tag/assets changed, local builds/installs, or real Linear uploads/issues.
