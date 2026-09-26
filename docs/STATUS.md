@@ -54,3 +54,11 @@ Nothing below has been run on a real machine yet. CI compilation does not prove 
 2. Fix failing remote checks before new features. Never run local builds.
 3. Work against PRODUCT acceptance criteria; preserve multi-image semantics.
 4. Update this file with implementation truth, exact verification evidence, open gaps, and next action before ending work.
+
+## Redesign checkpoint — 2026-09-26
+
+Owner requested a complete UI/flow and logo redesign, with commits pushed to main and all builds on Actions. Baseline is `c9b43fa`; working tree was clean. Owner reports the existing app works, but no new OS/version acceptance evidence has been recorded.
+
+Implemented in the upcoming UI commit: compact frameless editor (first image requests a bounded window size; explicit expand/compact, minimize, save-and-hide, drag header), teal/ivory/apricot vector identity, warm daylight and forest dark surfaces, compact evidence rail and contextual composer, reproduction-steps scaffold, settings navigation with connection/capture/appearance/privacy/keyboard reference. Existing image coordinates, export/redaction, local persistence, OAuth and stable issue identity remain the original implementation. New narrow Rust window command checks main-window identity.
+
+Verification pending: updated Playwright coverage for compact and narrow viewports, report scaffold, settings persistence and theme; CI screenshots use synthetic images only. No local build, install, browser test or Rust compile was run. Next: push implementation, inspect Actions, fix failures, inspect captured UI screenshots, then build development installers. Native frameless dragging/resizing/tray and mixed-DPI capture still need Windows runtime checks; all platform release gates remain open.

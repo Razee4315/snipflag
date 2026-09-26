@@ -9,9 +9,11 @@ interface Props {
   onSave: (settings: Settings) => Promise<void>; onConnect: () => void; onCancelConnect: () => void; onDisconnect: () => Promise<void>;
   onHistoryCleared: () => void; onClose: () => void;
 }
+const SECTIONS = ['Connection', 'Capture', 'Appearance', 'Privacy', 'Shortcuts'] as const;
 const RETENTION = [{ v: 7, l: '7 days' }, { v: 30, l: '30 days' }, { v: 90, l: '90 days' }, { v: 365, l: '1 year' }, { v: 0, l: 'Keep until I delete' }];
 
 export default function SettingsDialog(p: Props) {
+  const [section, setSection] = useState<typeof SECTIONS[number]>('Connection');
   const [draft, setDraft] = useState<Settings>(p.settings);
   const [error, setError] = useState(''); const [saved, setSaved] = useState('');
   const [recording, setRecording] = useState(false); const [confirmClear, setConfirmClear] = useState(false);
@@ -28,9 +30,12 @@ export default function SettingsDialog(p: Props) {
       <button type="button" className="button" onClick={p.onClose}>Close</button>
       <button type="button" className="button primary" disabled={!dirty} onClick={() => void save()}>Save settings</button>
     </>}>
+            <p className="muted settings-intro">Make Snipflag feel like part of your workflow.</p>
+      <nav className="settings-nav" aria-label="Settings sections">
+        {SECTIONS.map(name => <button key={name} type="button" className={section === name ? 'active' : ''} aria-pressed={section === name} onClick={() => setSection(name)}>{name}</button>)}
+      </nav>
       {error && <p className="error" role="alert">{error}</p>}
-      <section className="settings-section">
-        <h3>Linear</h3>
+      <section className="settings-section" hidden={section !== 'Connection'}><h3>Your Linear workspace</h3>
         {p.connection ? (
           <div className="row between">
             <p className="small">Connected to <strong>{p.connection.workspace}</strong> as {p.connection.name}.</p>
@@ -61,8 +66,7 @@ export default function SettingsDialog(p: Props) {
         )}
       </section>
 
-      <section className="settings-section">
-        <h3>Capture</h3>
+      <section className="settings-section" hidden={section !== 'Capture'}><h3>Ready when you spot something</h3><p className="small muted">Your first screenshot opens a compact editor. Expand it anytime from the header. Closing saves your draft and tucks Snipflag into the tray.</p>
         <label className="field">
           <span>Global capture shortcut</span>
           <input readOnly value={recording ? 'Press the new shortcut…' : shortcutLabel(draft.shortcut)} aria-describedby="shortcut-help"
@@ -83,8 +87,7 @@ export default function SettingsDialog(p: Props) {
         </label>
       </section>
 
-      <section className="settings-section">
-        <h3>Appearance</h3>
+      <section className="settings-section" hidden={section !== 'Appearance'}><h3>A calmer place to work</h3><div className="theme-preview" aria-hidden="true"><div className="theme-sample light-sample"><i /><span>Daylight</span></div><div className="theme-sample dark-sample"><i /><span>After hours</span></div></div>
         <label className="field">
           <span>Theme</span>
           <select value={draft.theme} onChange={e => setDraft({ ...draft, theme: e.target.value as Settings['theme'] })}>
@@ -93,8 +96,7 @@ export default function SettingsDialog(p: Props) {
         </label>
       </section>
 
-      <section className="settings-section">
-        <h3>Local history</h3>
+      <section className="settings-section" hidden={section !== 'Privacy'}><h3>Your screenshots. Your control.</h3><div className="privacy-card"><strong>Only shared when you choose Create issue.</strong><p className="small muted">Use solid redaction to remove private details before sending. Pixelation is cosmetic.</p></div>
         <p className="small muted">Drafts and their screenshots are stored only on this computer, unencrypted in the app data folder.</p>
         <label className="field">
           <span>Delete drafts not opened for</span>
@@ -109,6 +111,13 @@ export default function SettingsDialog(p: Props) {
             <button type="button" className="button" onClick={() => setConfirmClear(false)}>Keep</button>
           </div>
         ) : <button type="button" className="button danger-outline" onClick={() => setConfirmClear(true)}>Delete local history…</button>}
+      </section>
+      <section className="settings-section" hidden={section !== 'Shortcuts'}>
+        <h3>Stay in the flow</h3>
+        <dl className="shortcut-list">
+          {[['Capture from anywhere', shortcutLabel(draft.shortcut)], ['Select / Arrow / Rectangle', 'V / A / R'], ['Pen / Text', 'P / T'], ['Pixelate / Solid redaction', 'B / X'], ['Undo / Redo', 'Ctrl / ⌘ + Z / Shift + Z'], ['Delete selected mark', 'Delete'], ['Paste screenshot', 'Ctrl / ⌘ + V'], ['Create issue', 'Ctrl / ⌘ + Enter'], ['Zoom canvas', 'Ctrl / ⌘ + scroll']].map(([label, keys]) => <div key={label}><dt>{label}</dt><dd><kbd>{keys}</kbd></dd></div>)}
+        </dl>
+        <p className="small muted">Tool shortcuts pause while you type. Each screenshot keeps its own undo history.</p>
       </section>
       <p className="small muted">Snipflag {p.status?.version ?? ''} · {p.status?.platform ?? ''} · development build</p>
     </Dialog>

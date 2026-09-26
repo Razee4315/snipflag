@@ -64,6 +64,33 @@ fn app_status(window: WebviewWindow, app: AppHandle) -> Result<Value, String> {
     Ok(json!({"version": app.package_info().version.to_string(), "platform": std::env::consts::OS, "shortcutError": shortcut_error}))
 }
 
+/// Only the main editor may move or hide itself. Capture overlays have no access.
+#[tauri::command]
+fn editor_window(window: WebviewWindow, action: String, image_width: Option<u32>, image_height: Option<u32>) -> Result<(), String> {
+    main_only(&window)?;
+    let result = match action.as_str() {
+        "hide" => window.hide(),
+        "minimize" => window.minimize(),
+        "drag" => window.start_dragging(),
+        "compact" | "expand" => {
+            let expanded = action == "expand";
+            let width = if expanded { 1280.0 } else { (image_width.unwrap_or(500) as f64 + 370.0).clamp(860.0, 1040.0) };
+            let height = if expanded { 840.0 } else { (image_height.unwrap_or(350) as f64 + 260.0).clamp(620.0, 760.0) };
+            let monitor = window.current_monitor().map_err(|_| "Could not locate the current display.")?;
+            let (width, height) = monitor.map(|m| {
+                let size = m.size().to_logical::<f64>(m.scale_factor());
+                (width.min(size.width - 48.0), height.min(size.height - 80.0))
+            }).unwrap_or((width, height));
+            window.unmaximize().map_err(|_| "Could not restore the editor window.")?;
+            window.set_size(tauri::LogicalSize::new(width.max(640.0), height.max(480.0)))
+                .map_err(|_| "Could not resize the editor window.")?;
+            window.center()
+        }
+        _ => return Err("Unknown editor window action.".into()),
+    };
+    result.map_err(|_| "Could not update the editor window.".into())
+}
+
 fn build_tray(app: &AppHandle) -> tauri::Result<()> {
     let capture = MenuItem::with_id(app, "capture", "Capture screenshot", true, None::<&str>)?;
     let show = MenuItem::with_id(app, "show", "Open Snipflag", true, None::<&str>)?;
@@ -127,7 +154,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             storage::save_session, storage::load_session, storage::list_sessions, storage::delete_session,
             storage::clear_history, storage::load_settings, storage::submission_status,
-            save_settings, app_status,
+            save_settings, app_status, editor_window,
             auth::connect_linear, auth::cancel_login, auth::disconnect_linear,
             linear::linear_connection, linear::linear_team_options, linear::submit_issue, linear::open_issue, linear::open_linear_setup,
             capture::start_capture, capture::capture_frame, capture::capture_ready, capture::capture_select, capture::capture_cancel,

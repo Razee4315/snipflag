@@ -9,7 +9,7 @@ import SettingsDialog from './components/SettingsDialog';
 import Toolbar, { TOOLS } from './components/Toolbar';
 import { defaults, imageLabel, sessionLabel, shortcutLabel, validateSession, type CaptureImage, type Connection, type Settings } from './model';
 import {
-  appStatus, cancelLogin, connectLinear, desktop, disconnectLinear, errorText, exportPng, linearConnection, listSessions, loadSession,
+  appStatus, cancelLogin, connectLinear, desktop, disconnectLinear, editorWindow, errorText, exportPng, linearConnection, listSessions, loadSession,
   loadSettings, on, PREVIEW_MESSAGE, readClipboardImage, saveSession, saveSettings, startCapture, submissionStatus, submitIssue, type AppStatus, type RawImage,
 } from './native';
 import { fileBaseName, flatten, importImage } from './render';
@@ -32,6 +32,7 @@ export default function App() {
   const [progress, setProgress] = useState(''); const [submitError, setSubmitError] = useState('');
   const [pendingState, setPendingState] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
   const saveChain = useRef<Promise<void>>(Promise.resolve());
   const saveTimer = useRef<number | undefined>(undefined);
@@ -97,7 +98,14 @@ export default function App() {
   }, [session.id]);
 
   const addImages = useCallback((images: CaptureImage[]) => {
-    try { useStore.getState().addImages(images); setZoom('fit'); } catch (e) { notify(errorText(e), 'error'); }
+    try {
+      const first = !useStore.getState().session.images.length || !!useStore.getState().session.issue;
+      useStore.getState().addImages(images); setZoom('fit');
+      if (first && images[0]) {
+        setExpanded(false);
+        void editorWindow('compact', images[0].width, images[0].height).catch(e => notify(errorText(e), 'error'));
+      }
+    } catch (e) { notify(errorText(e), 'error'); }
   }, [notify]);
   const importFiles = useCallback(async (files: File[]) => {
     const images: CaptureImage[] = [];
@@ -215,25 +223,40 @@ export default function App() {
   }, [dialog, submit, importFiles, pasteImage]);
 
   const count = session.images.length; const index = image ? session.images.indexOf(image) : -1;
+  const resizeEditor = async () => {
+    try { await editorWindow(expanded ? 'compact' : 'expand', image?.width, image?.height); setExpanded(!expanded); setZoom('fit'); }
+    catch (e) { notify(errorText(e), 'error'); }
+  };
+  const tuckAway = async () => {
+    try { await flush(); await editorWindow('hide'); } catch (e) { notify(errorText(e), 'error'); }
+  };
   const saveText = saveState === 'saving' ? 'Saving…' : saveState === 'saved' ? 'Saved on this computer' : saveState === 'error' ? `Not saved: ${saveError}` : 'Nothing to save yet';
   return (
-    <div className="app" onDragOver={e => { if ([...e.dataTransfer.types].includes('Files')) e.preventDefault(); }}
+    <div className={`app ${expanded ? 'expanded' : 'compact'}`} onDragOver={e => { if ([...e.dataTransfer.types].includes('Files')) e.preventDefault(); }}
       onDrop={e => { const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/')); if (files.length) { e.preventDefault(); void importFiles(files); } }}>
-      <header className="topbar">
-        <div className="brand"><Logo /><span>Snipflag</span></div>
+      <header className="topbar" onMouseDown={e => {
+        if (e.button === 0 && !(e.target as HTMLElement).closest('button, input, a')) void editorWindow('drag').catch(err => notify(errorText(err), 'error'));
+      }}>
+        <div className="brand"><Logo size={30} /><span>snipflag<span className="brand-caption">See it. Flag it.</span></span></div>
         <div className="session-meta">
           <span className="session-name" title={sessionLabel(session)}>{sessionLabel(session)}</span>
           <span className={saveState === 'error' ? 'save-state error' : 'save-state'} role="status" aria-live="polite">{saveText}</span>
         </div>
         <span className="count">{count ? `${count} ${count === 1 ? 'image' : 'images'} · one issue` : ''}</span>
         <div className="top-actions">
-          <button type="button" className="button ghost" onClick={() => void newSession()} disabled={busy}><Icon name="plus" /> New session</button>
-          <button type="button" className="button ghost" onClick={() => setDialog('history')}><Icon name="history" /> History</button>
-          <button type="button" className="button ghost" onClick={() => setDialog('settings')}><Icon name="settings" /> Settings</button>
+          <button type="button" className="button ghost" aria-label="New session" title="New session" onClick={() => void newSession()} disabled={busy}><Icon name="plus" /><span className="action-label">New</span></button>
+          <button type="button" className="icon-button" aria-label="History" title="History" disabled={busy} onClick={() => setDialog('history')}><Icon name="history" /></button>
+          <button type="button" className="icon-button" aria-label="Settings" title="Settings" disabled={busy} onClick={() => setDialog('settings')}><Icon name="settings" /></button>
+        </div>
+        <div className="window-actions">
+          <button type="button" className="icon-button" aria-label={expanded ? 'Compact workspace' : 'Expand workspace'} title={expanded ? 'Compact workspace' : 'Expand workspace'} onClick={() => void resizeEditor()}><Icon name={expanded ? 'compact' : 'expand'} /></button>
+          {desktop && <><button type="button" className="icon-button" aria-label="Minimize" title="Minimize" onClick={() => void editorWindow('minimize').catch(e => notify(errorText(e), 'error'))}><Icon name="minus" /></button>
+          <button type="button" className="icon-button" aria-label="Save and hide to tray" title="Save and hide to tray" disabled={busy} onClick={() => void tuckAway()}><Icon name="close" /></button></>}
         </div>
       </header>
       <main className="workspace">
         <section className="stage-area" aria-label="Screenshot editor">
+          {image && <div className="stage-heading"><span className="eyebrow">THE EVIDENCE</span><span className="small muted">{index + 1} / {count} · Mark what matters</span></div>}
           {image ? (
             <>
               <Toolbar />

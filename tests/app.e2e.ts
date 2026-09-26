@@ -91,6 +91,7 @@ test('browser preview never pretends to reach Linear', async ({ page }) => {
   const dialog = page.getByRole('dialog', { name: 'Settings' });
   await expect(dialog.getByLabel('Linear OAuth client ID')).toBeVisible();
   await expect(dialog.getByRole('button', { name: 'Connect Linear' })).toBeDisabled();
+  await dialog.getByRole('button', { name: 'Appearance', exact: true }).click();
   await dialog.getByLabel('Theme').selectOption('dark');
   await dialog.getByRole('button', { name: 'Save settings' }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
@@ -135,4 +136,53 @@ test('tools are reachable by keyboard and named', async ({ page }) => {
   await page.getByLabel('Annotation text').fill('Wrong total');
   await page.keyboard.press('Enter');
   await expect(tile(page, 1)).toHaveAccessibleName(/1 mark$/);
+});
+
+
+test('compact composer preserves evidence and provides a QA report scaffold', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 920, height: 680 });
+  await addImages(page, [white, blue]);
+  await page.getByLabel('Title', { exact: true }).fill('Checkout total does not update');
+  await page.getByRole('button', { name: 'Add reproduction steps' }).click();
+  await expect(page.getByLabel('Description', { exact: true })).toHaveValue(/## Expected result/);
+  await expect(page.getByRole('button', { name: 'Add reproduction steps' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Create issue', exact: true })).toBeInViewport();
+  await expect(page.getByTestId('canvas')).toBeInViewport();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.getByRole('button', { name: 'Expand workspace' }).click();
+  await page.getByRole('button', { name: 'Compact workspace' }).click();
+  await expect(page.getByTestId('tile')).toHaveCount(2);
+  await expect(page.getByLabel('Title', { exact: true })).toHaveValue('Checkout total does not update');
+  await page.screenshot({ path: testInfo.outputPath('compact-daylight.png'), fullPage: true });
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Settings' });
+  for (const section of ['Capture', 'Privacy', 'Shortcuts', 'Appearance']) {
+    await dialog.getByRole('button', { name: section, exact: true }).click();
+    await expect(dialog.getByRole('button', { name: section, exact: true })).toHaveAttribute('aria-pressed', 'true');
+  }
+  await dialog.getByLabel('Theme').selectOption('dark');
+  await dialog.getByRole('button', { name: 'Save settings' }).click();
+  await page.screenshot({ path: testInfo.outputPath('settings-after-hours.png') });
+  await page.keyboard.press('Escape');
+  await page.screenshot({ path: testInfo.outputPath('compact-after-hours.png'), fullPage: true });
+  await page.setViewportSize({ width: 640, height: 480 });
+  await page.getByRole('button', { name: 'Create issue', exact: true }).scrollIntoViewIfNeeded();
+  await expect(page.getByRole('button', { name: 'Create issue', exact: true })).toBeInViewport();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('settings keep unsaved preferences when switching sections', async ({ page }) => {
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Settings' });
+  await dialog.getByLabel('Linear OAuth client ID').fill('public-client-id');
+  await dialog.getByRole('button', { name: 'Privacy', exact: true }).click();
+  await dialog.getByLabel('Delete drafts not opened for').selectOption('90');
+  await dialog.getByRole('button', { name: 'Connection', exact: true }).click();
+  await expect(dialog.getByLabel('Linear OAuth client ID')).toHaveValue('public-client-id');
+  await dialog.getByRole('button', { name: 'Save settings' }).click();
+  await expect(dialog.getByText('Settings saved.', { exact: true })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Privacy', exact: true }).click();
+  await expect(dialog.getByLabel('Delete drafts not opened for')).toHaveValue('90');
 });

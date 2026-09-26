@@ -1,9 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <title>Snipflag (single color)</title>
-  <g fill="none" stroke="#000000" stroke-width="32" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M112 198V112h86"/>
-    <path d="M400 314v86h-86"/>
-    <path d="M220 158v204"/>
-  </g>
-  <path d="M220 160h140l-44 52 44 52H220z" fill="#000000" stroke="#000000" stroke-width="16" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <path d="M112 210v-70a28 28 0 0 1 28-28h70M302 400h70a28 28 0 0 0 28-28v-70M196 352V164" stroke="currentColor" stroke-width="30" stroke-linecap="round"/>
+  <path d="M210 164h144l-40 58 40 58H210V164Z" fill="currentColor"/>
+  <circle cx="382" cy="130" r="26" fill="currentColor"/>
 </svg>

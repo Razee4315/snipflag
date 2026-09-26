@@ -28,6 +28,9 @@ const paths = {
   link: 'M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1',
   check: 'M5 12l5 5L20 7',
   close: 'M6 6l12 12M18 6L6 18',
+  minus: 'M5 12h14',
+  expand: 'M14 4h6v6M20 4l-6 6M4 14v6h6M4 20l6-6',
+  compact: 'M20 4l-6 6M14 4v6h6M4 20l6-6M4 14h6v6',
   file: 'M6 3h9l4 4v14H6zM14 3v5h5',
 } as const;
 export type IconName = keyof typeof paths;
@@ -40,20 +43,7 @@ export function Icon({ name, size = 18, ...rest }: { name: IconName; size?: numb
     </svg>
   );
 }
-/** Snipflag mark: crop corners (the snip) framing a swallowtail flag (the issue). Brand colors are fixed in both themes. */
-export function Logo({ size = 22 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 512 512" aria-hidden="true" focusable="false">
-      <defs>
-        <linearGradient id="snipflag-logo-bg" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#7569F0" /><stop offset="1" stopColor="#5243D4" />
-        </linearGradient>
-      </defs>
-      <rect width="512" height="512" rx="116" fill="url(#snipflag-logo-bg)" />
-      <g fill="none" stroke="#FFFFFF" strokeWidth="32" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M112 198V112h86" /><path d="M400 314v86h-86" /><path d="M220 158v204" />
-      </g>
-      <path d="M220 160h140l-44 52 44 52H220z" fill="#FFD166" stroke="#FFD166" strokeWidth="16" strokeLinejoin="round" />
-    </svg>
-  );
+/** The same vector source drives the header, installer and tray artwork. */
+export function Logo({ size = 30 }: { size?: number }) {
+  return <img src="/icon.svg" width={size} height={size} alt="" draggable={false} />;
 }
