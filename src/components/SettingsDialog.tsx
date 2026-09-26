@@ -1,7 +1,7 @@
 import { useState, type CSSProperties } from 'react';
 import { acceleratorFromEvent, REDIRECT_URI, shortcutLabel, type Connection, type Settings, type Template } from '../model';
 import { TEMPLATE_LIMITS, templatesOf, tidyTemplates } from '../templates';
-import { copyText, desktop, errorText, openAboutLink, openLinearSetup, type AboutLink, type AppStatus } from '../native';
+import { copyText, desktop, errorText, openAboutLink, openLinearSetup, type AboutLink, type AppStatus, type AvailableUpdate } from '../native';
 import Dialog from './Dialog';
 import { Icon, Mark, type IconName } from './icons';
 import { play } from '../sound';
@@ -10,7 +10,7 @@ import type { ConnectionState } from './IssuePanel';
 interface Props {
   settings: Settings; status: AppStatus | null; connection: Connection | null; connectionState: ConnectionState; connectionError: string;
   onSave: (settings: Settings) => Promise<void>; onConnect: () => void; onCancelConnect: () => void; onDisconnect: () => Promise<void>;
-  onClearHistory: () => Promise<void>; onClose: () => void;
+  onClearHistory: () => Promise<void>; onCheckUpdate: () => Promise<AvailableUpdate | null>; onInstallUpdate: () => void; onClose: () => void;
 }
 const SECTIONS = ['Connection', 'Capture', 'Templates', 'Appearance', 'Privacy', 'Shortcuts', 'About'] as const;
 const CREATOR: { target: AboutLink; label: string; detail: string; icon: IconName }[] = [
@@ -26,6 +26,7 @@ export default function SettingsDialog(p: Props) {
   const [error, setError] = useState(''); const [saved, setSaved] = useState('');
   const [recording, setRecording] = useState(false); const [confirmClear, setConfirmClear] = useState(false);
   const [added, setAdded] = useState('');
+  const [updateState, setUpdateState] = useState<{ checking?: boolean; found?: AvailableUpdate | null; error?: string }>({});
   const builtin = !!p.status?.builtinLinearClient;
   const dirty = JSON.stringify(draft) !== JSON.stringify(p.settings);
   const save = async (next = draft) => {
@@ -199,6 +200,26 @@ export default function SettingsDialog(p: Props) {
           </div>
         </div>
         <p className="small">Screenshots to clear Linear issues. Capture, mark up and send several screenshots as one issue.</p>
+        <h3 className="subhead">Updates</h3>
+        {p.status?.updates ? (
+          <>
+            <label className="check switch">
+              <input type="checkbox" role="switch" checked={draft.autoUpdate} onChange={e => setDraft({ ...draft, autoUpdate: e.target.checked })} />
+              Check for updates automatically
+            </label>
+            <small className="muted">Snipflag asks GitHub for the latest release. Updates are signature-checked and install only when you choose, after your draft is saved.</small>
+            <div className="row">
+              {updateState.found
+                ? <button type="button" className="button primary" onClick={p.onInstallUpdate}>Install {updateState.found.version} and restart</button>
+                : <button type="button" className="button" disabled={updateState.checking} onClick={() => {
+                    setUpdateState({ checking: true });
+                    p.onCheckUpdate().then(found => setUpdateState({ found })).catch(e => setUpdateState({ error: errorText(e) }));
+                  }}>{updateState.checking ? 'Checking…' : 'Check for updates'}</button>}
+              <span className="small muted" role="status">{updateState.found === null ? 'Snipflag is up to date.' : ''}</span>
+            </div>
+            {updateState.error && <p className="error small" role="alert">{updateState.error}</p>}
+          </>
+        ) : <p className="small muted">{desktop ? 'This build does not include automatic updates. Download new versions from the releases page.' : 'Updates are available in the installed desktop app.'}</p>}
         <div className="creator">
           <p className="small muted">Designed and built by <strong>Saqlain Razee</strong></p>
           <div className="creator-links">

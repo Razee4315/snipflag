@@ -50,6 +50,47 @@ jobs:
                   shutil.copy2(path, dest); assets.append(dest)
           if len(assets) != 6:
               raise SystemExit(f'Expected six installers; found {len(assets)}')
+          # Signed update manifest. Signatures come from the build's updater key; unsigned-key builds publish none.
+          base = f'https://github.com/{repo}/releases/download/{tag}/'
+          platforms = {}
+          def signature(path):
+              sig = pathlib.Path(str(path) + '.sig')
+              return sig.read_text().strip() if sig.exists() else None
+          for source in sorted(pathlib.Path('downloaded').rglob('*')):
+              name = source.name
+              sig = signature(source)
+              if sig is None:
+                  continue
+              if name.endswith('.app.tar.gz'):
+                  arch = 'aarch64' if 'aarch64' in source.relative_to('downloaded').parts[0] else 'x86_64'
+                  dest = out / f'unsigned-Snipflag_{version}_{arch}.app.tar.gz'
+                  shutil.copy2(source, dest); assets.append(dest)
+                  keys = [f'darwin-{arch}-app', f'darwin-{arch}']
+              elif name.endswith('-setup.exe'):
+                  keys = ['windows-x86_64-nsis', 'windows-x86_64']
+              elif name.endswith('.msi'):
+                  keys = ['windows-x86_64-msi']
+              elif name.endswith('.AppImage'):
+                  keys = ['linux-x86_64-appimage', 'linux-x86_64']
+              elif name.endswith('.deb'):
+                  keys = ['linux-x86_64-deb']
+              else:
+                  continue
+              asset = dest.name if name.endswith('.app.tar.gz') else 'unsigned-' + name
+              for key in keys:
+                  if key in platforms:
+                      raise SystemExit(f'Duplicate update platform {key}')
+                  platforms[key] = {'signature': sig, 'url': base + asset}
+          manifest = None
+          if platforms:
+              required = {'windows-x86_64', 'darwin-aarch64', 'darwin-x86_64', 'linux-x86_64'}
+              if not required <= platforms.keys():
+                  raise SystemExit(f'Update manifest is missing {sorted(required - platforms.keys())}')
+              import datetime
+              manifest = out / 'latest.json'
+              manifest.write_text(json.dumps({'version': version, 'notes': f'Snipflag {tag}', 'pub_date': datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'), 'platforms': platforms}, indent=2))
+          else:
+              print('No updater signatures: publishing without latest.json; this release cannot be installed by the updater.')
           checksums = out / 'SHA256SUMS.txt'
           checksums.write_text(''.join(f'{hashlib.sha256(p.read_bytes()).hexdigest()}  {p.name}\n' for p in assets))
           notes_file = pathlib.Path(f'docs/releases/{tag}.md')
@@ -59,6 +100,6 @@ jobs:
           notes += f'\n\nSource: `{sha}`\n\n[Checks](https://github.com/{repo}/actions/runs/{os.environ["CHECKS_RUN"]}) · [Builds](https://github.com/{repo}/actions/runs/{os.environ["BUILD_RUN"]})\n'
           pathlib.Path('release-notes.md').write_text(notes)
           gh('release', 'create', tag, '--target', sha, '--draft', '--prerelease', '--title', f'Snipflag {tag} — unsigned preview', '--notes-file', 'release-notes.md')
-          gh('release', 'upload', tag, *[str(p) for p in assets], str(checksums))
+          gh('release', 'upload', tag, *[str(p) for p in assets], str(checksums), *([str(manifest)] if manifest else []))
           gh('release', 'edit', tag, '--draft=false', '--prerelease', '--latest=false')
           PY

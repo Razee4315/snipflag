@@ -11,7 +11,7 @@ import Toolbar, { TOOLS } from './components/Toolbar';
 import { defaults, imageLabel, shortcutLabel, validateSession, type CaptureImage, type Connection, type Settings } from './model';
 import {
   appStatus, cancelLogin, clearHistory, connectLinear, deleteSession, desktop, disconnectLinear, editorWindow, errorText, exportPng, linearConnection, listSessions, loadSession,
-  loadSettings, on, PREVIEW_MESSAGE, readClipboardImage, saveSession, saveSettings, startCapture, submissionStatus, submitIssue, reconcileIssue, finishQuit, type AppStatus, type RawImage,
+  loadSettings, on, PREVIEW_MESSAGE, readClipboardImage, saveSession, saveSettings, startCapture, submissionStatus, submitIssue, reconcileIssue, finishQuit, checkUpdate, installUpdate, type AppStatus, type AvailableUpdate, type RawImage,
 } from './native';
 import { fileBaseName, flatten, importImage } from './render';
 import { activeImage, isLocked, useStore } from './store';
@@ -41,6 +41,7 @@ export default function App() {
   const [pendingState, setPendingState] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [flash, setFlash] = useState(0);
+  const [update, setUpdate] = useState<AvailableUpdate | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const saveChain = useRef<Promise<void>>(Promise.resolve());
   const saveTimer = useRef<number | undefined>(undefined);
@@ -274,6 +275,27 @@ export default function App() {
     updateSettings(v => ({ ...v, teamMemory: { ...v.teamMemory, [connection.workspaceId]: teamId } })).catch(() => undefined);
   }, [connection, updateSettings]);
 
+  // Signed updates: checked quietly in the background, installed only when the user asks.
+  const findUpdate = useCallback(async () => { const found = await checkUpdate(); setUpdate(found); return found; }, []);
+  useEffect(() => {
+    if (!ready || !status?.updates || !settings.autoUpdate) return;
+    const run = () => { void findUpdate().catch(() => undefined); };
+    const first = window.setTimeout(run, 8000); const every = window.setInterval(run, 6 * 60 * 60 * 1000);
+    return () => { window.clearTimeout(first); window.clearInterval(every); };
+  }, [ready, status?.updates, settings.autoUpdate, findUpdate]);
+  const applyUpdate = useCallback(async () => {
+    notify('Saving your draft and installing the update…');
+    try {
+      // Same guarantees as Quit: active edits are committed and the draft is saved before the app restarts.
+      await saveBeforeQuit({
+        isBusy: () => useStore.getState().busy,
+        commit: () => { (document.activeElement as HTMLElement | null)?.blur(); window.dispatchEvent(new Event('snipflag-commit-edit')); },
+        lock: value => useStore.getState().setBusy(value), save: flush,
+        finish: async saved => { if (saved) await installUpdate(); },
+      });
+    } catch (e) { setUpdate(null); notify(`Update not installed: ${errorText(e)}`, 'error'); }
+  }, [flush, notify]);
+
   const exportActive = useCallback(async (clipboard: boolean) => {
     const s = useStore.getState(); const img = activeImage(s); if (!img) return;
     const index = s.session.images.indexOf(img);
@@ -325,6 +347,8 @@ export default function App() {
         {saveState === 'error' && <span className="save-error" role="alert" title={saveText}><Icon name="alert" size={14} /> {saveText}</span>}
         {status?.cleanupError && <span className="save-error" role="alert" title={status.cleanupError}><Icon name="alert" size={14} /> Local cleanup incomplete. Retry in History or Settings.</span>}
         <div className="drag-space" aria-hidden="true" />
+        {update && <button type="button" className="update-chip" disabled={busy} title={update.notes || undefined} onClick={() => void applyUpdate()}>
+          <Icon name="refresh" size={14} /> Update to {update.version}</button>}
         <div className="top-actions">
           <button type="button" className="icon-button" aria-label="History" title="History" disabled={busy} onClick={() => setDialog('history')}><Icon name="history" /></button>
           <button type="button" className="icon-button" aria-label="Settings" title="Settings" disabled={busy} onClick={() => setDialog('settings')}><Icon name="settings" /></button>
@@ -380,7 +404,7 @@ export default function App() {
         <SettingsDialog settings={settings} status={status} connection={connection} connectionState={connectionState} connectionError={connectionError}
           onSave={async next => { setSettings(await saveSettings(next)); setStatus(await appStatus()); }}
           onConnect={() => void connect()} onCancelConnect={() => void cancelLogin().catch(() => undefined)} onDisconnect={disconnect}
-          onClearHistory={() => deleteLocal()} onClose={() => setDialog(null)} />
+          onClearHistory={() => deleteLocal()} onCheckUpdate={findUpdate} onInstallUpdate={() => { setDialog(null); void applyUpdate(); }} onClose={() => setDialog(null)} />
       )}
       {dialog === 'history' && (
         <HistoryDialog currentId={session.id} onOpen={openSession} onClose={() => setDialog(null)} onDelete={deleteLocal} />

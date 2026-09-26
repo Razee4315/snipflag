@@ -40,6 +40,8 @@ export interface Settings {
   sounds: boolean;
   /** Interface animations; the system reduced-motion preference always wins. */
   motion: boolean;
+  /** Look for signed updates at startup and every few hours. */
+  autoUpdate: boolean;
   teamMemory: Record<string, string>;
   /** Null means the built-in templates; an array is the user's edited list. */
   templates: Template[] | null;
@@ -53,7 +55,7 @@ export const LIMITS = { images: 10, imageBytes: 20 * 1024 * 1024, sessionBytes: 
 export const PRIORITIES = [
   { value: 0, label: 'No priority' }, { value: 1, label: 'Urgent' }, { value: 2, label: 'High' }, { value: 3, label: 'Medium' }, { value: 4, label: 'Low' },
 ];
-export const defaults: Settings = { clientId: '', shortcut: 'CommandOrControl+Shift+Digit2', theme: 'system', retentionDays: 30, launchAtLogin: false, sounds: true, motion: true, teamMemory: {}, templates: null, teamDefaults: {} };
+export const defaults: Settings = { clientId: '', shortcut: 'CommandOrControl+Shift+Digit2', theme: 'system', retentionDays: 30, launchAtLogin: false, sounds: true, motion: true, autoUpdate: true, teamMemory: {}, templates: null, teamDefaults: {} };
 export const REDIRECT_URI = 'http://127.0.0.1:47839/callback';
 
 export function newSession(): Session {

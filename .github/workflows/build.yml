@@ -19,16 +19,17 @@ jobs:
             bundles: nsis,msi
           - os: macos-latest
             target: aarch64-apple-darwin
-            bundles: dmg
+            bundles: app,dmg
           - os: macos-latest
             target: x86_64-apple-darwin
-            bundles: dmg
+            bundles: app,dmg
           - os: ubuntu-24.04
             target: x86_64-unknown-linux-gnu
             bundles: deb,appimage
     runs-on: ${{ matrix.os }}
     env:
       SNIPFLAG_LINEAR_CLIENT_ID: ${{ vars.SNIPFLAG_LINEAR_CLIENT_ID }}
+      SNIPFLAG_UPDATER_PUBKEY: ${{ vars.SNIPFLAG_UPDATER_PUBKEY }}
     steps:
       - uses: actions/checkout@v4
       - name: Verify built-in Linear configuration
@@ -44,6 +45,20 @@ jobs:
             exit 1
           else
             echo 'Built-in public Linear client configured. OAuth registration and native login still require runtime verification.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Verify updater signing configuration
+        shell: bash
+        env:
+          HAS_SIGNING_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY != '' }}
+        run: |
+          if [ -n "$SNIPFLAG_UPDATER_PUBKEY" ] && [ "$HAS_SIGNING_KEY" = "true" ]; then
+            echo 'UPDATER_ARGS=--config src-tauri/tauri.updater.conf.json' >> "$GITHUB_ENV"
+            echo 'Signed updater artifacts enabled. Update installation still requires runtime verification.' >> "$GITHUB_STEP_SUMMARY"
+          elif [ -z "$SNIPFLAG_UPDATER_PUBKEY" ] && [ "$HAS_SIGNING_KEY" != "true" ]; then
+            echo 'Updater key not configured: this build cannot offer or install updates.' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'Configure both variable SNIPFLAG_UPDATER_PUBKEY and secret TAURI_SIGNING_PRIVATE_KEY (plus its password), or neither.' >&2
+            exit 1
           fi
       - name: Linux dependencies
         if: runner.os == 'Linux'
@@ -61,7 +76,13 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run tauri -- icon public/icon.svg
-      - run: npm run tauri -- build --target ${{ matrix.target }} --bundles ${{ matrix.bundles }} -- --locked
+      - name: Build installers
+        shell: bash
+        # The private key reaches only this step; npm install scripts never see it.
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: npm run tauri -- build --target ${{ matrix.target }} --bundles ${{ matrix.bundles }} $UPDATER_ARGS -- --locked
       - uses: actions/upload-artifact@v4
         with:
           name: snipflag-development-unsigned-${{ matrix.target }}
@@ -71,5 +92,7 @@ jobs:
             src-tauri/target/${{ matrix.target }}/release/bundle/**/*.dmg
             src-tauri/target/${{ matrix.target }}/release/bundle/**/*.deb
             src-tauri/target/${{ matrix.target }}/release/bundle/**/*.AppImage
+            src-tauri/target/${{ matrix.target }}/release/bundle/**/*.app.tar.gz
+            src-tauri/target/${{ matrix.target }}/release/bundle/**/*.sig
           if-no-files-found: error
           retention-days: 7

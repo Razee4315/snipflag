@@ -59,7 +59,7 @@ fn write_atomic(path: &Path, bytes: &[u8]) -> Result<(), String> {
 
 pub fn default_settings() -> Value {
     // Empty means use this build's public client. Never persist a build default as a user override.
-    json!({"clientId": "", "shortcut": "CommandOrControl+Shift+Digit2", "theme": "system", "retentionDays": 30, "launchAtLogin": false, "sounds": true, "motion": true, "teamMemory": {}, "templates": null, "teamDefaults": {}})
+    json!({"clientId": "", "shortcut": "CommandOrControl+Shift+Digit2", "theme": "system", "retentionDays": 30, "launchAtLogin": false, "sounds": true, "motion": true, "teamMemory": {}, "templates": null, "teamDefaults": {}, "autoUpdate": true})
 }
 /// Returns a complete, validated settings object. Unknown keys are dropped.
 pub fn normalize_settings(input: &Value) -> Result<Value, String> {
@@ -86,6 +86,7 @@ pub fn normalize_settings(input: &Value) -> Result<Value, String> {
     if let Some(v) = input.get("launchAtLogin") { out["launchAtLogin"] = json!(v.as_bool().ok_or("Invalid login setting.")?); }
     if let Some(v) = input.get("sounds") { out["sounds"] = json!(v.as_bool().ok_or("Invalid sound setting.")?); }
     if let Some(v) = input.get("motion") { out["motion"] = json!(v.as_bool().ok_or("Invalid animation setting.")?); }
+    if let Some(v) = input.get("autoUpdate") { out["autoUpdate"] = json!(v.as_bool().ok_or("Invalid update setting.")?); }
     if let Some(v) = input.get("teamMemory") {
         let map = v.as_object().ok_or("Invalid team memory.")?;
         let mut clean = Map::new();
@@ -483,7 +484,9 @@ mod tests {
         assert!(normalize_settings(&json!({"teamDefaults":{team:{"projectId":"../p"}}})).is_err());
         let ok = normalize_settings(&json!({"clientId":"abc123","retentionDays":7,"extra":true})).unwrap();
         assert_eq!(ok["retentionDays"], 7); assert!(ok.get("extra").is_none());
-        assert_eq!(ok["sounds"], true); assert_eq!(ok["motion"], true);
+        assert_eq!(ok["sounds"], true); assert_eq!(ok["motion"], true); assert_eq!(ok["autoUpdate"], true);
+        assert_eq!(normalize_settings(&json!({"autoUpdate":false})).unwrap()["autoUpdate"], false);
+        assert!(normalize_settings(&json!({"autoUpdate":"yes"})).is_err());
         let quiet = normalize_settings(&json!({"sounds":false,"motion":false})).unwrap();
         assert_eq!(quiet["sounds"], false); assert_eq!(quiet["motion"], false);
         assert!(normalize_settings(&json!({"sounds":"loud"})).is_err());

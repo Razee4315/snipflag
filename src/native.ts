@@ -60,7 +60,7 @@ export const saveSettings = async (settings: Settings): Promise<Settings> => {
   if (desktop) return { ...defaults, ...await native<Settings>('save_settings', { settings }) };
   localStorage.setItem('snipflag-settings', JSON.stringify(settings)); return settings;
 };
-export interface AppStatus { version: string; platform: string; shortcutError: string | null; cleanupError?: string | null; builtinLinearClient?: boolean }
+export interface AppStatus { version: string; platform: string; shortcutError: string | null; cleanupError?: string | null; builtinLinearClient?: boolean; updates?: boolean }
 export const appStatus = (): Promise<AppStatus> => desktop ? native('app_status') : Promise.resolve({ version: 'preview', platform: 'browser', shortcutError: null });
 
 export const linearConnection = () => native<Connection | null>('linear_connection');
@@ -88,6 +88,10 @@ export async function copyText(text: string) {
   if (desktop) return native<void>('copy_text', { text });
   await navigator.clipboard.writeText(text);
 }
+export interface AvailableUpdate { version: string; notes: string }
+export const checkUpdate = () => native<AvailableUpdate | null>('check_update');
+/** Downloads, verifies and installs the checked update, then restarts. Save the draft first. */
+export const installUpdate = () => native<void>('install_update');
 export const startCapture = () => native<void>('start_capture');
 export const finishQuit = (requestId: string, saved: boolean) => native<void>('finish_quit', { requestId, saved });
 

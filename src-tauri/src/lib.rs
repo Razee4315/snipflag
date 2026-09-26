@@ -4,6 +4,7 @@ mod files;
 mod linear;
 mod mentions;
 mod storage;
+mod update;
 
 use serde_json::{json, Value};
 use std::sync::{atomic::{AtomicBool, Ordering}, Mutex};
@@ -38,6 +39,8 @@ fn request_quit(app: &AppHandle) {
         };
     });
 }
+/// Lets an exit the app started itself (after a saved quit or a verified update) go through.
+pub(crate) fn allow_exit(app: &AppHandle) { app.state::<QuitState>().allowed.store(true, Ordering::SeqCst); }
 #[tauri::command]
 fn finish_quit(window: WebviewWindow, app: AppHandle, request_id: String, saved: bool) -> Result<(), String> {
     main_only(&window)?;
@@ -94,7 +97,7 @@ fn app_status(window: WebviewWindow, app: AppHandle) -> Result<Value, String> {
     main_only(&window)?;
     let shortcut_error = app.state::<ShortcutStatus>().0.lock().ok().and_then(|s| s.clone());
     let cleanup_error = app.state::<Storage>().cleanup_error.lock().ok().and_then(|s| s.clone());
-    Ok(json!({"version": app.package_info().version.to_string(), "platform": std::env::consts::OS, "shortcutError": shortcut_error, "cleanupError": cleanup_error, "builtinLinearClient": !auth::builtin_client_id().is_empty()}))
+    Ok(json!({"version": app.package_info().version.to_string(), "platform": std::env::consts::OS, "shortcutError": shortcut_error, "cleanupError": cleanup_error, "builtinLinearClient": !auth::builtin_client_id().is_empty(), "updates": !update::pubkey().is_empty()}))
 }
 
 /// Comfortable full workspace in logical pixels: large, never fullscreen, always inside the work area.
@@ -226,6 +229,8 @@ pub fn run() {
         .plugin(tauri_plugin_global_shortcut::Builder::new().with_handler(|app, _shortcut, event| {
             if event.state == ShortcutState::Pressed { request_capture(app); }
         }).build())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .manage(update::PendingUpdate(tokio::sync::Mutex::new(None)))
         .manage(auth::NetworkLock(tokio::sync::Mutex::new(())))
         .manage(auth::LoginCancel(Mutex::new(None)))
         .manage(capture::CaptureState(Mutex::new(None)))
@@ -271,6 +276,7 @@ pub fn run() {
             linear::linear_connection, linear::linear_team_options, linear::submit_issue, linear::reconcile_issue, linear::open_issue, linear::open_linear_setup, linear::open_about_link,
             capture::start_capture, capture::capture_frame, capture::capture_ready, capture::capture_select, capture::capture_cancel,
             files::export_png, files::read_clipboard_image, files::copy_text,
+            update::check_update, update::install_update,
         ])
         .build(tauri::generate_context!())
         .expect("failed to build Snipflag");
