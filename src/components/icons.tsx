@@ -40,14 +40,20 @@ export function Icon({ name, size = 18, ...rest }: { name: IconName; size?: numb
     </svg>
   );
 }
-/** Two crop corners enclosing an outgoing arrow. */
+/** Snipflag mark: crop corners (the snip) framing a swallowtail flag (the issue). Brand colors are fixed in both themes. */
 export function Logo({ size = 22 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 512 512" aria-hidden="true" focusable="false">
-      <rect width="512" height="512" rx="112" fill="var(--primary)" />
-      <g fill="none" stroke="var(--primary-fg)" strokeWidth="34" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M204 135h-69v69m173 173h69v-69M135 308v69h69" /><path d="M235 277l139-139m-89 0h89v89" />
+      <defs>
+        <linearGradient id="snipflag-logo-bg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#7569F0" /><stop offset="1" stopColor="#5243D4" />
+        </linearGradient>
+      </defs>
+      <rect width="512" height="512" rx="116" fill="url(#snipflag-logo-bg)" />
+      <g fill="none" stroke="#FFFFFF" strokeWidth="32" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M112 198V112h86" /><path d="M400 314v86h-86" /><path d="M220 158v204" />
       </g>
+      <path d="M220 160h140l-44 52 44 52H220z" fill="#FFD166" stroke="#FFD166" strokeWidth="16" strokeLinejoin="round" />
     </svg>
   );
 }
