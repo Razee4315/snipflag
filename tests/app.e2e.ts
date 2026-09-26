@@ -141,7 +141,15 @@ test('tools are reachable by keyboard and named', async ({ page }) => {
 
 test('compact composer preserves evidence and provides a QA report scaffold', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 920, height: 680 });
-  await addImages(page, [white, blue]);
+  // Synthetic local fixture: no customer screenshots or external network content.
+  const fixture = await page.context().newPage();
+  await fixture.setViewportSize({ width: 480, height: 280 });
+  await fixture.setContent(`<body style="margin:0;background:#fff;font:14px system-ui;color:#243c38;padding:24px"><small style="color:#647b74">EXAMPLE STORE / CHECKOUT</small><h2 style="font-weight:500">Your order</h2><div style="padding:14px;background:#f3f5f1;border-radius:8px;display:flex;justify-content:space-between"><span>Studio notebook × 2</span><b>$24.00</b></div><div style="display:flex;justify-content:space-between;padding:20px 14px"><span>Total</span><b>$12.00</b></div><div style="background:#116d65;color:#fff;border-radius:7px;padding:10px;text-align:center">Continue to payment</div></body>`);
+  const evidence = { name: 'Checkout.png', mimeType: 'image/png', buffer: await fixture.screenshot() };
+  await fixture.close();
+  await addImages(page, [white, evidence]);
+  await page.keyboard.press('r');
+  await drag(page, [0.76, 0.6], [0.97, 0.75]);
   await page.getByLabel('Title', { exact: true }).fill('Checkout total does not update');
   await page.getByRole('button', { name: 'Add reproduction steps' }).click();
   await expect(page.getByLabel('Description', { exact: true })).toHaveValue(/## Expected result/);
@@ -165,6 +173,9 @@ test('compact composer preserves evidence and provides a QA report scaffold', as
   await page.screenshot({ path: testInfo.outputPath('settings-after-hours.png') });
   await page.keyboard.press('Escape');
   await page.screenshot({ path: testInfo.outputPath('compact-after-hours.png'), fullPage: true });
+  await page.setViewportSize({ width: 860, height: 620 });
+  await expect(page.getByRole('button', { name: 'Create issue', exact: true })).toBeInViewport();
+  await expect(page.getByTestId('canvas')).toBeInViewport();
   await page.setViewportSize({ width: 640, height: 480 });
   await page.getByRole('button', { name: 'Create issue', exact: true }).scrollIntoViewIfNeeded();
   await expect(page.getByRole('button', { name: 'Create issue', exact: true })).toBeInViewport();

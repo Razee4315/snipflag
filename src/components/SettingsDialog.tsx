@@ -30,7 +30,7 @@ export default function SettingsDialog(p: Props) {
       <button type="button" className="button" onClick={p.onClose}>Close</button>
       <button type="button" className="button primary" disabled={!dirty} onClick={() => void save()}>Save settings</button>
     </>}>
-            <p className="muted settings-intro">Make Snipflag feel like part of your workflow.</p>
+      <p className="muted settings-intro">Make Snipflag feel like part of your workflow.</p>
       <nav className="settings-nav" aria-label="Settings sections">
         {SECTIONS.map(name => <button key={name} type="button" className={section === name ? 'active' : ''} aria-pressed={section === name} onClick={() => setSection(name)}>{name}</button>)}
       </nav>

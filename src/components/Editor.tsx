@@ -190,7 +190,7 @@ export default function Editor({ image, zoom, onZoom, onScale }: Props) {
             {draft && renderShape(draft, false)}
             <Transformer ref={transformer} rotateEnabled={false} flipEnabled={false} ignoreStroke keepRatio={selected?.kind === 'text'}
               enabledAnchors={selected?.kind === 'text' ? ['top-left', 'top-right', 'bottom-left', 'bottom-right'] : undefined}
-              anchorSize={9} anchorCornerRadius={2} borderStroke="#6356DF" anchorStroke="#6356DF"
+              anchorSize={9} anchorCornerRadius={2} borderStroke="#116D65" anchorStroke="#116D65"
               boundBoxFunc={(oldBox, newBox) => (Math.abs(newBox.width) < 4 || Math.abs(newBox.height) < 4 ? oldBox : newBox)} />
           </Layer>
         </Stage>

@@ -180,7 +180,7 @@ code, kbd { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; fon
 .capture { position: fixed; inset: 0; cursor: crosshair; user-select: none; overflow: hidden; }
 .capture-frame { position: absolute; inset: 0; width: 100vw; height: 100vh; object-fit: fill; pointer-events: none; }
 .capture-dim { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.28); pointer-events: none; }
-.capture-selection { position: absolute; border: 1px solid #fff; outline: 1px solid rgba(99, 86, 223, 0.95); box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.42); pointer-events: none; }
+.capture-selection { position: absolute; border: 1px solid #fff; outline: 1px solid rgba(17, 109, 101, 0.95); box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.42); pointer-events: none; }
 .capture-size { position: absolute; left: 0; top: -24px; padding: 1px 6px; border-radius: 4px; background: rgba(0, 0, 0, 0.75); color: #fff; font-size: 12px; white-space: nowrap; }
 .capture-hint { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); padding: 6px 12px; border-radius: 8px; background: rgba(20, 20, 26, 0.85); color: #fff; font-size: 13px; }
 .capture-hint button { margin-left: 8px; border: 1px solid rgba(255, 255, 255, 0.4); background: transparent; color: #fff; border-radius: 6px; padding: 2px 8px; cursor: pointer; }
@@ -211,7 +211,8 @@ button:disabled { cursor: not-allowed; }
 .eyebrow { color: var(--primary); font-size: 9px; font-weight: 750; letter-spacing: 1.6px; }
 .stage-heading .small { font-size: 10px; }
 .toolbar { margin: 10px 12px 0; padding: 6px; border: 1px solid var(--border); border-radius: 12px; gap: 8px; box-shadow: 0 3px 10px #102d2110; }
-.tool { width: 30px; height: 32px; }
+.tool { width: 32px; height: 32px; }
+.tool-options { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .swatch { width: 17px; height: 17px; margin: 3px; }
 .compact-field { font-size: 10px; }
 .compact-field select { height: 27px; }
@@ -295,6 +296,8 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: .9; }
 .shortcut-list dd { margin: 0; }
 .shortcut-list kbd { font-size: 10px; }
 @media (max-width: 1100px) {
+  .toolbar .tool-options { order: 2; flex-basis: 100%; border-top: 1px solid var(--border); padding-top: 6px; }
+  .toolbar .tool-group.push { order: 1; }
   .count { display: none; }
   .image-bar .caption-field { flex-basis: calc(100% - 100px); }
   .image-bar .zoom { margin-right: auto; }

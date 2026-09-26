@@ -20,3 +20,9 @@ Linux: GNOME Wayland, KDE Wayland, X11; portals; global shortcut availability; t
 Linear: OAuth state mismatch, timeout, refresh, revoked access, empty teams, pagination, team switch clearing optional fields, partial upload, 429, expired upload URL, response lost after issue creation, restart reconciliation, repeated submit.
 
 No platform is “fully working” until its native runtime tests are recorded with OS version and results. CI green alone is insufficient.
+
+## Compact redesign gates
+
+Automated browser coverage includes the 920 x 680 compact workspace, 640 x 480 stacked layout without horizontal overflow, optional reproduction-steps scaffold, expand/compact preserving form and images, theme switching, and settings draft/persistence across sections. CI records synthetic-image screenshots for visual inspection. Browser expand/compact exercises UI state only; native window sizing is a separate gate.
+
+Native follow-up: verify header dragging, edge resizing, minimize, compact/expand on each display, first-capture sizing, second-capture retention of chosen size, save-and-hide/reopen, and Alt+F4 behavior on Windows. Repeat at 100/125/150/200% and mixed DPI. Verify macOS/Linux frameless window controls and tray restoration. Check logo at taskbar/tray sizes and installer branding. These additions do not replace the capture, Linear, and export acceptance matrix above.

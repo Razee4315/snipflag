@@ -47,6 +47,7 @@ export default function Toolbar() {
           </button>
         ))}
       </div>
+      <div className="tool-options">
       <div className="tool-group" role="radiogroup" aria-label="Color">
         {COLORS.map(c => (
           <button key={c.value} type="button" role="radio" aria-checked={activeColor.toUpperCase() === c.value} aria-label={c.name} title={c.name}
@@ -67,6 +68,7 @@ export default function Toolbar() {
           </select>
         </label>
       )}
+      </div>
       <div className="tool-group push">
         {selected && (
           <button type="button" className="tool" aria-label="Delete selected annotation (Delete)" title="Delete selected (Delete)" disabled={locked} onClick={() => removeAnnotation(selected.id)}>

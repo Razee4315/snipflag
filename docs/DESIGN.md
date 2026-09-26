@@ -1,24 +1,26 @@
 # Visual system
 
-Direction: quiet precision. Warm near-white workspace, dark ink, restrained violet accent, subtle borders, generous canvas space. Follow OS theme with an explicit override. Avoid decorative gradients, glass panels, excessive shadows, fake dashboard metrics, and large marketing headings in the editor.
+Direction: a small, calm desktop companion. Warm ivory and sage in daylight; layered forest greens after hours. Teal denotes the primary action and selection. Apricot is reserved for the brand detail and the empty-state illustration. System UI fonts keep Windows native text rendering without remote font requests.
 
-| Token | Light | Dark |
+| Token | Daylight | After hours |
 |---|---|---|
-| Background | #F6F6F8 | #121216 |
-| Surface | #FFFFFF | #1B1B22 |
-| Canvas surround | #ECECF1 | #0E0E12 |
-| Text | #20202A | #F4F4F7 |
-| Muted text | #686875 | #ADADBB |
-| Border | #DDDDE5 | #33333E |
-| Primary | #6356DF | #A398FF |
-| Primary foreground | #FFFFFF | #17132F |
-| Danger | #B52E43 | #FF8799 |
-| Success | #15734C | #76D5A8 |
+| Background | #F2F1EC | #172825 |
+| Surface | #FBFAF7 | #203530 |
+| Canvas surround | #E7EAE4 | #1A2E2A |
+| Text | #253D39 | #EDF3EA |
+| Muted text | #657772 | #A6BCB2 |
+| Border | #D9DFD7 | #385048 |
+| Primary | #116D65 | #8CDCC1 |
+| Primary foreground | #FBFAF7 | #10392F |
 
-Fonts: system UI (Segoe UI on Windows); no remote font fetch. Main body 13–14 px, controls 13 px, titles 18–22 px. Spacing scale 4/8/12/16/24/32. Control radius 7–9 px; panel radius 12 px. Border 1 px. Standard target 36 px; compact icon target no smaller than 32 px with label/tooltip.
+Main surfaces use 16px corners; controls use 10px corners. The canvas sits on a quiet dot grid; the floating toolbar and image have restrained shadows. A compact image rail retains explicit reorder/remove controls. The composer uses title, description, remembered team and collapsed optional issue details, plus an optional reproduction scaffold. Visible focus, named icon buttons, native form semantics, modal focus containment and reduced-motion support remain required.
 
-Annotation defaults: bright red #EF4444, 3 px stroke at image resolution, 22 px text; arrows with readable head size. Redaction uses opaque black. Pixelation is visual obscuring and must not be described as secure removal.
+## Logo
 
-Logo: two crop corners (the snip) framing a swallowtail flag on a pole (the issue being flagged). The notch in the flag doubles as a "snipped" edge. White corners and pole, amber flag `#FFD166`, on a rounded violet tile with a subtle vertical gradient `#7569F0` to `#5243D4`. The flag is the only use of amber in the product; it is a brand color, not a UI token. The source is `public/icon.svg` (copied to `docs/assets/logo.svg`); platform icons, installers, and the tray icon are generated from it on CI with `tauri icon`. A single-color variant for print or template use is `docs/assets/logo-mono.svg`. Keep clear space of at least one eighth of the tile size around the mark, do not recolor the flag, and do not place the mark on busy imagery. Verified legible at 16, 32, 64, and 192 px on light and dark backgrounds. The in-app header uses the same mark at 22 px next to the product name in semibold system UI type.
+The redesigned mark combines two rounded capture corners with an ivory swallowtail flag, on a deep teal squircle. A small apricot dot gives it a recognizable top-right detail. Fixed colors: tile #116D65, crop corners #BFF2DA, flag #FFF9ED, dot #F3B66B. Source of truth: `public/icon.svg`; the header loads the same vector. `docs/assets/logo.svg` is the documentation copy; `logo-mono.svg` is the single-color variant. Actions generates all native icon sizes and installer/tray assets from the vector. No raster artwork or new dependency is needed.
 
-Motion: 120–160 ms feedback only; disable under prefers-reduced-motion. Avoid animating large screenshot canvases. Maintain focus visibility on every surface.
+## Window and layout
+
+The main editor is frameless, initially 920 x 680 logical pixels. The first image in a session requests a compact size bounded to the current monitor. Additional images retain the user's workspace size. The header provides drag, expand/compact, minimize, and save-and-hide controls. Expanded mode requests 1280 x 840 logical pixels, bounded to the monitor; it does not enter fullscreen. At widths below 760px the form moves below the image and the window scrolls. Browser previews can exercise the responsive UI but cannot prove native window behavior.
+
+Annotation defaults and export pixels are unchanged: red #EF4444, 3px stroke at image resolution, 22px text. Solid black redaction is the privacy tool; pixelation is cosmetic. Image fit never upscales beyond original dimensions.

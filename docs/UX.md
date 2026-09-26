@@ -2,13 +2,13 @@
 
 ## Main workspace
 
-Native title bar → compact app header → screenshot canvas + right issue panel → bottom image filmstrip. Keep the screenshot dominant. Header: session name, local save state, New session, History, Settings. Canvas toolbar: select, arrow, rectangle, pen, text, pixelate, redact, color, thickness, undo/redo. Image controls: fit/zoom, copy, save.
+Frameless draggable app header → compact screenshot canvas + nearby issue composer → small image filmstrip. The first image sizes the editor to a bounded compact window; expand/compact is explicit. Save-and-hide flushes the draft before returning to the tray. Keep the screenshot dominant. Header: session name, local save state, New session, History, Settings. Canvas toolbar: select, arrow, rectangle, pen, text, pixelate, redact, color, thickness, undo/redo. Image controls: fit/zoom, copy, save.
 
 Empty state: “A clearer issue starts here.” Primary Capture screen; secondary Add images; paste hint. No fake sample screenshot in the working app.
 
 Filmstrip: numbered thumbnails, captions, selected outline, add button. Each tile has accessible move earlier/later and remove actions. Header count “3 images · one issue”. Selection does not mutate any other image.
 
-Issue panel: connection/workspace, title, description, team, collapsed optional project/assignee/labels/priority, attachment count, primary “Create issue”. Keep the panel disabled only when genuinely unavailable and explain why. No redirect to Linear to fill the issue form.
+Issue panel: connection/workspace, title, description, team, optional reproduction-steps scaffold and collapsed project/assignee/labels/priority, attachment count, primary “Create issue”. Keep the panel disabled only when genuinely unavailable and explain why. No redirect to Linear to fill the issue form.
 
 ## Repeated capture
 
@@ -20,7 +20,7 @@ Validate form → save snapshot → flatten ordered images → show upload progr
 
 ## Other surfaces
 
-- Settings: connection/OAuth client ID, capture shortcut, theme, history retention, delete local history, optional metadata.
+- Settings: five sections (Connection, Capture, Appearance, Privacy, Shortcuts). Preferences remain in one draft while navigating; Save settings persists them. Connection retains OAuth setup; Privacy explains the upload boundary and solid redaction alongside retention/delete controls. Appearance shows daylight/after-hours samples; Shortcuts provides a keyboard reference.
 - History: draft/submitted state, image count, timestamp, resume/open/delete.
 - First connection: explanation → browser OAuth → local callback → workspace identity. Provide useful setup guidance if no OAuth client ID is configured.
 
@@ -31,3 +31,4 @@ Default global: Ctrl/Cmd+Shift+2 (check registration failure). Editor: V select,
 ## Accessibility
 
 Visible focus, native button semantics, labels for icon controls, keyboard-accessible image ordering, status live regions, reduced motion, no color-only success/error, modal focus containment/restoration. At narrow widths, issue panel moves below the canvas instead of clipping inputs.
+

@@ -62,7 +62,7 @@ export default function IssuePanel(p: Props) {
   const labels = options?.labels.filter(l => l.name.toLowerCase().includes(labelFilter.toLowerCase())) ?? [];
   return (
     <aside className="panel" aria-label="Linear issue">
-      <div className="composer-heading"><span className="eyebrow">THE REPORT</span><h2>A little context.<br />A clear next step.</h2></div>
+      <div className="composer-heading"><span className="eyebrow">THE REPORT</span><h2>A little context.</h2></div>
       <section className="connection" aria-live="polite">
         {!desktop ? (
           <p className="muted small">Browser preview. Connecting to Linear and creating issues work in the installed desktop app.</p>
@@ -92,8 +92,8 @@ export default function IssuePanel(p: Props) {
           <input value={session.title} maxLength={LIMITS.title} disabled={locked} placeholder="What needs fixing?" onChange={e => patch({ title: e.target.value })} />
         </label>
         <label className="field grow">
-          <span>Description</span>
-          <textarea value={session.description} disabled={locked} rows={4} placeholder="What happened? What should happen instead?" onChange={e => patch({ description: e.target.value })} />
+          <span id="description-label">Description</span>
+          <textarea aria-labelledby="description-label" value={session.description} disabled={locked} rows={4} placeholder="What happened? What should happen instead?" onChange={e => patch({ description: e.target.value })} />
         </label>
         {!session.description && <button type="button" className="template-button" disabled={locked} onClick={() => patch({ description: '## Steps to reproduce\n1. \n\n## Expected result\n\n## Actual result\n\n## Environment\n' })}><Icon name="plus" size={14} /> Add reproduction steps</button>}
         <label className="field">
