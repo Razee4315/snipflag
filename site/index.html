@@ -48,26 +48,26 @@
       "applicationCategory": "DeveloperApplication",
       "applicationSubCategory": "Bug reporting",
       "operatingSystem": "Windows, macOS, Linux",
-      "softwareVersion": "1.0.0",
+      "softwareVersion": "1.1.0",
       "datePublished": "2026-09-26",
       "license": "https://opensource.org/licenses/MIT",
       "isAccessibleForFree": true,
       "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-      "downloadUrl": "https://github.com/Razee4315/snipflag/releases/tag/v1.0.0",
+      "downloadUrl": "https://github.com/Razee4315/snipflag/releases/tag/v1.1.0",
       "codeRepository": "https://github.com/Razee4315/snipflag",
       "url": "https://razee4315.github.io/snipflag/",
       "image": "https://razee4315.github.io/snipflag/og.png",
       "screenshot": "https://razee4315.github.io/snipflag/assets/img/hero-dark.webp",
       "video": { "@type": "VideoObject", "name": "Snipflag in action", "description": "Capture a checkout page, annotate it, pixelate private fields, and create one Linear issue.", "thumbnailUrl": "https://razee4315.github.io/snipflag/assets/video/demo-poster.webp", "contentUrl": "https://razee4315.github.io/snipflag/assets/video/demo.mp4", "uploadDate": "2026-09-26", "duration": "PT33S" },
-      "featureList": ["Region capture across monitors", "Arrow, rectangle, pen, highlighter, text and pixelate", "Up to 10 screenshots per Linear issue", "Linear OAuth with PKCE", "Drafts that survive restarts", "Duplicate-safe retries"]
+      "featureList": ["Region capture across monitors", "Arrow, rectangle, ellipse, pen, highlighter, text, numbered steps and pixelate", "Up to 10 screenshots per Linear issue", "Linear OAuth with PKCE", "Drafts that survive restarts", "Duplicate-safe retries"]
     },
     { "@type": "WebSite", "@id": "https://razee4315.github.io/snipflag/#site", "name": "Snipflag", "url": "https://razee4315.github.io/snipflag/" },
     {
       "@type": "FAQPage",
       "mainEntity": [
         { "@type": "Question", "name": "Is Snipflag free?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. It's free and open source under the MIT License. No account, subscription or screenshot cloud." } },
-        { "@type": "Question", "name": "How does Snipflag connect to Linear?", "acceptedAnswer": { "@type": "Answer", "text": "With Linear OAuth and PKCE. In v1.0.0 you create an OAuth application in Linear, add the callback http://127.0.0.1:47839/callback, and paste its client ID into Snipflag." } },
-        { "@type": "Question", "name": "Why does my computer warn about the installer?", "acceptedAnswer": { "@type": "Answer", "text": "v1.0.0 is an unsigned preview. Installers are built on GitHub Actions with published checksums, but they are not code-signed yet." } },
+        { "@type": "Question", "name": "How does Snipflag connect to Linear?", "acceptedAnswer": { "@type": "Answer", "text": "With Linear OAuth and PKCE. In this version you create an OAuth application in Linear, add the callback http://127.0.0.1:47839/callback, and paste its client ID into Snipflag." } },
+        { "@type": "Question", "name": "Why does my computer warn about the installer?", "acceptedAnswer": { "@type": "Answer", "text": "v1.1.0 is an unsigned preview. Installers are built on GitHub Actions with published checksums, but they are not code-signed yet." } },
         { "@type": "Question", "name": "Does it record video or console logs?", "acceptedAnswer": { "@type": "Answer", "text": "No, Snipflag is screenshots only. For recordings or browser logs, Jam or BugShot is a better fit." } },
         { "@type": "Question", "name": "Does it work with Jira or GitHub Issues?", "acceptedAnswer": { "@type": "Answer", "text": "No, Linear only. You can still copy or save any annotated screenshot as a PNG." } }
       ]
@@ -129,7 +129,7 @@
       </div>
       <ol class="steps">
         <li data-reveal><h3>Capture</h3><p>Press <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>2</kbd> and drag over anything on screen.</p></li>
-        <li data-reveal><h3>Mark it up</h3><p>Arrows, boxes, text and highlights. Pixelate anything private.</p></li>
+        <li data-reveal><h3>Mark it up</h3><p>Arrows, boxes, numbered steps, text and highlights. Pixelate anything private.</p></li>
         <li data-reveal><h3>Send one issue</h3><p>Add more screenshots, then create one Linear issue with all of them, in order.</p></li>
       </ol>
     </div>
@@ -215,8 +215,8 @@
       </div>
       <div class="faq">
         <details class="qa"><summary>Is Snipflag free?</summary><div class="a"><p>Yes. It's free and open source under the MIT License. No account, subscription or screenshot cloud.</p></div></details>
-        <details class="qa"><summary>How does Snipflag connect to Linear?</summary><div class="a"><p>With Linear OAuth and PKCE. In v1.0.0 you create an OAuth application in Linear, add the callback <code>http://127.0.0.1:47839/callback</code>, and paste its client ID into Snipflag. <a href="https://github.com/Razee4315/snipflag/blob/main/docs/LINEAR.md">Setup guide</a></p></div></details>
-        <details class="qa" id="faq-unsigned"><summary>Why does my computer warn about the installer?</summary><div class="a"><p>v1.0.0 is an unsigned preview. Installers are built on GitHub Actions with <a href="https://github.com/Razee4315/snipflag/releases/download/v1.0.0/SHA256SUMS.txt">published checksums</a>, but they are not code-signed yet.</p></div></details>
+        <details class="qa"><summary>How does Snipflag connect to Linear?</summary><div class="a"><p>With Linear OAuth and PKCE. In this version you create an OAuth application in Linear, add the callback <code>http://127.0.0.1:47839/callback</code>, and paste its client ID into Snipflag. <a href="https://github.com/Razee4315/snipflag/blob/main/docs/LINEAR.md">Setup guide</a></p></div></details>
+        <details class="qa" id="faq-unsigned"><summary>Why does my computer warn about the installer?</summary><div class="a"><p>v1.1.0 is an unsigned preview. Installers are built on GitHub Actions with <a href="https://github.com/Razee4315/snipflag/releases/download/v1.1.0/SHA256SUMS.txt">published checksums</a>, but they are not code-signed yet.</p></div></details>
         <details class="qa"><summary>Does it record video or console logs?</summary><div class="a"><p>No, Snipflag is screenshots only. For recordings or browser logs, <a href="compare/jam/">Jam</a> or <a href="compare/bugshot/">BugShot</a> is a better fit.</p></div></details>
         <details class="qa"><summary>Does it work with Jira or GitHub Issues?</summary><div class="a"><p>No, Linear only. You can still copy or save any annotated screenshot as a PNG.</p></div></details>
       </div>
@@ -229,16 +229,16 @@
       <p class="lede">Free for Windows, macOS and Linux.</p>
       <div class="dl-grid">
         <div class="dl" data-os="windows"><h3>Windows</h3>
-          <a href="https://github.com/Razee4315/snipflag/releases/download/v1.0.0/unsigned-Snipflag_1.0.0_x64-setup.exe">Installer <small>.exe · 4.4 MB</small></a>
-          <a href="https://github.com/Razee4315/snipflag/releases/download/v1.0.0/unsigned-Snipflag_1.0.0_x64_en-US.msi">MSI <small>6 MB</small></a></div>
+          <a href="https://github.com/Razee4315/snipflag/releases/download/v1.1.0/unsigned-Snipflag_1.1.0_x64-setup.exe">Installer <small>.exe · 4.4 MB</small></a>
+          <a href="https://github.com/Razee4315/snipflag/releases/download/v1.1.0/unsigned-Snipflag_1.1.0_x64_en-US.msi">MSI <small>6.1 MB</small></a></div>
         <div class="dl" data-os="mac"><h3>macOS</h3>
-          <a href="https://github.com/Razee4315/snipflag/releases/download/v1.0.0/unsigned-Snipflag_1.0.0_aarch64.dmg">Apple silicon <small>.dmg · 5.4 MB</small></a>
-          <a href="https://github.com/Razee4315/snipflag/releases/download/v1.0.0/unsigned-Snipflag_1.0.0_x64.dmg">Intel <small>.dmg · 5.8 MB</small></a></div>
+          <a href="https://github.com/Razee4315/snipflag/releases/download/v1.1.0/unsigned-Snipflag_1.1.0_aarch64.dmg">Apple silicon <small>.dmg · 5.4 MB</small></a>
+          <a href="https://github.com/Razee4315/snipflag/releases/download/v1.1.0/unsigned-Snipflag_1.1.0_x64.dmg">Intel <small>.dmg · 5.8 MB</small></a></div>
         <div class="dl" data-os="linux"><h3>Linux</h3>
-          <a href="https://github.com/Razee4315/snipflag/releases/download/v1.0.0/unsigned-Snipflag_1.0.0_amd64.AppImage">AppImage <small>83 MB</small></a>
-          <a href="https://github.com/Razee4315/snipflag/releases/download/v1.0.0/unsigned-Snipflag_1.0.0_amd64.deb">.deb <small>7.3 MB</small></a></div>
+          <a href="https://github.com/Razee4315/snipflag/releases/download/v1.1.0/unsigned-Snipflag_1.1.0_amd64.AppImage">AppImage <small>83 MB</small></a>
+          <a href="https://github.com/Razee4315/snipflag/releases/download/v1.1.0/unsigned-Snipflag_1.1.0_amd64.deb">.deb <small>7.3 MB</small></a></div>
       </div>
-      <p class="foot-note">v1.0.0 unsigned preview from <a href="https://github.com/Razee4315/snipflag/releases/tag/v1.0.0">GitHub Releases</a>. Your OS will ask before opening it.</p>
+      <p class="foot-note">v1.1.0 unsigned preview from <a href="https://github.com/Razee4315/snipflag/releases/tag/v1.1.0">GitHub Releases</a>. Your OS will ask before opening it.</p>
     </div>
   </section>
 </main>

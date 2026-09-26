@@ -1,5 +1,15 @@
 # Current state / handoff
 
+## Product and engineering audit — 2026-09-26
+
+Owner requested a detailed audit and roadmap. Audited checkout `9f4dd38`; findings and proposed work are recorded in [AUDIT-2026-09-26.md](AUDIT-2026-09-26.md). Application code was not changed; no new implementation, commit, publication, native runtime test, or local build/install was performed. Audit documents are local and uncommitted.
+
+Remote evidence rechecked: [Checks 36235494635](https://github.com/Razee4315/snipflag/actions/runs/36235494635) at `4127d3d5631daff50d5ceca1bace1112a33d855e` succeeded (23 frontend unit tests, 18 Chromium tests, 22 Rust tests on each native platform, build/typecheck/all-target checks). No diff from that checked revision to the audit checkout under src, src-tauri, tests, package.json or package-lock.json. [Development installers 36234286219](https://github.com/Razee4315/snipflag/actions/runs/36234286219) at `e0f97ba248697e21375573be6c51251bce95a717` remain the latest inspected successful installer run. Published latest remains 1.0.0; source/installers are 1.1.0. Repository metadata is now public, superseding the historical private label below. No fresh CI run was dispatched for this documentation-only audit.
+
+Priority findings, not fixed: empty-session persistence can retain removed content; uncertain-create recovery can associate later edits with an earlier remote issue; tray Quit bypasses pending autosave; image deletion errors are ignored; translucent pixelation needs a source-over compositing regression test/correction; filmstrip and mention thumbnails show original images. The audit also records undo/history/retention gaps, non-resumable partial uploads, onboarding friction, resource/performance risks, keyboard limitations, release-note version hardcoding, and stale security documentation. Source-confirmed behavior is distinguished from unverified runtime risks. Existing green tests do not cover all these scenarios.
+
+Next: implement the prioritized correctness tickets with remote regression checks, then improve OAuth onboarding and report workflow; record Windows-first native acceptance and signing evidence before future stable releases. The audit did not authorize a new release or posting test content to Linear. Unrelated untracked `.claude/` content was left untouched.
+
 Updated: 2026-09-26. Repository: https://github.com/Razee4315/snipflag (private; renamed from `nacrelark` the same day, GitHub redirects the old URL).
 
 ## Decisions locked by user
@@ -189,3 +199,11 @@ The owner asked for a product website with a comparison page and strong SEO, and
 - Deployed: `db30a4b` pushed. Pages had been enabled in legacy branch mode (main, `/`), which served the app's dev `index.html` and overwrote the first Actions deploy. Pages source was switched to GitHub Actions and [Website 36235003991](https://github.com/Razee4315/snipflag/actions/runs/36235003991) redeployed. Live checks: `/`, all five compare pages, assets, sitemap, robots and manifest return 200, and unknown paths return the custom 404. In the browser, every request loads with no broken images.
 - Revision (owner request): a minimal, readable redesign using Geist, much less copy, and no decorative motion. The new hero is captured from the real UI by the `Website screenshots` workflow ([36235719906](https://github.com/Razee4315/snipflag/actions/runs/36235719906)). Local check: fonts, hero and editor load; no overflow at 375 px; `check_site.py` passes.
 - Hero now uses the owner's real demo recording (capture, annotate, issue, open in Linear). The browser tab strip is blurred after 23 s to hide an email address in a tab title. The video autoplays muted, has a pause button, and respects reduced motion. Local check: autoplays, pause works, no overflow at 375 px, `check_site.py` passes.
+
+## v1.1.0 release published — 2026-09-26
+
+The owner asked to publish the latest build for everyone. Release notes are in `docs/releases/v1.1.0.md`. `publish-preview.yml` now reads `docs/releases/<tag>.md` and no longer always uses the v1.0.0 notes.
+- Source `5f66c3a`. [Checks 36239748080](https://github.com/Razee4315/snipflag/actions/runs/36239748080) and [Development installers 36239763769](https://github.com/Razee4315/snipflag/actions/runs/36239763769) were green at that exact commit. [Publish run 36240110526](https://github.com/Razee4315/snipflag/actions/runs/36240110526) created [v1.1.0](https://github.com/Razee4315/snipflag/releases/tag/v1.1.0) with six `unsigned-` installers and `SHA256SUMS.txt`. At the owner's request it was then marked the Latest regular release (not a prerelease), as was done for v1.0.0.
+- The website (buttons, download cards, schema `softwareVersion`, compare pages) and the README now point to v1.1.0 assets.
+- Still true: the installers are unsigned, and the native runtime acceptance gates listed above remain open. Automated checks and packaging do not prove native behavior.
+

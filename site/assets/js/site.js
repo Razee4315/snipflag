@@ -8,7 +8,7 @@
   var finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
   /* ---------- Download button: pick the visitor's platform ---------- */
-  var REL = 'https://github.com/Razee4315/snipflag/releases/download/v1.0.0/';
+  var REL = 'https://github.com/Razee4315/snipflag/releases/download/v1.1.0/';
   function detectOS() {
     var p = ((navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || '').toLowerCase();
     var ua = navigator.userAgent.toLowerCase();
@@ -21,9 +21,9 @@
   (function downloads() {
     var os = detectOS();
     var map = {
-      windows: { href: REL + 'unsigned-Snipflag_1.0.0_x64-setup.exe', label: 'Download for Windows', meta: 'Free' },
+      windows: { href: REL + 'unsigned-Snipflag_1.1.0_x64-setup.exe', label: 'Download for Windows', meta: 'Free' },
       mac: { href: '#download', label: 'Download for macOS', meta: 'Free' },
-      linux: { href: REL + 'unsigned-Snipflag_1.0.0_amd64.AppImage', label: 'Download for Linux', meta: 'Free' }
+      linux: { href: REL + 'unsigned-Snipflag_1.1.0_amd64.AppImage', label: 'Download for Linux', meta: 'Free' }
     };
     var pick = map[os];
     if (pick) {
