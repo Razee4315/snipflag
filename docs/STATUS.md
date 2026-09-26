@@ -119,3 +119,11 @@ Owner requested v1 on GitHub Releases and screenshots in README. Prepared matchi
 - README now embeds four verified synthetic UI previews: daylight, dark theme, image mentions, and settings. The gallery explicitly identifies browser/CI previews rather than native runtime evidence.
 
 Next: run and record the documented Windows-first native acceptance matrix, real Linear rendering with authorized test content, and macOS/Linux runtime checks; configure signing before promoting to stable. Publication does not close any of those gates. This checkpoint changes documentation only.
+
+## Latest release promotion - 2026-09-26
+
+Owner explicitly requested that v1 appear in the repository Releases sidebar and confirmed that the app is working great. This overrides the earlier prerelease gate for this release; it is owner-reported working behavior, not a completed platform acceptance matrix.
+
+Promoted the existing v1.0.0 release to a regular release and marked it latest, titled Snipflag v1.0.0. Verified GitHub's releases/latest endpoint returns v1.0.0 with draft=false, prerelease=false and seven assets. Source/tag remains 59017516274199f6b8461c3306f737777496bdb4; installers and checksums were not rebuilt or replaced. Checks 36227110895, installer run 36227111618, and publication run 36227461740 remain the green release evidence linked above. README, CHANGELOG, CI policy context and release notes now reflect the promotion. Unsigned filenames and signing/runtime limitations remain explicit.
+
+A first local metadata-edit command had a PowerShell parse error caused by a typographic apostrophe; no mutation occurred. Corrected the quoting and successfully updated the release. No build, dependency install or runtime test was performed locally. Next: complete the detailed platform acceptance records and signing setup. Future prerelease workflow behavior is unchanged.

@@ -4,7 +4,7 @@ All notable changes to Snipflag are documented here. The format follows [Keep a 
 
 ## [1.0.0] - 2026-09-26
 
-First v1 preview. Published as an unsigned prerelease; runtime acceptance and signing remain pending.
+First v1 release. Promoted to the latest regular release at the explicit request of the owner after they confirmed the app is working well. Installers remain unsigned; the detailed runtime acceptance matrix and signing remain pending.
 
 ### Added
 
