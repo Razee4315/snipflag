@@ -1,5 +1,18 @@
 # Current state / handoff
 
+## Fix-first completed and remotely verified — 2026-09-26
+
+Final source: `72560a85fa542f5b1e05ad026d9e42f23b9c081f` (`72560a8`). Focused implementation commits, all pushed: `466bdc0` privacy rendering/thumbnails; `ae51c04` empty drafts, durable undo and retryable deletion; `776cc31` immutable submissions and quit handshake; `2de9867` cleanup/capture/quit hardening; `72560a8` defensive save-error preservation.
+
+- [Checks 36241550474](https://github.com/Razee4315/snipflag/actions/runs/36241550474) passed every job at the final source: strict typecheck/production frontend build, 28 frontend unit tests, 24 Chromium browser tests, and 28 Rust tests plus all-target checks on Windows/macOS/Linux.
+- [Development installers 36241561955](https://github.com/Razee4315/snipflag/actions/runs/36241561955) passed all four targets at the same source, version **1.1.0**, unsigned, 7-day artifact retention. [Windows NSIS/MSI](https://github.com/Razee4315/snipflag/actions/runs/36241561955/artifacts/10906875238), [macOS Intel](https://github.com/Razee4315/snipflag/actions/runs/36241561955/artifacts/10906770556), [macOS Apple Silicon](https://github.com/Razee4315/snipflag/actions/runs/36241561955/artifacts/10906296232), [Linux](https://github.com/Razee4315/snipflag/actions/runs/36241561955/artifacts/10906125672).
+- No test/build failures in this workstream. Intermediate Checks 36241384370 passed frontend but was superseded/cancelled by the final push; final verification above covers all changes.
+- No local builds, dependency installs, browser installs or Rust compilation. No release workflow, tag, version bump, release-asset replacement, or real Linear test issue. Existing published 1.1.0 remains unchanged. Unrelated `.claude/` content remains untracked and untouched.
+
+All six fix-first categories are implemented: persisted removal/emptying, safe app-initiated quit, exact uncertain-submission recovery, protected thumbnails, durable bounded per-image undo/redo, and visible/retryable deletion plus pixelation edge handling. Privacy exports still retain original dimensions, use at least 12px true block averages, and render legacy redactions last. Old drafts remain readable; history predating this change cannot be reconstructed. Old uncertain attempts without snapshots stop for explicit review rather than guessing their submitted content.
+
+Next: test the Windows development artifact against the native scenarios in TESTING.md, especially immediate tray Quit, locked-file deletion and real authorized Linear response-loss recovery. Compilation, automated browser tests and packaging do not constitute native runtime verification. Forced termination/power loss and guaranteed anonymization are not claimed. Later feature backlog remains unimplemented by design. This final checkpoint is documentation only.
+
 ### Fix-first defensive save follow-up — 2026-09-26
 
 `2de9867` [Checks 36241384370](https://github.com/Razee4315/snipflag/actions/runs/36241384370) passed frontend including expanded privacy regressions; native jobs were still running at this checkpoint. Final two defensive changes: an uncertain status must not convert an existing draft-save error into successful Quit, and failed orphan cleanup during autosave is retained in native cleanup status. These changes require their own final remote check. No test failures observed so far in this workstream. Version and release assets unchanged.
