@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { imageReference, mentionQuery, missingImageReferences, type ImageReferences } from '../mentions';
 import type { CaptureImage } from '../model';
 
@@ -14,6 +14,9 @@ export default function DescriptionEditor({ value, images, references, disabled,
     .filter(({ image, key }) => key && (!query?.query || key.includes(query.query) || image.name.toLowerCase().includes(query.query)));
   const selected = Math.min(active, Math.max(0, choices.length - 1));
   const missing = missingImageReferences(value, images, references);
+  useEffect(() => {
+    if (query) document.getElementById(`${id}-image-${selected}`)?.scrollIntoView({ block: 'nearest' });
+  }, [id, selected, query]);
   const update = () => {
     const el = input.current;
     setQuery(el && el.selectionStart === el.selectionEnd && !composing ? mentionQuery(el.value, el.selectionStart) : null);

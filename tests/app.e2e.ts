@@ -259,7 +259,7 @@ test('image mentions support keyboard selection, undo, reordering and missing-im
   await expect(page.getByRole('status', { name: 'Saved on this computer' })).toBeVisible();
   await page.reload();
   await expect(description).toHaveValue('Wrong total in @image1 but correct in @image2 ');
-  await description.press('End');
+  await description.press('Control+End');
   await description.pressSequentially('See @');
   await expect(page.getByRole('option', { name: /@image1 white/ })).toBeVisible();
   await expect(page.getByRole('option', { name: /@image2 blue/ })).toBeVisible();
@@ -272,4 +272,12 @@ test('image mentions support keyboard selection, undo, reordering and missing-im
   await description.fill('Replacement @');
   await expect(page.getByRole('option', { name: /@image3 white/ })).toBeVisible();
   await expect(page.getByRole('option', { name: /@image1/ })).toHaveCount(0);
+  await description.fill('Replacement @wh');
+  await expect(page.getByRole('option')).toHaveCount(1);
+  await description.press('Tab');
+  await expect(description).toHaveValue('Replacement @image3 ');
+  await description.fill('Contact qa@example.com');
+  await expect(page.getByRole('listbox')).toHaveCount(0);
+  await description.fill('Code `@ima');
+  await expect(page.getByRole('listbox')).toHaveCount(0);
 });
