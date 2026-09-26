@@ -31,6 +31,8 @@ Rust is the only production network client. Capture/edit work offline. Metadata 
 
 No private client secret in distributed apps. OAuth is a public client using S256 PKCE and state, with a loopback callback bound only to 127.0.0.1. Client ID is public configuration. Desktop keyring has to be available; no fallback to plaintext tokens.
 
+Rust resolves the saved custom client ID first, then the build's `SNIPFLAG_LINEAR_CLIENT_ID`. Empty settings remain empty on disk so upgrades pick up the current build default. The renderer receives only a built-in-availability flag through app status; advanced custom setup remains optional. Refresh uses the client ID stored alongside its keyring credential. Installer CI requires public client configuration unless explicitly building custom-client-only artifacts.
+
 ## Capture
 
 Native monitor frame acquisition runs off the UI thread. Hide editor before acquisition. Overlay per monitor uses physical bounds and maps pointer positions to image pixels; crop original frame in Rust. Restrict region to one monitor. Close/cancel all overlays together. XCap is behind our adapter; Wayland failures show a useful import/paste fallback and remain a platform acceptance item.

@@ -103,11 +103,9 @@ On macOS, grant Screen Recording permission when asked. On Linux Wayland, some c
 
 Snipflag signs in to Linear with OAuth and PKCE. No client secret is used, and the resulting token is kept in your operating system's credential store.
 
-1. In Linear, open **Settings, API, OAuth applications** and create an application.
-2. Add the callback URL `http://127.0.0.1:47839/callback`.
-3. Copy the application's **client ID** into Snipflag **Settings**, then choose **Connect Linear**.
+New configured development installers offer **Connect Linear** directly. Approve access in your browser, then return to Snipflag. The existing published 1.1.0 installers predate this onboarding change.
 
-Builds can also embed a client ID through the `SNIPFLAG_LINEAR_CLIENT_ID` repository variable. More detail is in [docs/LINEAR.md](docs/LINEAR.md).
+Self-builds can use **Settings → Advanced: custom Linear application**: register an OAuth application with callback `http://127.0.0.1:47839/callback` and enter its public client ID. Leave the field blank to use the installer's built-in connection. Maintainers configure that connection through the `SNIPFLAG_LINEAR_CLIENT_ID` repository variable; no client secret is embedded. More detail is in [docs/LINEAR.md](docs/LINEAR.md).
 
 ## Privacy
 

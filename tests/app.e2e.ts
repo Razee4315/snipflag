@@ -92,7 +92,10 @@ test('browser preview never pretends to reach Linear', async ({ page }) => {
   await expect(page.getByText(/Sent to Linear/)).toHaveCount(0);
   await page.getByRole('button', { name: 'Settings' }).click();
   const dialog = page.getByRole('dialog', { name: 'Settings' });
+  await expect(dialog.getByText('This build has no built-in Linear connection.', { exact: false })).toBeVisible();
+  await dialog.getByText('Advanced: custom Linear application', { exact: true }).click();
   await expect(dialog.getByLabel('Linear OAuth client ID')).toBeVisible();
+  await dialog.getByLabel('Linear OAuth client ID').fill('custom-client');
   await expect(dialog.getByRole('button', { name: 'Connect Linear' })).toBeDisabled();
   await dialog.getByRole('button', { name: 'Appearance', exact: true }).click();
   await dialog.getByText('Dark', { exact: true }).click();
@@ -101,6 +104,11 @@ test('browser preview never pretends to reach Linear', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   await page.keyboard.press('Escape');
   await expect(dialog).toBeHidden();
+  await page.reload();
+  await page.getByRole('button', { name: 'Settings' }).click();
+  await expect(dialog.getByText('Using your custom Linear application.')).toBeVisible();
+  await dialog.getByText('Advanced: custom Linear application', { exact: true }).click();
+  await expect(dialog.getByLabel('Linear OAuth client ID')).toHaveValue('custom-client');
 });
 
 async function exportPixels(page: Page, points: [number, number][]) {

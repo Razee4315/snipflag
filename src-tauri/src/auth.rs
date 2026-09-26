@@ -11,6 +11,13 @@ use crate::storage::{main_only, now, Storage};
 pub const SERVICE: &str = "io.github.razee4315.snipflag";
 const REDIRECT: &str = "http://127.0.0.1:47839/callback";
 
+pub fn builtin_client_id() -> &'static str { option_env!("SNIPFLAG_LINEAR_CLIENT_ID").unwrap_or("").trim() }
+fn resolve_client_id<'a>(custom: &'a str, builtin: &'a str) -> Result<&'a str, String> {
+    let id = if custom.trim().is_empty() { builtin.trim() } else { custom.trim() };
+    if id.is_empty() { return Err("This build has no built-in Linear connection. Add a public client ID in Settings → Advanced, or use a configured installer.".into()); }
+    Ok(id)
+}
+
 /// Serializes Linear operations so refresh-token rotation and keyring writes never race.
 pub struct NetworkLock(pub tokio::sync::Mutex<()>);
 /// Lets the editor abandon a browser login that the user closed.
@@ -82,7 +89,7 @@ async fn wait_for_code(listener: tokio::net::TcpListener, state: String) -> Resu
         let n = match tokio::time::timeout(Duration::from_secs(3), socket.read(&mut buffer)).await { Ok(Ok(n)) => n, _ => continue };
         let request = String::from_utf8_lossy(&buffer[..n]).into_owned();
         let outcome = parse_callback(&request, &state);
-        let body = match &outcome { Some(Ok(_)) => "Snipflag is connected to Linear. You can close this tab.", Some(Err(_)) => "Linear login was cancelled. You can close this tab.", None => "This login response was not accepted. Return to Snipflag and retry." };
+        let body = match &outcome { Some(Ok(_)) => "Authorization received. Return to Snipflag to finish connecting. You can close this tab.", Some(Err(_)) => "Linear login was cancelled. You can close this tab.", None => "This login response was not accepted. Return to Snipflag and retry." };
         let status = if outcome.is_some() { "200 OK" } else { "400 Bad Request" };
         let reply = format!("HTTP/1.1 {status}\r\nContent-Type: text/plain; charset=utf-8\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}", body.len());
         let _ = socket.write_all(reply.as_bytes()).await;
@@ -96,7 +103,7 @@ pub async fn connect_linear(window: WebviewWindow, app: AppHandle) -> Result<(),
     let lock = app.state::<NetworkLock>();
     let _guard = lock.0.try_lock().map_err(|_| "Another Linear operation is in progress.")?;
     let settings = app.state::<Storage>().settings()?;
-    let client_id = settings["clientId"].as_str().filter(|s| !s.is_empty()).ok_or("Add your public Linear OAuth client ID in Settings first.")?.to_string();
+    let client_id = resolve_client_id(settings["clientId"].as_str().unwrap_or(""), builtin_client_id())?.to_string();
     let listener = tokio::net::TcpListener::bind("127.0.0.1:47839").await.map_err(|_| "Login callback port 47839 is in use. Close the other login attempt and retry.")?;
     let (verifier, challenge) = pkce();
     let state = uuid::Uuid::new_v4().to_string();
@@ -137,6 +144,13 @@ pub async fn disconnect_linear(window: WebviewWindow, app: AppHandle) -> Result<
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test] fn client_selection_preserves_overrides_and_upgrades_empty_settings() {
+        assert_eq!(resolve_client_id("", "official-v2").unwrap(), "official-v2");
+        assert_eq!(resolve_client_id("custom", "official-v2").unwrap(), "custom");
+        assert_eq!(resolve_client_id("custom", "").unwrap(), "custom");
+        assert!(resolve_client_id(" ", "").is_err());
+        assert_eq!(crate::storage::normalize_settings(&serde_json::json!({"clientId":""})).unwrap()["clientId"], "");
+    }
     #[test] fn pkce_challenge_is_s256_of_verifier() {
         let (verifier, challenge) = pkce();
         assert!(verifier.len() >= 43);

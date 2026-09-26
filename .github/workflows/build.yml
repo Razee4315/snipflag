@@ -1,5 +1,11 @@
 name: Development installers
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      custom_client_only:
+        description: Build without a built-in Linear connection (advanced self-build)
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
@@ -21,8 +27,24 @@ jobs:
             target: x86_64-unknown-linux-gnu
             bundles: deb,appimage
     runs-on: ${{ matrix.os }}
+    env:
+      SNIPFLAG_LINEAR_CLIENT_ID: ${{ vars.SNIPFLAG_LINEAR_CLIENT_ID }}
     steps:
       - uses: actions/checkout@v4
+      - name: Verify built-in Linear configuration
+        shell: bash
+        env:
+          CUSTOM_CLIENT_ONLY: ${{ inputs.custom_client_only }}
+        run: |
+          if [ "$CUSTOM_CLIENT_ONLY" = "true" ]; then
+            echo 'SNIPFLAG_LINEAR_CLIENT_ID=' >> "$GITHUB_ENV"
+            echo 'Advanced build: users must supply a public client ID.' >> "$GITHUB_STEP_SUMMARY"
+          elif [[ ! "$SNIPFLAG_LINEAR_CLIENT_ID" =~ ^[a-zA-Z0-9_-]{1,200}$ ]]; then
+            echo 'Configure repository variable SNIPFLAG_LINEAR_CLIENT_ID with the public OAuth client ID, or explicitly select custom-client-only.' >&2
+            exit 1
+          else
+            echo 'Built-in public Linear client configured. OAuth registration and native login still require runtime verification.' >> "$GITHUB_STEP_SUMMARY"
+          fi
       - name: Linux dependencies
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf libxcb1-dev libxrandr-dev libdbus-1-dev libpipewire-0.3-dev libwayland-dev libegl-dev libgbm-dev libdrm-dev libclang-dev
@@ -40,9 +62,6 @@ jobs:
       - run: npm test
       - run: npm run tauri -- icon public/icon.svg
       - run: npm run tauri -- build --target ${{ matrix.target }} --bundles ${{ matrix.bundles }} -- --locked
-        env:
-          # Public OAuth client ID only (never a secret). Optional: users can also paste it in Settings.
-          SNIPFLAG_LINEAR_CLIENT_ID: ${{ vars.SNIPFLAG_LINEAR_CLIENT_ID }}
       - uses: actions/upload-artifact@v4
         with:
           name: snipflag-development-unsigned-${{ matrix.target }}

@@ -360,7 +360,7 @@ export default function App() {
         )}
         {count > 0 && <Filmstrip canCapture={desktop} onCapture={() => void capture()} onAdd={() => fileInput.current?.click()} />}
       </main>
-      <IssuePanel connection={connection} connectionState={connectionState} connectionError={connectionError} hasClientId={!!settings.clientId}
+      <IssuePanel connection={connection} connectionState={connectionState} connectionError={connectionError} hasClientId={!!settings.clientId || !!status?.builtinLinearClient}
         progress={progress} submitError={submitError} pendingState={pendingState}
         onConnect={() => void connect()} onCancelConnect={() => void cancelLogin().catch(() => undefined)} onRetryConnection={() => void refreshConnection()}
         onOpenSettings={() => setDialog('settings')} onSubmit={() => void submit()} onNewSession={() => void newSession()} onTeamChosen={rememberTeam} notify={notify} />

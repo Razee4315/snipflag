@@ -58,8 +58,8 @@ fn write_atomic(path: &Path, bytes: &[u8]) -> Result<(), String> {
 }
 
 pub fn default_settings() -> Value {
-    // The Linear OAuth client ID is public. Builds may embed one; otherwise the owner enters it in Settings.
-    json!({"clientId": option_env!("SNIPFLAG_LINEAR_CLIENT_ID").unwrap_or(""), "shortcut": "CommandOrControl+Shift+Digit2", "theme": "system", "retentionDays": 30, "launchAtLogin": false, "sounds": true, "motion": true, "teamMemory": {}})
+    // Empty means use this build's public client. Never persist a build default as a user override.
+    json!({"clientId": "", "shortcut": "CommandOrControl+Shift+Digit2", "theme": "system", "retentionDays": 30, "launchAtLogin": false, "sounds": true, "motion": true, "teamMemory": {}})
 }
 /// Returns a complete, validated settings object. Unknown keys are dropped.
 pub fn normalize_settings(input: &Value) -> Result<Value, String> {

@@ -94,7 +94,7 @@ fn app_status(window: WebviewWindow, app: AppHandle) -> Result<Value, String> {
     main_only(&window)?;
     let shortcut_error = app.state::<ShortcutStatus>().0.lock().ok().and_then(|s| s.clone());
     let cleanup_error = app.state::<Storage>().cleanup_error.lock().ok().and_then(|s| s.clone());
-    Ok(json!({"version": app.package_info().version.to_string(), "platform": std::env::consts::OS, "shortcutError": shortcut_error, "cleanupError": cleanup_error}))
+    Ok(json!({"version": app.package_info().version.to_string(), "platform": std::env::consts::OS, "shortcutError": shortcut_error, "cleanupError": cleanup_error, "builtinLinearClient": !auth::builtin_client_id().is_empty()}))
 }
 
 /// Comfortable full workspace in logical pixels: large, never fullscreen, always inside the work area.

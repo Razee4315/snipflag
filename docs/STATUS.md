@@ -1,5 +1,13 @@
 # Current state / handoff
 
+## Add next: Linear onboarding implementation — 2026-09-26
+
+Started from `19a41d1477cbb01993d28586456cf3baeb8a3e37`; remote main matched, prior final checks/installers were green, only unrelated `.claude/` content was untracked. Owner supplied the public OAuth client ID; repository variable `SNIPFLAG_LINEAR_CLIENT_ID` is now configured. No secret requested or stored.
+
+Implemented in this checkpoint, remote verification pending: direct Connect Linear with a built-in public client; custom IDs under collapsed Advanced settings; empty saved IDs resolve to the current build default without overwriting existing custom IDs; explicit return to built-in connection; truthful loopback receipt copy; build-time ID validation and installer preflight with an explicit custom-client-only option. Added Rust selection/upgrade and frontend availability/persistence regressions. Version remains 1.1.0; no release/tag/assets changed, local builds/installs, or real Linear uploads/issues.
+
+Scope review: retain `read,write` pending authorized runtime verification of `read,issues:create`, especially `fileUpload`; current official docs and operation inventory are recorded in LINEAR.md. Next: push this focused checkpoint, run Checks and unsigned development packaging, fix any failures, then record exact commit/run links. Native login, registration/distribution, refresh and all previous runtime gates remain open. Phase 2 preview and Phase 3 templates/defaults are not implemented by this checkpoint.
+
 ## Fix-first completed and remotely verified — 2026-09-26
 
 Final source: `72560a85fa542f5b1e05ad026d9e42f23b9c081f` (`72560a8`). Focused implementation commits, all pushed: `466bdc0` privacy rendering/thumbnails; `ae51c04` empty drafts, durable undo and retryable deletion; `776cc31` immutable submissions and quit handshake; `2de9867` cleanup/capture/quit hardening; `72560a8` defensive save-error preservation.

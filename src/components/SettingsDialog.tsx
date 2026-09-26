@@ -24,6 +24,7 @@ export default function SettingsDialog(p: Props) {
   const [draft, setDraft] = useState<Settings>(p.settings);
   const [error, setError] = useState(''); const [saved, setSaved] = useState('');
   const [recording, setRecording] = useState(false); const [confirmClear, setConfirmClear] = useState(false);
+  const builtin = !!p.status?.builtinLinearClient;
   const dirty = JSON.stringify(draft) !== JSON.stringify(p.settings);
   const save = async (next = draft) => {
     setError(''); setSaved('');
@@ -52,22 +53,27 @@ export default function SettingsDialog(p: Props) {
           <div className="row between"><p className="small">Waiting for you to approve access in the browser…</p><button type="button" className="button" onClick={p.onCancelConnect}>Cancel</button></div>
         ) : (
           <>
-            <details className="setup" open={!draft.clientId}>
-              <summary>How to set up the Linear connection</summary>
+            <p className="small muted">Sign in through your browser. Screenshots stay here until you choose Create issue.</p>
+            {!builtin && !draft.clientId && <p className="warn small">This build has no built-in Linear connection. Use a configured installer or add your own public client ID below.</p>}
+            {draft.clientId && <p className="small muted">Using your custom Linear application.</p>}
+            <details className="setup">
+              <summary>Advanced: custom Linear application</summary>
               <ol className="small">
                 <li>In Linear, open Settings → API → OAuth applications and create a new application.</li>
                 <li>Add this callback URL: <code>{REDIRECT_URI}</code> <button type="button" className="link-button" onClick={() => copyText(REDIRECT_URI).then(() => setSaved('Callback URL copied.')).catch(e => setError(errorText(e)))}>Copy</button></li>
                 <li>Copy the application's <strong>Client ID</strong> (not the secret) into the field below, then choose Connect Linear.</li>
               </ol>
               {desktop && <button type="button" className="button" onClick={() => openLinearSetup().catch(e => setError(errorText(e)))}>Open Linear OAuth settings</button>}
-            </details>
             <label className="field">
               <span>Linear OAuth client ID</span>
               <input value={draft.clientId} spellCheck={false} autoComplete="off" placeholder="Paste the public client ID" onChange={e => setDraft({ ...draft, clientId: e.target.value.trim() })} />
-              <small className="muted">Snipflag uses PKCE and never needs a client secret. Tokens are kept in your system credential store.</small>
+              <small className="muted">{builtin ? 'Leave blank to use the built-in connection. ' : ''}Use the public ID only, never a client secret.</small>
             </label>
+            {builtin && draft.clientId && <button type="button" className="button" onClick={() => setDraft({ ...draft, clientId: '' })}>Use built-in connection</button>}
+            </details>
+            <p className="small muted">Snipflag uses PKCE. Tokens stay in your system credential store.</p>
             {p.connectionError && <p className="error small" role="alert">{p.connectionError}</p>}
-            <button type="button" className="button primary" disabled={!draft.clientId || !desktop} onClick={() => void connect()}>Connect Linear</button>
+            <button type="button" className="button primary" disabled={(!draft.clientId && !builtin) || !desktop} onClick={() => void connect()}>Connect Linear</button>
             {!desktop && <p className="small muted">Connecting works in the installed desktop app.</p>}
           </>
         )}

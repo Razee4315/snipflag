@@ -1,5 +1,11 @@
 # Test and release gates
 
+## Built-in Linear onboarding
+
+Automated coverage: built-in/custom/missing client selection, empty saved settings after upgrade, Settings connection availability and collapsed advanced setup, browser-only refusal, custom ID persistence. Installer builds fail early when the public client variable is missing unless custom-client-only mode is explicitly selected. These checks do not contact Linear.
+
+Native gates: fresh profile Connect Linear without setup; existing empty settings upgrade; custom ID preserved; clear custom ID and connect using built-in client; cancel/deny/timeout/port conflict; callback receipt must not claim success before token exchange/keyring persistence; locked keyring; restart and refresh; disconnect/reconnect. Verify owner app distribution from a second intended workspace. Before narrowing scopes, authorize synthetic test content and verify metadata, flattened upload, optional fields, stable issue UUID/reconciliation and refresh with `read,issues:create`.
+
 ## Fix-first regressions (1.1.0 source update, no new release)
 
 Remote suites now cover persisted empty image/text drafts, independent undo/redo across restart, legacy drafts without histories, bounded history, retryable failed deletion, orphan cleanup, stale-save rejection after delete, immutable submission snapshots across restart, retention protection, renderer pending-report locks, and quit acknowledgment ordering/failure. Privacy fixtures include alternating patterned semitransparent pixels, protected bounded thumbnails after reload, fractional region boundaries, fully transparent regions, marks added after masks, and legacy redactions drawn last.
