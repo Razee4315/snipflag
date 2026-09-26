@@ -373,10 +373,13 @@ test('the interface behaves like a desktop app, not a web page', async ({ page }
 
 test('numbered steps count up per image and ellipses draw', async ({ page }) => {
   await addImages(page, [white]);
+  const before = (await page.getByTestId('canvas').boundingBox())!;
+  await page.keyboard.press('n');
+  // Choosing a tool never moves the canvas.
   const box = (await page.getByTestId('canvas').boundingBox())!;
+  expect(box).toEqual(before);
   // Click at image pixels (100, 100) and (250, 150), whatever the fit scale is.
   const k = box.width / 400;
-  await page.keyboard.press('n');
   await page.mouse.click(box.x + 100 * k, box.y + 100 * k);
   await page.mouse.click(box.x + 250 * k, box.y + 150 * k);
   await page.keyboard.press('e');

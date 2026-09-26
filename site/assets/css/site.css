@@ -139,9 +139,13 @@ kbd { font-family: var(--f-mono); font-size: .8em; padding: .12em .45em; border-
 .cursor .xy { position: absolute; left: 14px; top: 12px; font: 500 10px/1 var(--f-mono); letter-spacing: .06em; color: var(--forest); background: var(--apricot); padding: 3px 5px; border-radius: 1px; white-space: nowrap; }
 .cursor.link .dot { transform: scale(2.6); }
 .cursor.link .h, .cursor.link .v { opacity: 0; }
+.cursor.ink .h, .cursor.ink .v { background: var(--apricot-ink); }
+.cursor.ink .dot { border-color: var(--apricot-ink); }
+.cursor.ink .xy { background: var(--apricot-ink); color: var(--apricot); }
 @media (hover: hover) and (pointer: fine) {
   html.has-cursor, html.has-cursor a, html.has-cursor button, html.has-cursor summary, html.has-cursor label { cursor: none; }
   html.has-cursor input, html.has-cursor textarea, html.has-cursor select { cursor: auto; }
+  html.has-cursor .canvas-wrap canvas { cursor: none; }
 }
 
 /* HERO */
@@ -159,7 +163,8 @@ kbd { font-family: var(--f-mono); font-size: .8em; padding: .12em .45em; border-
 .hero-note { margin-top: 1rem; font-size: .8125rem; color: var(--ivory-faint); max-width: 52ch; }
 .hero-note a { color: var(--ivory-dim); }
 
-.hero-shot { grid-column: 8 / span 5; position: relative; z-index: 1; margin-right: calc(-1 * clamp(0px, 8vw, 140px)); }
+.hero-shot { grid-column: 8 / span 5; position: relative; z-index: 1; margin: 0; }
+@media (min-width: 1061px) { .hero-shot { width: calc(100% + min(6vw, 90px)); } }
 .shot-frame { position: relative; }
 .shot-frame::before { content: ""; position: absolute; inset: -18% -12%; z-index: -1; background: radial-gradient(closest-side, rgba(255,178,91,.34), rgba(255,178,91,0) 70%); filter: blur(10px); }
 .shot-frame img { width: 100%; border-radius: var(--radius); box-shadow: 0 30px 80px -30px rgba(0,0,0,.6); }
@@ -212,7 +217,7 @@ kbd { font-family: var(--f-mono); font-size: .8em; padding: .12em .45em; border-
 /* PINNED SESSION SEQUENCE (motion floor #7) */
 .session { position: relative; }
 .session-pin { min-height: 100dvh; display: flex; align-items: center; padding-block: 96px 48px; }
-.session .grid { align-items: center; width: 100%; }
+.session .grid { align-items: center; }
 .session-steps { grid-column: 1 / span 4; list-style: none; margin: 0; padding: 0; }
 .session-steps li { position: relative; padding: 1rem 0 1rem 3.4rem; color: var(--ivory-faint); transition: color 300ms; }
 .session-steps li .mono { position: absolute; left: 0; top: 1.35rem; }
@@ -348,16 +353,16 @@ details.qa .a a { color: var(--ivory); text-decoration: underline; text-decorati
 main { background: var(--forest) radial-gradient(rgba(244,239,227,.06) 1px, transparent 1.2px) 0 0 / 24px 24px; }
 .site-footer.static { position: relative; }
 .site-footer { position: sticky; bottom: 0; z-index: 0; min-height: 100dvh; display: flex; flex-direction: column; background: var(--apricot); color: var(--apricot-ink); overflow: clip; }
-.site-footer .wrap { flex: 1; display: flex; flex-direction: column; padding-block: clamp(5rem, 10vw, 8rem) 2rem; }
+.site-footer .wrap { flex: 1; display: flex; flex-direction: column; padding-block: clamp(4rem, 7vw, 6rem) 1.6rem; }
 .site-footer .label { color: var(--apricot-ink); } .site-footer .label::before { background: var(--apricot-ink); }
-.site-footer .display { margin-top: 1.4rem; font-size: clamp(3.6rem, 13vw, 13rem); }
+.site-footer .display { margin-top: 1.2rem; font-size: clamp(3.4rem, 10.5vw, 10rem); }
 .foot-dl { display: flex; flex-wrap: wrap; gap: .7rem; margin-top: 2.6rem; }
 .foot-dl .btn { --bg: var(--apricot-ink); --fg: var(--apricot); }
 .foot-dl .btn:hover { box-shadow: 4px 4px 0 var(--forest); }
 .foot-dl .btn.alt { --bg: transparent; --fg: var(--apricot-ink); box-shadow: inset 0 0 0 1.5px var(--apricot-ink); }
 .foot-note { margin-top: 1.2rem; font-size: .85rem; max-width: 60ch; opacity: .8; }
 .foot-note a { text-decoration: underline; text-underline-offset: 3px; }
-.foot-bottom { display: grid; grid-template-columns: repeat(12, minmax(0,1fr)); gap: var(--gutter); margin-top: auto; padding-top: 4rem; font-size: .9rem; }
+.foot-bottom { display: grid; grid-template-columns: repeat(12, minmax(0,1fr)); gap: var(--gutter); margin-top: auto; padding-top: 3rem; font-size: .9rem; }
 .foot-bottom nav { display: flex; flex-direction: column; gap: .45rem; }
 .foot-bottom nav:nth-child(1) { grid-column: 1 / span 3; } .foot-bottom nav:nth-child(2) { grid-column: 4 / span 3; } .foot-bottom nav:nth-child(3) { grid-column: 7 / span 3; }
 .foot-bottom .fine { grid-column: 10 / span 3; font-size: .8rem; opacity: .75; }

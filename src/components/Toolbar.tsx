@@ -106,8 +106,6 @@ export default function Toolbar() {
             </select>
           </label>
         )}
-        {tool === 'pixelate' && <span className="tool-hint">Drag over anything private. Pixels are burned into the exported image.</span>}
-        {tool === 'step' && <span className="tool-hint">Click to place the next number.</span>}
       </div>
       <div className="tool-group push">
         {selected && (
