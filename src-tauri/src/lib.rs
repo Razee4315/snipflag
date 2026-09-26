@@ -64,6 +64,12 @@ fn app_status(window: WebviewWindow, app: AppHandle) -> Result<Value, String> {
     Ok(json!({"version": app.package_info().version.to_string(), "platform": std::env::consts::OS, "shortcutError": shortcut_error}))
 }
 
+fn editor_size(expanded: bool, image: (u32, u32), scale: f64, available: (f64, f64)) -> (f64, f64) {
+    let width = if expanded { 1280.0 } else { (image.0 as f64 / scale + 370.0).clamp(860.0, 1040.0) };
+    let height = if expanded { 840.0 } else { (image.1 as f64 / scale + 260.0).clamp(620.0, 760.0) };
+    (width.min(available.0 - 32.0).max(640.0), height.min(available.1 - 32.0).max(480.0))
+}
+
 /// Only the main editor may move or hide itself. Capture overlays have no access.
 #[tauri::command]
 fn editor_window(window: WebviewWindow, action: String, image_width: Option<u32>, image_height: Option<u32>) -> Result<(), String> {
@@ -74,21 +80,45 @@ fn editor_window(window: WebviewWindow, action: String, image_width: Option<u32>
         "drag" => window.start_dragging(),
         "compact" | "expand" => {
             let expanded = action == "expand";
-            let width = if expanded { 1280.0 } else { (image_width.unwrap_or(500) as f64 + 370.0).clamp(860.0, 1040.0) };
-            let height = if expanded { 840.0 } else { (image_height.unwrap_or(350) as f64 + 260.0).clamp(620.0, 760.0) };
             let monitor = window.current_monitor().map_err(|_| "Could not locate the current display.")?;
-            let (width, height) = monitor.map(|m| {
-                let size = m.size().to_logical::<f64>(m.scale_factor());
-                (width.min(size.width - 48.0), height.min(size.height - 80.0))
-            }).unwrap_or((width, height));
+            let scale = monitor.as_ref().map(|m| m.scale_factor()).unwrap_or(1.0);
+            let available = monitor.as_ref().map(|m| {
+                let size = m.work_area().size.to_logical::<f64>(scale);
+                (size.width, size.height)
+            }).unwrap_or((1920.0, 1080.0));
+            let (width, height) = editor_size(expanded, (image_width.unwrap_or(500), image_height.unwrap_or(350)), scale, available);
             window.unmaximize().map_err(|_| "Could not restore the editor window.")?;
-            window.set_size(tauri::LogicalSize::new(width.max(640.0), height.max(480.0)))
+            window.set_size(tauri::LogicalSize::new(width, height))
                 .map_err(|_| "Could not resize the editor window.")?;
-            window.center()
+            if let Some(monitor) = monitor {
+                // Physical work-area origin preserves negative-origin displays and excludes taskbars.
+                let area = monitor.work_area();
+                window.set_position(tauri::PhysicalPosition::new(
+                    area.position.x + ((area.size.width as f64 - width * scale) / 2.0).max(0.0) as i32,
+                    area.position.y + ((area.size.height as f64 - height * scale) / 2.0).max(0.0) as i32,
+                ))
+            } else { window.center() }
         }
         _ => return Err("Unknown editor window action.".into()),
     };
     result.map_err(|_| "Could not update the editor window.".into())
+}
+
+#[cfg(test)]
+mod editor_window_tests {
+    use super::editor_size;
+    #[test]
+    fn same_capture_at_different_dpi_has_same_logical_workspace() {
+        let normal = editor_size(false, (600, 400), 1.0, (1920.0, 1040.0));
+        let hidpi = editor_size(false, (1200, 800), 2.0, (1920.0, 1040.0));
+        assert_eq!(normal, hidpi);
+    }
+    #[test]
+    fn expanded_workspace_leaves_space_inside_monitor_work_area() {
+        let (width, height) = editor_size(true, (8000, 8000), 2.0, (960.0, 520.0));
+        assert!(width < 960.0 && height < 520.0);
+        assert!(width >= 640.0 && height >= 480.0);
+    }
 }
 
 fn build_tray(app: &AppHandle) -> tauri::Result<()> {

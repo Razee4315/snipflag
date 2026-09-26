@@ -31,4 +31,3 @@ Default global: Ctrl/Cmd+Shift+2 (check registration failure). Editor: V select,
 ## Accessibility
 
 Visible focus, native button semantics, labels for icon controls, keyboard-accessible image ordering, status live regions, reduced motion, no color-only success/error, modal focus containment/restoration. At narrow widths, issue panel moves below the canvas instead of clipping inputs.
-

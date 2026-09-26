@@ -66,3 +66,7 @@ Verification pending: updated Playwright coverage for compact and narrow viewpor
 ### First remote review
 
 UI implementation pushed as `461ca26`. Checks [36224775127](https://github.com/Razee4315/snipflag/actions/runs/36224775127) passed frontend build/unit tests and 8 of 9 browser tests; native jobs were skipped because the new compact test failed at the exact Description label lookup after inserting the template. Fixed with an explicit description label reference (no weakened assertion). Inspected the CI screenshot: compact surfaces fit at 920 x 680; refined the heading and grouped tool appearance controls to avoid a mostly empty second toolbar row. Updated DESIGN/UX/TESTING to describe the implemented flow. Next commit reruns CI and adds a synthetic checkout screenshot plus the minimum compact-size assertion; native/runtime gates remain pending.
+
+### DPI review
+
+Refinement commit `9a214cd` passed all frontend checks, including 9/9 browser tests, in [36224980719](https://github.com/Razee4315/snipflag/actions/runs/36224980719). Native jobs were still running at this checkpoint. Source review found the new compact sizing should convert screenshot pixels by monitor DPI and use the monitor work area rather than whole-screen bounds. Follow-up uses that conversion and centers within the work area, including negative origins, with two Rust regression tests. This is not mixed-DPI runtime verification. Next: verify the final revision on all CI targets and package unsigned development installers.
