@@ -28,3 +28,9 @@ Upload all final images before creating the issue. Partial upload failure preser
 OAuth registration acceptance for loopback redirect; token refresh and reconnect; paginated private-team visibility; selected optional fields; actual upload headers; issueCreate stable UUID support against live schema; two-image issue; revoked tokens; rate limit; timeout after successful create. Use a clearly named test issue only with explicit user authorization to submit test content.
 
 Sources checked 2026-09-26: https://linear.app/developers/oauth-2-0-authentication ; https://linear.app/developers/graphql ; https://linear.app/developers/how-to-upload-a-file-to-linear ; https://linear.app/developers/file-storage-authentication .
+
+## Image references
+
+Type @ in Description to choose a local screenshot by thumbnail, stable alias or caption. Aliases (@image1, @image2) map to image UUIDs, survive reorder/reload, and are never recycled after removal. New drafts record the mapping; older unsent drafts initialize it in existing filmstrip order. Submitted drafts are not migrated. Missing references block submission before network work. Literal code, escaped text, email/URL text and existing Markdown links are excluded.
+
+During explicit submission, Rust resolves each alias to the uploaded flattened image asset and emits a Markdown link at that point in the prose. All full images are still embedded once below in filmstrip order with their aliases in the headings. This uses Linear's documented Markdown support; Linear's native @ picker does not document screenshot mentions. Verify clickable references in a real issue as a separate authorized runtime gate.

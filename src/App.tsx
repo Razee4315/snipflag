@@ -14,6 +14,7 @@ import {
 } from './native';
 import { fileBaseName, flatten, importImage } from './render';
 import { activeImage, isLocked, useStore } from './store';
+import { missingImageReferences } from './mentions';
 
 type Notice = { kind: 'error' | 'info'; text: string } | null;
 const isTyping = (t: EventTarget | null) => t instanceof HTMLElement && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName));
@@ -155,6 +156,8 @@ export default function App() {
     if (!desktop) { setSubmitError(PREVIEW_MESSAGE); return; }
     const invalid = validateSession(s.session);
     if (invalid) { setSubmitError(invalid); return; }
+    const missing = missingImageReferences(s.session.description, s.session.images, s.session.imageReferences ?? {});
+    if (missing.length) { setSubmitError(`Fix the missing image reference: @${missing[0]}.`); return; }
     if (!connection) { setSubmitError('Connect Linear before creating the issue.'); return; }
     s.setBusy(true); setSubmitError(''); setProgress('Saving draft…');
     try {

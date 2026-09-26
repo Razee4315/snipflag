@@ -11,6 +11,8 @@ export interface Session {
   schemaVersion: 1; id: string; createdAt: number; updatedAt: number;
   title: string; description: string; teamId: string; projectId: string; assigneeId: string; labelIds: string[];
   priority: number; images: CaptureImage[]; issue: IssueResult | null;
+  /** Optional for older drafts; stable aliases map to image UUIDs, including removed images. */
+  imageReferences?: Record<string, string>;
 }
 export interface Named { id: string; name: string; displayName?: string; key?: string; color?: string }
 export interface Connection { name: string; workspace: string; workspaceId: string; teams: Named[] }

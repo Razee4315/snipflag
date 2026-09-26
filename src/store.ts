@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { ensureImageReferences } from './mentions';
 import { estimateBytes, LIMITS, newSession, reorder, type Annotation, type CaptureImage, type IssueResult, type Session, type Tool } from './model';
 
 type History = { past: Annotation[][]; future: Annotation[][] };
@@ -22,7 +23,7 @@ const locked = (s: State) => s.busy || !!s.session.issue;
 export const useStore = create<State>((set, get) => ({
   session: newSession(), activeId: '', tool: 'arrow', color: '#EF4444', stroke: 3, fontSize: 22,
   histories: {}, busy: false, selection: null, saveState: 'idle', saveError: '', persisted: [],
-  hydrate: (session) => set({ session, selection: null, activeId: session.images[0]?.id ?? '', histories: {}, persisted: session.images.map(i => i.id), saveState: 'saved', saveError: '' }),
+  hydrate: (session) => set({ session: session.issue ? session : { ...session, imageReferences: ensureImageReferences(session.images, session.imageReferences) }, selection: null, activeId: session.images[0]?.id ?? '', histories: {}, persisted: session.images.map(i => i.id), saveState: 'saved', saveError: '' }),
   reset: () => set({ session: newSession(), activeId: '', selection: null, histories: {}, persisted: [], saveState: 'idle', saveError: '', busy: false }),
   patch: (patch) => { if (!locked(get())) set(s => ({ session: { ...s.session, ...patch, updatedAt: Date.now() } })); },
   select: (activeId) => set({ activeId, selection: null }),
@@ -35,7 +36,7 @@ export const useStore = create<State>((set, get) => ({
     const total = [...session.images, ...images].reduce((sum, i) => sum + estimateBytes(i.dataUrl), 0);
     if (total > LIMITS.sessionBytes) throw new Error('This session would exceed the 100 MB image limit.');
     set({
-      session: { ...session, images: [...session.images, ...images], updatedAt: Date.now() }, activeId: images[images.length - 1].id,
+      session: { ...session, images: [...session.images, ...images], imageReferences: ensureImageReferences([...session.images, ...images], session.imageReferences), updatedAt: Date.now() }, activeId: images[images.length - 1].id,
       ...(fresh ? { histories: {}, persisted: [] } : {}),
     });
   },

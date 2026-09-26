@@ -2,6 +2,7 @@ mod auth;
 mod capture;
 mod files;
 mod linear;
+mod mentions;
 mod storage;
 
 use serde_json::{json, Value};

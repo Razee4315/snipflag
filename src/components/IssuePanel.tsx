@@ -3,6 +3,7 @@ import { LIMITS, PRIORITIES, type Connection, type TeamOptions } from '../model'
 import { copyText, desktop, errorText, openIssue, teamOptions } from '../native';
 import { isLocked, useStore } from '../store';
 import { Icon } from './icons';
+import DescriptionEditor from './DescriptionEditor';
 
 export type ConnectionState = 'idle' | 'loading' | 'connecting' | 'error';
 interface Props {
@@ -89,10 +90,7 @@ export default function IssuePanel(p: Props) {
           <span>Title</span>
           <input value={session.title} maxLength={LIMITS.title} disabled={locked} placeholder="What needs fixing?" onChange={e => patch({ title: e.target.value })} />
         </label>
-        <label className="field grow">
-          <span id="description-label">Description</span>
-          <textarea aria-labelledby="description-label" value={session.description} disabled={locked} rows={4} placeholder="What happened? What should happen instead?" onChange={e => patch({ description: e.target.value })} />
-        </label>
+        <DescriptionEditor key={session.id} value={session.description} images={session.images} references={session.imageReferences ?? {}} disabled={locked} onChange={description => patch({ description })} />
         {!session.description && <button type="button" className="template-button" disabled={locked} onClick={() => patch({ description: '## Steps to reproduce\n1. \n\n## Expected result\n\n## Actual result\n\n## Environment\n' })}><Icon name="plus" size={14} /> Add reproduction steps</button>}
         <label className="field">
           <span>Team</span>

@@ -149,6 +149,8 @@ pub async fn submit_issue(window: WebviewWindow, app: AppHandle, session: Value,
     let images = session["images"].as_array().ok_or("Missing screenshots.")?.clone();
     if images.is_empty() || images.len() > MAX_IMAGES { return Err("Add between 1 and 10 screenshots.".into()); }
     if images.len() != exports.len() { return Err("Every screenshot must be exported before sending.".into()); }
+    let image_references = crate::mentions::references(&session, &images)?;
+    crate::mentions::validate(session["description"].as_str().unwrap_or(""), &image_references, &images)?;
     if !session["issue"].is_null() { return Err("This session has already been sent.".into()); }
     let priority = session["priority"].as_u64().filter(|p| *p <= 4).unwrap_or(0);
     let labels: Vec<String> = session["labelIds"].as_array().map(|a| a.iter().take(50).filter_map(|v| v.as_str()).map(id).collect::<Result<_, _>>()).transpose()?.unwrap_or_default();
@@ -181,13 +183,22 @@ pub async fn submit_issue(window: WebviewWindow, app: AppHandle, session: Value,
         Plan::Fresh => {}
     }
     storage.set_submission(&session_id, &workspace, "uploading", None)?;
-    let count = decoded.len(); let mut sections = Vec::new();
+    let count = decoded.len(); let mut sections = Vec::new(); let mut uploaded = Vec::new();
     for (i, bytes) in decoded.into_iter().enumerate() {
         progress(&app, &format!("Uploading screenshot {} of {}…", i + 1, count));
         let url = upload(&token, bytes, i).await?;
-        sections.push((images[i]["name"].as_str().unwrap_or("").to_string(), url));
+        let image_id = images[i]["id"].as_str().unwrap_or_default();
+        uploaded.push((image_id.to_string(), url.clone()));
+        let caption = images[i]["name"].as_str().unwrap_or("");
+        let alias = image_references.iter().find(|(_, id)| id.as_str() == image_id).map(|(key, _)| key.as_str());
+        let caption = match alias {
+            Some(key) if session["imageReferences"].is_object() => if caption.is_empty() { format!("@{key}") } else { format!("@{key} · {caption}") },
+            _ => caption.to_string(),
+        };
+        sections.push((caption, url));
     }
-    let description = build_description(session["description"].as_str().unwrap_or(""), &sections);
+    let prose = crate::mentions::resolve(session["description"].as_str().unwrap_or(""), &image_references, &uploaded)?;
+    let description = build_description(&prose, &sections);
     let mut input = json!({"id": session_id, "teamId": team_id, "title": title, "description": description, "priority": priority});
     if !labels.is_empty() { input["labelIds"] = json!(labels); }
     for field in ["projectId", "assigneeId"] { if let Some(value) = session[field].as_str().filter(|s| !s.is_empty()) { input[field] = json!(id(value)?); } }

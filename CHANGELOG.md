@@ -17,9 +17,16 @@ Development version 0.1.0. Not yet released; installers are unsigned development
 - Linear connection with OAuth and PKCE, tokens stored in the OS credential store, and team, project, assignee, label, and priority selection with per-workspace team memory.
 - Issue creation with ordered screenshot sections, a stable issue ID, and reconciliation so a retry after an uncertain failure never creates a duplicate.
 - Settings for the Linear client ID, capture shortcut, launch at login, theme, and history.
-- Brand identity: the Snipflag mark (crop corners framing a swallowtail flag) used for the app, installers, and tray.
+- Brand identity: a rounded abstract S mark in teal, mint and ivory used for the app, installers, and tray.
 - Project documentation: README, contributing guide, code of conduct, security policy, support guide, and issue and pull request templates.
+
+- Shift drawing: 15-degree angle snapping for arrows and straight pen segments, plus square rectangles.
+- Optional reproduction-steps scaffold and keyboard shortcut reference.
 
 ### Changed
 
 - Product renamed from Nacrelark to Snipflag.
+
+- Compact frameless workspace with image-aware sizing, custom window controls, and minimal utility chrome.
+- Warm daylight and forest dark themes; compact image rail and simplified issue composer.
+- Settings organized into Connection, Capture, Appearance, Privacy, and Shortcuts.

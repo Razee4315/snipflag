@@ -1,9 +1,11 @@
 import { imageLabel, LIMITS } from '../model';
 import { isLocked, useStore } from '../store';
 import { Icon } from './icons';
+import { imageReference } from '../mentions';
 
 export default function Filmstrip({ onCapture, onAdd, canCapture }: { onCapture: () => void; onAdd: () => void; canCapture: boolean }) {
   const images = useStore(s => s.session.images); const activeId = useStore(s => s.activeId); const locked = useStore(isLocked);
+  const references = useStore(s => s.session.imageReferences);
   const { select, moveImage, removeImage } = useStore.getState();
   const full = images.length >= LIMITS.images;
   return (
@@ -15,7 +17,7 @@ export default function Filmstrip({ onCapture, onAdd, canCapture }: { onCapture:
             <li key={image.id} className={image.id === activeId ? 'tile active' : 'tile'} data-testid="tile">
               <button type="button" className="tile-select" aria-current={image.id === activeId ? 'true' : undefined}
                 aria-label={`Screenshot ${index + 1}: ${label}, ${marks} ${marks === 1 ? 'mark' : 'marks'}`} onClick={() => select(image.id)}>
-                <span className="tile-number" aria-hidden="true">{index + 1}</span>
+                <span className="tile-number" aria-hidden="true" title={`@${imageReference(image.id, references ?? {}) ?? `image${index + 1}`}`}>{(imageReference(image.id, references ?? {}) ?? `image${index + 1}`).slice(5)}</span>
                 <img src={image.dataUrl} alt="" draggable={false} />
                 <span className="tile-caption" aria-hidden="true">{label}</span>
                 {marks > 0 && <span className="tile-marks" aria-hidden="true">{marks}</span>}
