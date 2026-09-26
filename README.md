@@ -36,7 +36,7 @@ CI-rendered UI previews using synthetic sample images. Native window controls an
 
 ![Description image mention picker with screenshot thumbnails](docs/assets/screenshots/image-mentions.png)
 
-![Snipflag appearance settings](docs/assets/screenshots/settings.png)
+![Snipflag appearance, sound and motion settings](docs/assets/screenshots/settings.png)
 
 </details>
 

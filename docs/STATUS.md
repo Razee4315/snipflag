@@ -139,4 +139,12 @@ Follow-up commit implements the rest:
 - **Sound and motion settings:** `src/sound.ts` Web Audio cues (capture, add, success, error). New settings keys `sounds` and `motion` (default true) validated in Rust `normalize_settings` with a unit test.
 - **Tests:** updated workspace test (no expand/compact, bar above composer, dark priority-picker screenshot); new tests for sound/animation persistence and constant Settings dialog size.
 
-No local build, install or browser run. Verification pending on Actions; results recorded below.
+No local build, install or browser run.
+
+### Verification — 2026-09-26
+
+- Implementation `256c127`: [Checks 36230044151](https://github.com/Razee4315/snipflag/actions/runs/36230044151) green on all jobs, but the mention test passed only on retry. Its failure exposed a real bug: the save status still said "Saved on this computer" during the 400 ms debounce after a new edit, so a reload could lose the latest text while the UI claimed durability. CI screenshots also showed the open themed picker invisible (fade transition) and the Add images tile wrapping. Installer run 36230071027 for that revision was cancelled as superseded.
+- Fix `0853e98`: pending edits switch the status to saving immediately, and it returns to saved only after the change is written. Picker transition removed; tile kept on one line; empty-state screenshots added. [Checks 36230307120](https://github.com/Razee4315/snipflag/actions/runs/36230307120): strict build, 19 unit tests, **13/13 browser tests with no retries**, 20 Rust tests plus all-target check on Windows, macOS and Linux. [Development installers 36230325150](https://github.com/Razee4315/snipflag/actions/runs/36230325150) at `0853e98`: all four targets green (Windows NSIS + MSI 10 MB, macOS Apple Silicon and Intel DMG, Linux deb + AppImage). Unsigned, 7-day retention.
+- Visual review of CI screenshots (synthetic images only): daylight/dark workspace, both empty states, open dark priority picker (themed list with checkmark), mention picker, appearance settings with sound/motion switches. README gallery refreshed from these renders.
+
+Still manual gates, not proven by CI: WebView2 rendering of `base-select` pickers, audible sounds and the autoplay unlock, reveal-after-paint and launch/capture window sizing at each DPI, frameless drag from the utility bar and empty state, parallel preview encoding on multi-monitor setups, and the NSIS installer icon. Next: install the Windows artifact and run these checks; then decide on a v1.1.0 release with the owner.
