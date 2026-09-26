@@ -88,3 +88,7 @@ Previous refinement `9c4b61d`: Checks [36225571317](https://github.com/Razee4315
 ### Mention visual review
 
 `5525090` frontend build, unit tests and 11/11 browser tests passed in [36226364465](https://github.com/Razee4315/snipflag/actions/runs/36226364465); native jobs still running at review time. Inspected CI daylight/dark screenshots and the mention picker: the blank strip above the evidence is gone and the thumbnail menu fits under Description. Follow-up ensures keyboard selection scrolls within long mention lists and extends coverage to caption filtering/Tab and email/code exclusions. Packaging [36226442537](https://github.com/Razee4315/snipflag/actions/runs/36226442537) started for this checkpoint; final artifacts must match the follow-up revision.
+
+### Test selector correction
+
+Follow-up `6041c74` run [36226489524](https://github.com/Razee4315/snipflag/actions/runs/36226489524) passed build/unit tests and 10/11 browser tests. The caption-filter assertion incorrectly counted every option on the page (including tool width/team dropdowns): expected 1, received 14. Scoped it to the image mention listbox, retaining the expected single match. This changes only test code; production source is unchanged from `6041c74`. Installer run [36226490343](https://github.com/Razee4315/snipflag/actions/runs/36226490343) packages that production revision. Next: verify corrected browser test and all native checks; then record final artifact evidence.

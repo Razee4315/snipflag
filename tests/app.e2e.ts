@@ -273,7 +273,7 @@ test('image mentions support keyboard selection, undo, reordering and missing-im
   await expect(page.getByRole('option', { name: /@image3 white/ })).toBeVisible();
   await expect(page.getByRole('option', { name: /@image1/ })).toHaveCount(0);
   await description.fill('Replacement @wh');
-  await expect(page.getByRole('option')).toHaveCount(1);
+  await expect(page.getByRole('listbox', { name: 'Mention an image' }).getByRole('option')).toHaveCount(1);
   await description.press('Tab');
   await expect(description).toHaveValue('Replacement @image3 ');
   await description.fill('Contact qa@example.com');
