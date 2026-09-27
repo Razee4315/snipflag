@@ -7,6 +7,7 @@
 - The real demo recording moved to a new `#demo` section ("From capture to issue in 30 seconds.") after "How it works", so the two videos are never next to each other. `preload="metadata"`.
 - Mobile (≤640 px): the hero is tighter, both videos run almost edge to edge (10 px margins), and the video controls are smaller.
 - Local check (built-in browser): `check_site.py` passes on 7 pages; at 1366x800 the film is paused on load and plays muted after a short scroll; the speaker button unmutes it; at 375 px the film is 355x200, plays muted after a scroll, and there is no horizontal overflow. Section order: hero, how, demo, features, compare, faq, download.
+- Deployed: `d130dc4`, [Website 36324676853](https://github.com/Razee4315/snipflag/actions/runs/36324676853) green; the live home page has the speaker button and `#demo`.
 
 ### Earlier the same day: launch film section after the hero
 
