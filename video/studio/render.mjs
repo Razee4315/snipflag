@@ -37,5 +37,9 @@ const info=JSON.parse(execFileSync('ffprobe',['-v','quiet','-show_format','-show
 const v=info.streams.find(s=>s.codec_type==='video'),a=info.streams.find(s=>s.codec_type==='audio');
 if(v.width!==1920||v.height!==1080||v.nb_frames!=='2520'||v.avg_frame_rate!=='60/1'||!a||Math.abs(Number(info.format.duration)-42)>.05)throw Error('Media verification failed');
 await writeFile(`${out}/verification.json`,JSON.stringify({commit:process.env.GITHUB_SHA,consoleErrors:failures,verified:true,...info},null,2));
+const audioCheck=spawn('ffmpeg',['-hide_banner','-i',`${out}/Snipflag-Make-it-clear-1080p60.mp4`,'-af','volumedetect','-vn','-f','null','-'],{stdio:['ignore','ignore','pipe']});
+let audioStats='';audioCheck.stderr.on('data',d=>audioStats+=d);const [audioCode]=await once(audioCheck,'close');
+if(audioCode!==0||audioStats.includes('mean_volume: -inf'))throw Error('Audio is invalid or silent');
+await writeFile(`${out}/audio-check.txt`,audioStats);
 execFileSync('ffmpeg',['-hide_banner','-loglevel','error','-y','-i',`${out}/Snipflag-Make-it-clear-1080p60.mp4`,'-vf','fps=1/2.625,scale=480:270,tile=4x4','-frames:v','1',`${out}/contact-sheet.jpg`]);
 console.log('Verified 2520 frames, 1080p60, 42 seconds, stereo soundtrack.');

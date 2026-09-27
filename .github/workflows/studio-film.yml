@@ -53,6 +53,7 @@ jobs:
             video/studio/out/poster.png
             video/studio/out/contact-sheet.jpg
             video/studio/out/verification.json
+            video/studio/out/audio-check.txt
             video/studio/out/source-contact.jpg
             video/studio/out/source.json
             video/studio/out/Manrope-OFL.txt

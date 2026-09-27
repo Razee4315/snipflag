@@ -36,9 +36,23 @@ function footage(t){bg();const k=t<4?0:t<8?1:2;const titles=['Catch the moment.'
 function many(t){bg(C.paper);chrome('04 / 06','',true);reveal('Different angles.',86,227,92,t,0,C.ink);reveal('One clear issue.',86,335,92,t,.14,C.ink);label('MULTIPLE IMAGES · INDEPENDENT ANNOTATIONS',92,418,'#667d70');const p=ease(t/.8), converge=smooth((t-2.7)/1.1);
  for(let i=0;i<3;i++){const x=lerp(395+i*560,960,converge),y=lerp(683+(i===1?-30:15),699,converge);move(x,y,lerp(.78,.88,converge)*p,lerp((i-1)*.045,0,converge),()=>{rect(-264+10,-200+16,528,398,'#d7dfd3',20);bill(-264,-200,528,398,i===0?1:0);if(i>0)frame(64,82,173,98,1,C.coral,20);rect(-241,-227,127,41,C.ink,20);text(`@image${i+1}`,-178,-199,18,C.mint,600,'center')})}
  fade(ease((t-3.25)/.5),()=>{rect(702,900,516,61,C.ink,30);text('One session. One Linear issue.',960,940,23,C.mint,600,'center')})}
+let privatePixels;
+function averagedEmail(){
+    if(privatePixels)return privatePixels;
+    const surface=document.createElement('canvas');surface.width=947;surface.height=126;
+    const ctx=surface.getContext('2d');ctx.fillStyle=C.paper;ctx.fillRect(0,0,947,126);
+    ctx.font='600 63px Studio';ctx.fillStyle=C.ink;ctx.fillText('jane.doe@example.com',34,86);
+    const pixels=ctx.getImageData(0,0,947,126).data;
+    for(let by=0;by<126;by+=30)for(let bx=0;bx<947;bx+=30){
+        const bw=Math.min(30,947-bx),bh=Math.min(30,126-by);let r=0,g=0,b=0;
+        for(let yy=by;yy<by+bh;yy++)for(let xx=bx;xx<bx+bw;xx++){const i=(yy*947+xx)*4;r+=pixels[i];g+=pixels[i+1];b+=pixels[i+2]}
+        const n=bw*bh;ctx.fillStyle=`rgb(${Math.round(r/n)},${Math.round(g/n)},${Math.round(b/n)})`;ctx.fillRect(bx,by,bw,bh);
+    }
+    return privatePixels=surface;
+}
 function privacy(t){bg();chrome('05 / 06','');reveal('Show what matters.',88,249,99,t);reveal('Hide what doesn’t.',88,369,99,t,.14,C.mint);label('PIXELATE SENSITIVE DETAILS BEFORE SHARING.',94,468);const x=180,y=568,w=1560,h=233;rect(x,y,w,h,C.paper,22);text('Email',x+50,y+133,35,C.forest,650);text('jane.doe@example.com',x+555,y+139,63,C.ink,600);
- const p=ease((t-.65)/1.2);clip(x+521,y+53,Math.max(.01,947*p),126,0,()=>{for(let a=0;a<32;a++)for(let b=0;b<5;b++){const v=(a*17+b*31)%7;rect(x+521+a*30,y+53+b*26,30,26,['#c8cfc4','#e0e3d9','#b6c2b5','#d3d9cf','#a2afa3','#bec8bc','#e7e9e0'][v])}});frame(x+510,y+40,968,151,p,C.mint,24);text('Screenshots stay local until you choose Create issue.',94,915,29,C.dim)}
-function heroScene(t){bg();label('LESS EXPLAINING. MORE FIXING.',88,82,C.mint);const p=ease(t/.95);move(1120,568,lerp(.87,.92,p)+t*.004,-.018*(1-p),()=>ui(-720,-456,1440,912));rect(0,0,730,H,C.ink);reveal('See it.',87,361,123,t);reveal('Mark it.',87,503,123,t,.18);reveal('Flag it.',87,645,123,t,.36,C.mint);fade(ease((t-.9)/.7),()=>{text('A clearer way to report bugs.',94,792,30,C.dim);arrow(210,869,380,-85,1,C.mint)});}
+ const p=ease((t-.65)/1.2);clip(x+521,y+53,Math.max(.01,947*p),126,0,()=>{c.drawImage(averagedEmail(),x+521,y+53)});frame(x+510,y+40,968,151,p,C.mint,24);text('Screenshots stay local until you choose Create issue.',94,915,29,C.dim)}
+function heroScene(t){bg();label('LESS EXPLAINING. MORE FIXING.',88,82,C.mint);const p=ease(t/.95);move(1285,570,lerp(.70,.74,p)+t*.002,-.018*(1-p),()=>ui(-720,-456,1440,912));rect(0,0,710,H,C.ink);reveal('See it.',87,361,123,t);reveal('Mark it.',87,503,123,t,.18);reveal('Flag it.',87,645,123,t,.36,C.mint);fade(ease((t-.9)/.7),()=>{text('A clearer way to report bugs.',94,792,30,C.dim);arrow(160,909,380,-55,1,C.mint)});}
 function outro(t){bg(C.mint);const p=ease(t/.9);const origin=lerp(240,0,p);c.save();c.translate(0,origin);c.drawImage(logo,91,110,106,106);label('THE SCREENSHOT-TO-LINEAR WORKFLOW',231,177,C.forest);reveal('Snipflag',78,548,244,t,0,C.ink,750);line(93,632,1827,632,'#86bea3',2);reveal('Make it clear.',91,765,94,t,.3,C.ink,650);fade(ease((t-.9)/.6),()=>{text('Get Snipflag',99,940,31,C.ink,750);text('razee4315.github.io/snipflag',1830,940,30,C.forest,550,'right');line(327,929,391,929,C.ink,3);line(378,916,391,929,C.ink,3);line(378,942,391,929,C.ink,3)});c.restore();}
 const scenes=[{at:0,end:4,fn:opening},{at:4,end:7,fn:statement},{at:7,end:10,fn:brand},{at:10,end:22,fn:footage},{at:22,end:27,fn:many},{at:27,end:31,fn:privacy},{at:31,end:35,fn:heroScene},{at:35,end:42,fn:outro}];
 window.ready=(async()=>{[hero,logo]=await Promise.all([image('../../site/assets/img/hero-dark.webp'),image('../../public/icon.svg')]);await document.fonts.load('650 100px Studio');await document.fonts.ready;return true})();
