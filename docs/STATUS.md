@@ -4,7 +4,8 @@
 
 - New `#film` section follows the hero on the home page. It has the heading "Make it clear.", the owner's 57 s launch film, and a "Play film" button. The film loads only on click (`preload="none"`), plays with sound and native controls, pauses when scrolled away, and resets at the end.
 - Source: the owner's `snipflag-launch-1080p60.mp4` (34 MB, rendered by the launch-film workflow). Re-encoded locally with ffmpeg to `site/assets/video/launch.mp4` (1920x1080, 60 fps, H.264 CRF 23, AAC 128k, faststart, 14 MB). The poster `launch-poster.webp` is the frame at 20 s.
-- Local check (Python static server plus the built-in browser): `check_site.py` passes on 7 pages; clicking Play starts playback unmuted at 1920 px with controls; no horizontal overflow at 375 px (the player is 335x189). Not checked: deployed Pages behavior, Safari/iOS playback.
+- Local check (Python static server plus the built-in browser): `check_site.py` passes on 7 pages; clicking Play starts playback unmuted at 1920 px with controls; no horizontal overflow at 375 px (the player is 335x189). Not checked: Safari/iOS playback.
+- Deployed: `29f42f7` pushed; [Website 36324389492](https://github.com/Razee4315/snipflag/actions/runs/36324389492) check and deploy green. Live: the home page contains `#film`; `launch.mp4` serves as `video/mp4` with range requests (206), and the poster serves as `image/webp`.
 
 ## Website: "Try it" section removed (owner request) — 2026-09-27
 
