@@ -63,6 +63,23 @@
     sync();
   })();
 
+  /* ---------- Launch film: loads only on play, with sound and native controls ---------- */
+  (function film() {
+    var v = $('[data-film]'), btn = $('[data-film-play]');
+    if (!v || !btn) return;
+    var frame = v.parentNode;
+    btn.addEventListener('click', function () {
+      v.controls = true;
+      frame.classList.add('playing');
+      var p = v.play(); if (p && p.catch) p.catch(function () { frame.classList.remove('playing'); });
+      v.focus();
+    });
+    v.addEventListener('ended', function () { v.controls = false; v.currentTime = 0; frame.classList.remove('playing'); });
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (e) { if (!e[0].isIntersecting && !v.paused) v.pause(); }, { threshold: 0.2 }).observe(v);
+    }
+  })();
+
   /* ---------- Header ---------- */
   var header = $('.site-header');
   var menuBtn = $('.menu-btn');

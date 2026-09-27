@@ -1,5 +1,11 @@
 # Current state / handoff
 
+## Website: launch film section after the hero (owner request) — 2026-09-27
+
+- New `#film` section follows the hero on the home page. It has the heading "Make it clear.", the owner's 57 s launch film, and a "Play film" button. The film loads only on click (`preload="none"`), plays with sound and native controls, pauses when scrolled away, and resets at the end.
+- Source: the owner's `snipflag-launch-1080p60.mp4` (34 MB, rendered by the launch-film workflow). Re-encoded locally with ffmpeg to `site/assets/video/launch.mp4` (1920x1080, 60 fps, H.264 CRF 23, AAC 128k, faststart, 14 MB). The poster `launch-poster.webp` is the frame at 20 s.
+- Local check (Python static server plus the built-in browser): `check_site.py` passes on 7 pages; clicking Play starts playback unmuted at 1920 px with controls; no horizontal overflow at 375 px (the player is 335x189). Not checked: deployed Pages behavior, Safari/iOS playback.
+
 ## Website: "Try it" section removed (owner request) — 2026-09-27
 
 - Removed the in-browser "Try it" editor section from `site/index.html`, `site/assets/js/editor.js`, and its CSS.
