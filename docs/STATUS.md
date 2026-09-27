@@ -19,6 +19,14 @@
 - Baseline remains in progress after more than 30 minutes. Concurrency now isolates revisions by SHA so the corrected version can render independently without cancelling the baseline; queued `a4350a1` run [36313087164](https://github.com/Razee4315/snipflag/actions/runs/36313087164) is superseded by this workflow-only change.
 - Next: record baseline result, inspect the queued corrected render and its encoded review artifacts, fix failures/glitches, and deliver the MP4.
 
+### Baseline export passed; corrected export running
+
+- [Baseline run 36311487293](https://github.com/Razee4315/snipflag/actions/runs/36311487293) **passed** at `b5cb480`: 3,420 frames at 60 fps, 57 seconds, 1920×1080, soundtrack and H.264/AAC export. Frame capture took roughly 32 minutes; encoding completed at 10:42 UTC. Downloaded the 33,008,851-byte MP4, poster and WAV to `C:/Users/Saqlain/Downloads/Snipflag-launch/baseline-b5cb480/`. Browser playback confirms duration/dimensions and seekable decoding; this is the earlier film, not the corrected deliverable.
+- Corrected film is pushed through `142867b`: [run 36313246602](https://github.com/Razee4315/snipflag/actions/runs/36313246602) is rendering. Includes `6a54595` realistic windows, `0da5243` animation/audio/poster fixes, `d945c51` stable aliases and annotated thumbnails, and `a4350a1` random-seek checks. No failure reported at this checkpoint; final render and encoded inspection remain pending.
+- Pending runs [36313048868](https://github.com/Razee4315/snipflag/actions/runs/36313048868) and [36313087164](https://github.com/Razee4315/snipflag/actions/runs/36313087164) were superseded/cancelled before rendering; the baseline was preserved.
+- Local preview inspected old-way Paint/Linear, annotation framing, reordered thumbnails, composer, upload, final issue, feature grid and complete end card. Encoded final contact sheets/stills must still be reviewed. All rendering/encoding/extraction stays on Actions; local Python only serves source/MP4 playback.
+- Next: download run 36313246602 when complete, inspect logs and encoded review images, repair any remaining failures/glitches, deliver the corrected MP4 and record the final result here.
+
 ## Website: "Try it" section removed (owner request) — 2026-09-27
 
 - Removed the in-browser "Try it" editor section from `site/index.html`, `site/assets/js/editor.js`, and its CSS.
