@@ -16,6 +16,7 @@
 - Work moved to managed `launch-video-review` worktree after another chat switched the shared checkout to `codex/launch-film`. Polish is on `launch-video` as `0da5243`; unrelated studio work is excluded.
 - Corrections committed as `0da5243` and `d945c51`. Baseline still rendering after about 30 minutes. Workflow now queues new renders instead of cancelling an in-progress render, preserving the baseline while corrected work is pushed.
 - Corrected render queued in [Launch video 36313048868](https://github.com/Razee4315/snipflag/actions/runs/36313048868) at `a7d2ace`. Adding a focused Actions check that seeking backward from the outro reproduces identical frames in the old-way, annotation, reorder and feature scenes; new push will supersede only the pending run.
+- Baseline remains in progress after more than 30 minutes. Concurrency now isolates revisions by SHA so the corrected version can render independently without cancelling the baseline; queued `a4350a1` run [36313087164](https://github.com/Razee4315/snipflag/actions/runs/36313087164) is superseded by this workflow-only change.
 - Next: record baseline result, inspect the queued corrected render and its encoded review artifacts, fix failures/glitches, and deliver the MP4.
 
 ## Website: "Try it" section removed (owner request) — 2026-09-27

@@ -7,7 +7,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: launch-video-${{ github.ref }}
+  group: launch-video-${{ github.ref }}-${{ github.sha }}
   cancel-in-progress: false
 jobs:
   render:
