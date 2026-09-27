@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@500;600&display=block" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@500;600&family=Open+Sans:wght@400;600;700&display=block" rel="stylesheet">
 <link rel="stylesheet" href="film.css">
 </head>
 <body>
@@ -25,7 +25,7 @@
       <span class="oldstep" id="oldStep">01 / 06</span>
       <div class="oldtitles">
         <h2 class="kin ot">Screenshot it.</h2>
-        <h2 class="kin ot">Paste it into an editor. Scribble.</h2>
+        <h2 class="kin ot">Paste it into Paint. Scribble.</h2>
         <h2 class="kin ot">Save it. Somewhere.</h2>
         <h2 class="kin ot">Open Linear. New issue.</h2>
         <h2 class="kin ot">Explain it all in words.</h2>
@@ -35,56 +35,103 @@
       <div class="timer"><b id="timer">00:00</b><span>spent on one screenshot</span></div>
     </div>
     <div id="win">
-      <!-- P1: the page, PrtSc -->
-      <div class="pane" id="p1">
-        <div class="wbar"><i></i><i></i><i></i><span class="wurl">app.acme.dev/account/billing</span></div>
-        <div class="wbody light"><div class="p1shot" id="p1shot"></div></div>
-        <kbd class="prt" id="prt">PrtSc</kbd>
-        <div class="toast" id="toast">Screenshot copied to clipboard</div>
+      <!-- P1: Edge with the page, then Windows Snipping Tool (Win+Shift+S) -->
+      <div class="pane win11" id="p1">
+        <div class="edge-tabs"><div class="etab on"><i class="fav acme">A</i>Billing · Acme<span class="x">✕</span></div><div class="etab"><i class="fav"></i>Inbox</div><span class="plus">+</span><span class="caps"><i class="cmin"></i><i class="cmax"></i><i class="cx"></i></span></div>
+        <div class="edge-bar"><span class="nav">‹</span><span class="nav">›</span><span class="nav">⟳</span><div class="addr"><i class="lockic"></i>app.acme.dev/account/billing</div><span class="dots">···</span></div>
+        <div class="edge-page"><div class="p1shot" id="p1shot"></div></div>
+        <div class="snipdim" id="snipdim"></div>
+        <div class="snipsel" id="snipsel"></div>
+        <div class="snipbar" id="snipbar"><span class="on"><svg viewBox="0 0 20 20"><rect x="3" y="4" width="14" height="12" rx="1.5"/></svg></span><span><svg viewBox="0 0 20 20"><path d="M4 4h12v12H4zM4 7h12"/></svg></span><span><svg viewBox="0 0 20 20"><rect x="2.5" y="3.5" width="15" height="11" rx="1"/><path d="M7 17h6"/></svg></span><span><svg viewBox="0 0 20 20"><path d="M5 6c3-4 11-2 10 3s-8 3-9 7"/></svg></span><i></i><span><svg viewBox="0 0 20 20"><path d="M5 5l10 10M15 5L5 15"/></svg></span></div>
+        <div class="pcross" id="pcross"><i class="h"></i><i class="v"></i></div>
         <div class="pflash" id="p1flash"></div>
+        <div class="wtoast" id="toast"><div class="wth"><i class="snipic"></i>Snipping Tool<span>✕</span></div><div class="wtb"><div class="wthumb" id="toastThumb"></div><div><b>Screenshot copied to clipboard</b><p>Automatically saved to screenshots folder.</p><p class="lnk">Markup and share</p></div></div></div>
+        <div class="wkeys" id="prt"><kbd>⊞ Win</kbd><kbd>Shift</kbd><kbd>S</kbd></div>
       </div>
-      <!-- P2: generic image editor -->
-      <div class="pane" id="p2">
-        <div class="wbar gray"><span class="wtitle">Untitled - Image editor</span></div>
-        <div class="ribbon"><span class="rb"></span><span class="rb"></span><span class="rb on" id="pencil">✎</span><span class="rb"></span><span class="rb"></span><span class="rsep"></span><i style="background:#111"></i><i style="background:#e11d48"></i><i style="background:#2563eb"></i><i style="background:#16a34a"></i><i style="background:#eab308"></i></div>
-        <div class="paintbg"><div class="p2shot" id="p2shot"></div><svg class="wobble" viewBox="0 0 1000 640"><path id="wob"/></svg></div>
+      <!-- P2: Windows 11 Paint -->
+      <div class="pane win11" id="p2">
+        <div class="w11title"><i class="paintic"></i><span>Untitled - Paint</span><span class="caps"><i class="cmin"></i><i class="cmax"></i><i class="cx"></i></span></div>
+        <div class="pmenu"><span>File</span><span>Edit</span><span>View</span><i class="sep"></i><span class="ico" data-w="save"></span><span class="ico" data-w="undo"></span><span class="ico" data-w="redo"></span></div>
+        <div class="pribbon">
+          <div class="grp"><div class="gi big" data-w="select"></div><label>Selection</label></div>
+          <div class="grp"><div class="gi row"><b data-w="crop"></b><b data-w="resize"></b><b data-w="rotate"></b></div><label>Image</label></div>
+          <div class="grp"><div class="gi grid"><b class="on" id="pencil" data-w="pencil"></b><b data-w="fill"></b><b data-w="text"></b><b data-w="eraser"></b><b data-w="picker"></b><b data-w="zoom"></b></div><label>Tools</label></div>
+          <div class="grp"><div class="gi big" data-w="brush"></div><label>Brushes</label></div>
+          <div class="grp"><div class="gi shapes"><i>╱</i><i>▢</i><i>◯</i><i>△</i><i>☆</i><i>⬠</i><i>➜</i><i>♡</i></div><label>Shapes</label></div>
+          <div class="grp"><div class="gi big" data-w="size"></div><label>Size</label></div>
+          <div class="grp"><div class="gi colors"><span class="cur" style="background:#e11d48"></span><div class="pal">
+            <i style="background:#000"></i><i style="background:#7f7f7f"></i><i style="background:#880015"></i><i style="background:#ed1c24"></i><i style="background:#ff7f27"></i><i style="background:#fff200"></i><i style="background:#22b14c"></i><i style="background:#00a2e8"></i><i style="background:#3f48cc"></i><i style="background:#a349a4"></i>
+            <i style="background:#fff"></i><i style="background:#c3c3c3"></i><i style="background:#b97a57"></i><i style="background:#ffaec9"></i><i style="background:#ffc90e"></i><i style="background:#efe4b0"></i><i style="background:#b5e61d"></i><i style="background:#99d9ea"></i><i style="background:#7092be"></i><i style="background:#c8bfe7"></i></div></div><label>Colors</label></div>
+        </div>
+        <div class="paintbg" id="paintbg"><div class="p2shot" id="p2shot"></div><svg class="wobble" viewBox="0 0 1000 640"><path id="wob"/></svg></div>
+        <div class="pstatus"><span>✛ 588, 262px</span><span>⬚ 640 × 400px</span><span class="z">100% &nbsp;─────●───── &nbsp;⊕</span></div>
         <div class="pcur" id="c2"><svg viewBox="0 0 28 28"><path d="M6 3.5v18.2l4.6-4.4 3.1 7 3.1-1.3-3.1-6.9h6.6z"/></svg></div>
       </div>
-      <!-- P3: Save As -->
-      <div class="pane" id="p3">
-        <div class="wbar gray"><span class="wtitle">Save As</span></div>
-        <div class="saveb">
-          <div class="snav"><span>Desktop</span><span class="on">Downloads</span><span>Documents</span><span>Pictures</span></div>
-          <div class="slist">
-            <div class="sh"><span>Name</span><span>Date modified</span></div>
-            <div><span>Screenshot (9).png</span><span>09:12</span></div><div><span>Screenshot (10).png</span><span>09:14</span></div>
-            <div><span>image (3).png</span><span>10:02</span></div><div><span>Screenshot (11).png</span><span>10:40</span></div>
-            <div><span>final-FINAL.png</span><span>11:05</span></div><div><span>Screenshot (12).png</span><span>13:51</span></div>
-            <div><span>Screenshot (13).png</span><span>14:07</span></div>
+      <!-- P3: File Explorer Save As -->
+      <div class="pane win11" id="p3">
+        <div class="w11title"><i class="paintic"></i><span>Save As</span><span class="caps"><i class="cx"></i></span></div>
+        <div class="xaddr"><span class="nav">←</span><span class="nav">→</span><span class="nav">↑</span><div class="crumbs2"><i class="fold"></i>›&nbsp; This PC &nbsp;›&nbsp; Downloads &nbsp;›</div><span class="nav">⟳</span><div class="xsearch">⌕ &nbsp;Search Downloads</div></div>
+        <div class="xcmd"><span>Organize ▾</span><span>New folder</span><span class="r">☰ ▾ &nbsp; ⓘ</span></div>
+        <div class="xbody">
+          <div class="xnav"><span><i class="ic home"></i>Home</span><span><i class="ic gal"></i>Gallery</span><i class="gap"></i><span><i class="ic desk"></i>Desktop</span><span class="on"><i class="ic dl"></i>Downloads</span><span><i class="ic doc"></i>Documents</span><span><i class="ic pic"></i>Pictures</span><i class="gap"></i><span><i class="ic pc"></i>This PC</span></div>
+          <div class="xlist">
+            <div class="xh"><span>Name</span><span>Date modified</span><span>Type</span><span>Size</span></div>
+            <div class="xg">⌄ Today</div>
+            <div><span><i class="png"></i>Screenshot (13).png</span><span>27/09/2026 14:07</span><span>PNG File</span><span>184 KB</span></div>
+            <div><span><i class="png"></i>Screenshot (12).png</span><span>27/09/2026 13:51</span><span>PNG File</span><span>201 KB</span></div>
+            <div><span><i class="png"></i>final-FINAL.png</span><span>27/09/2026 11:05</span><span>PNG File</span><span>96 KB</span></div>
+            <div><span><i class="png"></i>Screenshot (11).png</span><span>27/09/2026 10:40</span><span>PNG File</span><span>177 KB</span></div>
+            <div><span><i class="png"></i>image (3).png</span><span>27/09/2026 10:02</span><span>PNG File</span><span>58 KB</span></div>
+            <div class="xg">⌄ Yesterday</div>
+            <div><span><i class="png"></i>Screenshot (10).png</span><span>26/09/2026 18:14</span><span>PNG File</span><span>212 KB</span></div>
           </div>
-          <div class="sfoot"><label>File name:</label><div class="sfield" id="sname"></div><span class="sbtn" id="sSave">Save</span><span class="sbtn ghost">Cancel</span></div>
+        </div>
+        <div class="xfoot">
+          <div class="xrow"><label>File name:</label><div class="sfield" id="sname"></div></div>
+          <div class="xrow"><label>Save as type:</label><div class="sfield sel">PNG (*.png)<b>⌄</b></div></div>
+          <div class="xrow btns"><span class="hide">⌃ Hide Folders</span><span class="sbtn" id="sSave">Save</span><span class="sbtn ghost">Cancel</span></div>
         </div>
         <div class="pcur" id="c3"><svg viewBox="0 0 28 28"><path d="M6 3.5v18.2l4.6-4.4 3.1 7 3.1-1.3-3.1-6.9h6.6z"/></svg></div>
       </div>
-      <!-- P4: the tracker, new issue -->
-      <div class="pane" id="p4">
+      <!-- P4: Linear in Edge, New issue -->
+      <div class="pane win11" id="p4">
         <div class="p4in" id="p4in">
-          <div class="wbar dark"><i></i><i></i><i></i><span class="wurl dark">linear.app/acme/team/ENG/new</span></div>
-          <div class="trk">
-            <div class="tside"><b></b><i></i><i></i><i></i><i></i></div>
-            <div class="tmodal">
-              <div class="tcrumb">ENG › New issue</div>
+          <div class="edge-tabs dark"><div class="etab on"><i class="fav lin"></i>Active issues › Engineering<span class="x">✕</span></div><div class="etab"><i class="fav acme">A</i>Billing · Acme</div><span class="plus">+</span><span class="caps"><i class="cmin"></i><i class="cmax"></i><i class="cx"></i></span></div>
+          <div class="edge-bar dark"><span class="nav">‹</span><span class="nav">›</span><span class="nav">⟳</span><div class="addr"><i class="lockic"></i>linear.app/acme/team/ENG/active</div><span class="dots">···</span></div>
+          <div class="lin">
+            <aside class="lside">
+              <div class="lws"><i>A</i>Acme <span>⌄</span><b>✎</b></div>
+              <span class="li"><i>▭</i>Inbox</span><span class="li"><i>◎</i>My issues</span>
+              <span class="lh">Workspace</span><span class="li"><i>▦</i>Projects</span><span class="li"><i>◈</i>Views</span>
+              <span class="lh">Your teams</span><span class="li"><i class="tm">E</i>Engineering</span><span class="li sub on">Issues</span><span class="li sub">Cycles</span><span class="li sub">Projects</span>
+            </aside>
+            <main class="lmain">
+              <div class="lhead"><span>Engineering</span><b>Active issues</b><span class="lbtn">Filter</span></div>
+              <div class="lgrp">◔ In Progress <span>3</span></div>
+              <div class="lrow"><span class="pr">▮▮▮</span><span class="id">ENG-139</span><i class="st ip"></i>Invoice PDF cuts off the last line</div>
+              <div class="lrow"><span class="pr">▮▮▯</span><span class="id">ENG-137</span><i class="st ip"></i>Team invite link expires too early</div>
+              <div class="lrow"><span class="pr">▮▯▯</span><span class="id">ENG-131</span><i class="st ip"></i>Slow search on the members page</div>
+              <div class="lgrp">◌ Todo <span>4</span></div>
+              <div class="lrow"><span class="pr">▮▮▯</span><span class="id">ENG-141</span><i class="st"></i>Dark mode flicker on load</div>
+              <div class="lrow"><span class="pr">▮▯▯</span><span class="id">ENG-140</span><i class="st"></i>Settings toggle has no label</div>
+              <div class="lrow"><span class="pr">▮▯▯</span><span class="id">ENG-136</span><i class="st"></i>Pagination resets on refresh</div>
+            </main>
+            <div class="lback"></div>
+            <div class="lmodal">
+              <div class="lmtop"><span class="chip">ENG</span><span class="mut">› &nbsp;New issue</span><span class="ic">⤢ &nbsp; ✕</span></div>
               <div class="ttitle" id="tTitle"></div>
               <div class="tdesc" id="tDesc"></div>
-              <div class="tdrop" id="tDrop"><span id="tDropTxt">Drop files to attach</span><div class="tprog"><i id="tProg"></i></div></div>
-              <div class="tfoot"><span></span><span></span><b>Create issue</b></div>
+              <div class="tup" id="tUp"><i class="png"></i><span id="tDropTxt">Uploading Screenshot (14).png…</span><div class="tprog"><i id="tProg"></i></div></div>
+              <div class="lchips"><span>◌ Backlog</span><span>··· No priority</span><span>◯ Assignee</span><span>⬡ Labels</span><span>▣ Project</span><span>···</span></div>
+              <div class="lmfoot"><span class="clip" data-w="clip"></span><span class="more">Create more <i></i></span><b>Create issue</b></div>
+              <div class="tdrop" id="tDrop"><span>Drop files to upload</span></div>
             </div>
           </div>
           <div class="dl" id="dl">
-            <div class="wbar gray sm"><span class="wtitle">Downloads</span></div>
-            <div class="dlist"><div>Screenshot (11).png</div><div>final-FINAL.png</div><div>Screenshot (12).png</div><div>Screenshot (13).png</div><div class="hit">Screenshot (14).png</div></div>
+            <div class="w11title sm"><i class="fold"></i><span>Downloads</span><span class="caps"><i class="cmin"></i><i class="cmax"></i><i class="cx"></i></span></div>
+            <div class="dlist"><div><i class="png"></i>Screenshot (11).png</div><div><i class="png"></i>final-FINAL.png</div><div><i class="png"></i>Screenshot (12).png</div><div><i class="png"></i>Screenshot (13).png</div><div class="hit"><i class="png"></i>Screenshot (14).png</div></div>
           </div>
-          <div class="dragchip" id="dragchip">Screenshot (14).png</div>
+          <div class="dragchip" id="dragchip"><i class="png"></i><span>+ Copy</span></div>
           <div class="pcur" id="c4"><svg viewBox="0 0 28 28"><path d="M6 3.5v18.2l4.6-4.4 3.1 7 3.1-1.3-3.1-6.9h6.6z"/></svg></div>
         </div>
       </div>

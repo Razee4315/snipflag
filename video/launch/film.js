@@ -186,7 +186,15 @@ function build() {
   $('#tileI .thumb').appendChild(makeShot('inv', .2, false).el);
   $('#iShot1').appendChild(makeShot('inv', 1.25, false).el);
   const i2 = makeShot('bill', 1.25, true); $('#iShot2').appendChild(i2.el); S.issueAnn = i2.refs;
-  $('#p1shot').appendChild(makeShot('bill', 1.25, false).el);
+  $('#p1shot').appendChild(makeShot('bill', 1.1, false).el);
+  $('#toastThumb').appendChild(makeShot('bill', .1625, false).el);
+  // Windows-style line icons for the Paint and Linear mock-ups.
+  const W = { save: 'M5 4h11l3 3v13H5zM8 4v5h7V4M8 20v-6h8v6', undo: 'M9 14L4 9l5-5M4 9h10a6 6 0 010 12h-3', redo: 'M15 14l5-5-5-5M20 9H10a6 6 0 000 12h3',
+    pencil: 'M4.5 19.5l1-4.2L15.6 5.2a2 2 0 012.8 0l.4.4a2 2 0 010 2.8L8.7 18.5zM13.8 7l3.2 3.2', fill: 'M5 12l7-7 7 7-7 7zM19 15c1 1.5 1.5 2.5 1.5 3a1.5 1.5 0 01-3 0c0-.5.5-1.5 1.5-3z',
+    text: 'M6 19l6-14 6 14M8.5 14h7', eraser: 'M4 16l9-9 6 6-6 6H8zM9 11l5 5M13 19h7', picker: 'M14 4l6 6-3 1-8 8H6v-3l8-8zM12 8l4 4', zoom: 'M11 18a7 7 0 100-14 7 7 0 000 14zM20 20l-4-4',
+    select: 'M4 7V4h3M10 4h4M17 4h3v3M20 10v4M20 17v3h-3M14 20h-4M7 20H4v-3M4 14v-4', brush: 'M14 4l6 6-7 7-4-4zM9 13c-3 0-5 2-5 5v2h2c3 0 5-2 5-5', size: 'M4 6h16M4 11h16M4 16.5h16',
+    crop: 'M7 3v14h14M3 7h14v14', resize: 'M4 9V4h5M20 15v5h-5M4 4l7 7M20 20l-7-7', rotate: 'M4 12a8 8 0 1014-5.3M18 3v4h-4', clip: 'M16 8l-7 7a2.5 2.5 0 01-3.5-3.5l7.5-7.5a4 4 0 015.7 5.7L11 18' };
+  $$('[data-w]').forEach(el => { el.innerHTML = `<svg viewBox="0 0 24 24"><path d="${W[el.dataset.w]}"/></svg>`; });
   $('#p2shot').appendChild(makeShot('bill', 1, false).el);
   S.ots = $$('.ot').map(split);
   // Burst
@@ -258,9 +266,11 @@ function measure() {
   $$('.logo path').forEach(p => { p.dataset.len = p.getTotalLength(); p.style.strokeDasharray = p.dataset.len; });
   const scr = $('.scribble path'); scr.dataset.len = scr.getTotalLength(); scr.style.strokeDasharray = scr.dataset.len;
   const p2 = $('#p2'), p3 = $('#p3'), p4 = $('#p4in');
-  G.p = { pencil: rel($('#pencil'), p2), save: rel($('#sSave'), p3), sname: rel($('#sname'), p3), title: rel($('#tTitle'), p4), desc: rel($('#tDesc'), p4), hit: rel($('.dlist .hit'), p4), drop: rel($('#tDrop'), p4) };
-  { // A hand-drawn circle around the wrong total, the way people do it in a paint program.
-    const ox = 60, oy = 36, cx = ox + (G.rect[0] + G.rect[2]) / 2 + 6, cy = oy + (G.rect[1] + G.rect[3]) / 2;
+  G.p = { pencil: rel($('#pencil'), p2), save: rel($('#sSave'), p3), sname: rel($('#sname'), p3), title: rel($('#tTitle'), p4), desc: rel($('#tDesc'), p4), hit: rel($('.dlist .hit'), p4), drop: rel($('#tDrop'), p4),
+    shot: rel($('#p1shot'), $('#p1')), paintTop: rel($('#paintbg'), p2).y };
+  { // A hand-drawn circle around the wrong total, the way people do it in Paint.
+    const ps = rel($('#p2shot'), $('#paintbg'));
+    const ox = ps.x, oy = ps.y, cx = ox + (G.rect[0] + G.rect[2]) / 2 + 6, cy = oy + (G.rect[1] + G.rect[3]) / 2;
     const rx = (G.rect[2] - G.rect[0]) / 2 + 18, ry = (G.rect[3] - G.rect[1]) / 2 + 12, r = rng(11), pts = [];
     for (let i = 0; i <= 48; i++) { const a = -2.6 + i / 48 * Math.PI * 2.25, w = 1 + Math.sin(i * .7) * .05 + (r() - .5) * .05 + i / 48 * .12; pts.push([cx + Math.cos(a) * rx * w, cy + Math.sin(a) * ry * w]); }
     let d = `M${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;
@@ -384,18 +394,29 @@ function s0(T) {
     pe.style.display = on ? 'block' : 'none';
     if (on) tf(pe, { x: (1 - p) * 460 - q * 460, ry: (1 - p) * -14 + q * 10, s: lerp(.94, 1, p) - q * .04, o: clamp(p * 2) * (1 - q), blur: (1 - p) * 12 + q * 12 });
   });
-  // P1: PrtSc, flash, toast
-  const k = $('#prt'), kd = T >= 1.75 && T < 1.95 ? 1 : 0;
-  k.style.transform = `translateY(${kd * 5}px)`; k.style.borderColor = kd ? 'rgba(140,220,193,.8)' : ''; k.style.color = kd ? '#8CDCC1' : '';
-  k.style.opacity = P(T, 1.45, 1.65);
-  $('#p1flash').style.opacity = T >= 1.85 ? .9 * (1 - P(T, 1.85, 2.2, E.outCubic)) : 0;
-  const tp = P(T, 1.95, 2.3);
-  $('#toast').style.opacity = tp; $('#toast').style.transform = `translate(-50%, ${((1 - tp) * -14).toFixed(1)}px)`;
+  // P1: Win+Shift+S, the Snipping Tool overlay, a region drag, the Windows toast.
+  const k = $('#prt'), kin = P(T, 1.36, 1.5) * (1 - P(T, 1.66, 1.78, E.lin));
+  k.style.opacity = kin; k.style.transform = `translateX(-50%) translateY(${((1 - kin) * 12).toFixed(1)}px)`;
+  [...k.children].forEach((kb, i) => { const d = T >= 1.44 + i * .05 && T < 1.7 ? 1 : 0; kb.style.transform = `translateY(${d * 4}px)`; kb.style.borderColor = d ? 'rgba(140,220,193,.8)' : ''; kb.style.color = d ? '#8CDCC1' : ''; });
+  const snipOn = T >= 1.6 && T < 2.16, sr = G.p.shot;
+  $('#snipdim').style.opacity = snipOn && T < 1.84 ? P(T, 1.6, 1.68, E.lin) : 0;
+  const sb = $('#snipbar'), sbp = P(T, 1.62, 1.8);
+  sb.style.opacity = snipOn ? sbp : 0; sb.style.transform = `translateX(-50%) translateY(${((1 - sbp) * -20).toFixed(1)}px)`;
+  const dragP = P(T, 1.84, 2.12, E.inOutCubic);
+  const cx1 = T < 1.84 ? lerp(620, sr.x, P(T, 1.64, 1.82, E.inOutCubic)) : lerp(sr.x, sr.x + sr.w, dragP);
+  const cy1 = T < 1.84 ? lerp(560, sr.y, P(T, 1.64, 1.82, E.inOutCubic)) : lerp(sr.y, sr.y + sr.h, dragP);
+  const pc = $('#pcross'); pc.style.opacity = snipOn && T >= 1.64 ? 1 : 0; pc.style.transform = `translate(${cx1.toFixed(1)}px,${cy1.toFixed(1)}px)`;
+  const ss = $('#snipsel');
+  ss.style.opacity = snipOn && T >= 1.84 ? 1 : 0;
+  Object.assign(ss.style, { left: sr.x + 'px', top: sr.y + 'px', width: Math.max(0, cx1 - sr.x) + 'px', height: Math.max(0, cy1 - sr.y) + 'px' });
+  $('#p1flash').style.opacity = T >= 2.16 ? .85 * (1 - P(T, 2.16, 2.45, E.outCubic)) : 0;
+  const tp = P(T, 2.2, 2.45);
+  $('#toast').style.opacity = tp; $('#toast').style.transform = `translateX(${((1 - tp) * 60).toFixed(1)}px)`;
   // P2: scribble with the pencil; the cursor rides the stroke.
   const w = $('#wob'), len = +w.dataset.len, dp = P(T, 3.0, 3.5, E.inOutCubic);
   w.style.strokeDashoffset = (len * (1 - dp)).toFixed(1);
   const pt = w.getPointAtLength(len * dp), p0 = w.getPointAtLength(0), pen = G.p.pencil;
-  const c2 = T < 2.98 ? path([[2.62, pen.cx + 60, pen.cy + 90], [2.78, pen.cx, pen.cy], [2.85, pen.cx, pen.cy], [2.98, p0.x, p0.y + 114]], T) : [pt.x, pt.y + 114];
+  const c2 = T < 2.98 ? path([[2.62, pen.cx + 60, pen.cy + 90], [2.78, pen.cx, pen.cy], [2.85, pen.cx, pen.cy], [2.98, p0.x, p0.y + G.p.paintTop]], T) : [pt.x, pt.y + G.p.paintTop];
   pcur($('#c2'), c2[0], c2[1], T >= 2.62 && T < 3.62, (T > 2.8 && T < 2.9) || (T >= 3 && T < 3.5));
   // P3: Save As
   const fname = 'Screenshot (14).png', n = Math.floor(P(T, 4.0, 4.42, E.lin) * fname.length);
@@ -406,9 +427,9 @@ function s0(T) {
   $('#sSave').style.background = saveDown ? '#1e40af' : '';
   pcur($('#c3'), c3[0], c3[1], T >= 4.4 && T < 4.95, saveDown);
   // P4: the tracker; zoom inside the window per step.
-  const Z = [{ t: 4.9, s: 1, px: 500, py: 320 }, { t: 5.3, s: 1.28, px: 560, py: 200 }, { t: 6.0, s: 1.3, px: 575, py: 215, e: E.lin }, { t: 6.35, s: 1.25, px: 590, py: 270 }, { t: 7.2, s: 1.22, px: 590, py: 290, e: E.lin }, { t: 7.5, s: 1, px: 500, py: 320 }];
+  const Z = [{ t: 4.9, s: 1, px: 520, py: 330 }, { t: 5.3, s: 1.3, px: 560, py: 250 }, { t: 6.0, s: 1.32, px: 575, py: 262, e: E.lin }, { t: 6.35, s: 1.28, px: 590, py: 300 }, { t: 7.2, s: 1.25, px: 590, py: 312, e: E.lin }, { t: 7.5, s: 1, px: 520, py: 330 }];
   const z = kf(Z, T);
-  $('#p4in').style.transform = `translate(${(500 - z.px * z.s).toFixed(1)}px,${(320 - z.py * z.s).toFixed(1)}px) scale(${z.s.toFixed(4)})`;
+  $('#p4in').style.transform = `translate(${(520 - z.px * z.s).toFixed(1)}px,${(330 - z.py * z.s).toFixed(1)}px) scale(${z.s.toFixed(4)})`;
   const blink = Math.floor(T * 2.4) % 2 === 0, tc = '<span class="caret" style="background:#8CDCC1"></span>';
   const title = 'Billing broken??', nt = Math.floor(P(T, 5.3, 5.75, E.lin) * title.length);
   $('#tTitle').innerHTML = nt ? esc(title.slice(0, nt)) + (T < 6.05 && (blink || T < 5.75) ? tc : '') : '<span class="ph2">Issue title</span>' + (T >= 5.2 && blink ? tc : '');
@@ -424,10 +445,11 @@ function s0(T) {
   const chip = $('#dragchip');
   chip.style.opacity = dragging ? 1 : 0;
   chip.style.transform = `translate(${(c4[0] + 12).toFixed(1)}px,${(c4[1] + 14).toFixed(1)}px) rotate(-3deg)`;
-  $('#tDrop').classList.toggle('hot', T >= 7.7 && T < 8.45);
-  const up = P(T, 8.0, 8.45, E.lin);
-  $('#tDropTxt').textContent = T >= 8.0 ? `Uploading Screenshot (14).png… ${Math.round(up * 64)}%` : 'Drop files to attach';
-  $('.tprog').style.opacity = T >= 8.0 ? 1 : 0; $('#tProg').style.width = (up * 64) + '%';
+  $('#tDrop').classList.toggle('hot', T >= 7.68 && T < 8.02);
+  const up = P(T, 8.02, 8.45, E.lin);
+  $('#tUp').style.opacity = T >= 8.02 ? 1 : 0;
+  $('#tDropTxt').textContent = `Uploading Screenshot (14).png… ${Math.round(up * 64)}%`;
+  $('#tProg').style.width = (up * 64) + '%';
 }
 function s2(T) {
   const el = scene('s2');
@@ -826,7 +848,7 @@ function fit() {
 }
 async function boot() {
   await document.fonts.ready;
-  await Promise.all(['700 100px "Inter Tight"', '800 100px "Inter Tight"', '500 100px "Inter Tight"', 'italic 400 100px "Instrument Serif"', '400 15px Inter', '600 15px Inter', '700 15px Inter', '500 20px "JetBrains Mono"', '600 20px "JetBrains Mono"'].map(f => document.fonts.load(f)));
+  await Promise.all(['700 100px "Inter Tight"', '800 100px "Inter Tight"', '500 100px "Inter Tight"', 'italic 400 100px "Instrument Serif"', '400 15px Inter', '600 15px Inter', '700 15px Inter', '500 20px "JetBrains Mono"', '600 20px "JetBrains Mono"', '400 13px "Open Sans"', '600 13px "Open Sans"'].map(f => document.fonts.load(f)));
   build();
   measure();
   plan();
