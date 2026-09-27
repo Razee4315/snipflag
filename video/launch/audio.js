@@ -52,7 +52,7 @@ async function buildSoundtrack(sr = 48000) {
     if (curve === 'exp') g.gain.exponentialRampToValueAtTime(.0001, at + a + d); else g.gain.linearRampToValueAtTime(0, at + a + d);
   };
   const osc = (type, f, at, stop, dest) => { const o = c.createOscillator(); o.type = type; o.frequency.setValueAtTime(f, at); o.connect(dest); o.start(at); o.stop(stop); return o; };
-  const noise = (at, dur, dest, rate = 1) => { const s = c.createBufferSource(); s.buffer = nb; s.playbackRate.value = rate; s.connect(dest); s.start(at, R() * 2, dur + .05); return s; };
+  const noise = (at, dur, dest, rate = 1) => { const s = c.createBufferSource(); s.buffer = nb; s.playbackRate.value = rate; s.connect(dest); s.start(at, R() * 2, dur + .05); return dest; };
   const filt = (type, f, q = .7) => { const b = c.createBiquadFilter(); b.type = type; b.frequency.value = f; b.Q.value = q; return b; };
   const gain = (v, dest) => { const g = c.createGain(); g.gain.value = v; if (dest) g.connect(dest); return g; };
 
@@ -144,7 +144,7 @@ async function buildSoundtrack(sr = 48000) {
   for (let t = 1.3; t < 8.4; t += BEAT) bass(t, PROG[Math.floor((t - 1.3) / BAR) % 4].root, BEAT * .5, .11);
   [1.3, 2.5, 3.7, 4.9, 6.0, 7.2].forEach(t => whoosh(t - .08, .45, .11));
   // Step sounds.
-  keycap(1.75); shutter(1.85, 1);
+  keycap(1.75); shutter(2.16, 1);
   click(2.85, .5);
   { const bp = filt('bandpass', 1900, .8); const g = gain(0, sfx); g.gain.setValueAtTime(.0001, 3.0); g.gain.exponentialRampToValueAtTime(.07, 3.08); g.gain.setValueAtTime(.07, 3.42); g.gain.exponentialRampToValueAtTime(.0001, 3.5); bp.connect(g); noise(3.0, .5, bp); }
   for (let i = 0; i < 19; i++) tick(4.0 + i * (.42 / 19), .8);
