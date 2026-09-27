@@ -12,6 +12,8 @@
 - Realistic old-way screens are committed in `6a54595`, awaiting push after the baseline run completes.
 - Local preview/source review found duplicate `c2`/`c3`/`c4` IDs: old-way cursors intercepted the feature-card animation selectors. Renamed the cursor IDs; the renderer now rejects duplicate IDs before capture. Aligned the old-way shutter cue to its 2.16 s flash, corrected noise filter routing, and moved the poster to the complete 55.2 s end card.
 - Added Actions-only extraction of timestamped contact sheets and key full-resolution frames from the encoded MP4. Final encoded visual/audio review remains pending. No local dependency installation, build, encoding or frame extraction.
+- Product-fidelity review also corrected stable image aliases after reorder (Billing remains `@image1`, Invoice remains `@image2`), matched resulting issue section headings to `src/report.ts`, and made the billing thumbnail retain its annotations/pixelation. Follow-up source edits are awaiting remote rendering.
+- Work moved to managed `launch-video-review` worktree after another chat switched the shared checkout to `codex/launch-film`. Polish is on `launch-video` as `0da5243`; unrelated studio work is excluded.
 - Next: finish baseline inspection, push corrected realistic film, inspect its Actions results/artifacts, polish any remaining faults, and deliver the MP4.
 
 ## Website: "Try it" section removed (owner request) — 2026-09-27

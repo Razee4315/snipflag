@@ -182,7 +182,8 @@ function build() {
   shotSrc = makeShot('bill', 1.25, false); $('#srcShot').appendChild(shotSrc.el);
   shotFly = makeShot('bill', 1, false); $('#flyer').appendChild(shotFly.el);
   shotEd = makeShot('bill', 853 / 640, true); $('#edImg').appendChild(shotEd.el); annEd = shotEd.refs;
-  $('#tileB .thumb').appendChild(makeShot('bill', .2, false).el);
+  const thumbB = makeShot('bill', .2, true);
+  $('#tileB .thumb').appendChild(thumbB.el); S.thumbAnn = thumbB.refs;
   $('#tileI .thumb').appendChild(makeShot('inv', .2, false).el);
   $('#iShot1').appendChild(makeShot('inv', 1.25, false).el);
   const i2 = makeShot('bill', 1.25, true); $('#iShot2').appendChild(i2.el); S.issueAnn = i2.refs;
@@ -280,7 +281,7 @@ function measure() {
   $$('.scene').forEach(s => s.style.display = '');
   // Pixelation master and the static annotated copy in the issue.
   buildPixelation();
-  [annEd.cv, S.issueAnn.cv].forEach(cv => cv.getContext('2d').drawImage(pixMaster, 0, 0));
+  [annEd.cv, S.issueAnn.cv, S.thumbAnn.cv].forEach(cv => cv.getContext('2d').drawImage(pixMaster, 0, 0));
   setAnn(S.issueAnn, FINAL_ANN());
 }
 
@@ -602,12 +603,14 @@ function s5(t) {
   // Annotations
   const R = G.rect, X = G.pix;
   const rp = P(t, 20.55, 21.25, E.inOutCubic), xp = P(t, 22.2, 22.9, E.inOutCubic);
-  setAnn(annEd, {
+  const annotationState = {
     rect: t >= 20.55 ? [R[0], R[1], lerp(R[0] + 1, R[2], rp), lerp(R[1] + 1, R[3], rp)] : null,
     pix: t >= 22.2 ? [X[0], X[1], lerp(X[0], X[2], xp), lerp(X[1], X[3], xp)] : null,
     arrow: P(t, 23.7, 24.3, E.inOutCubic),
     step: t >= 24.97 ? spring(t - 24.97, 2.6, .4) : 0,
-  });
+  };
+  setAnn(annEd, annotationState);
+  setAnn(S.thumbAnn, annotationState);
   // Filmstrip
   const tI = $('#tileI'), tB = $('#tileB');
   const addP = spring(t - 28.85, 2.2, .45);
@@ -618,15 +621,15 @@ function s5(t) {
   tI.style.zIndex = 3; tI.style.boxShadow = lift > 0 ? `0 ${20 * lift}px ${40 * lift}px -10px rgba(0,0,0,.7)` : '';
   tB.style.left = lerp(G.slot[0], G.slot[1], re) + 'px';
   tB.classList.add('on');
-  tI.querySelector('.num').textContent = t >= 29.95 ? '1' : '2';
-  tB.querySelector('.num').textContent = t >= 29.95 ? '2' : '1';
+  tI.querySelector('.num').textContent = '2';
+  tB.querySelector('.num').textContent = '1';
   const addBtn = $('#addImg');
   addBtn.style.left = (t >= 28.85 ? lerp(G.slot[1], G.slot[1] + 156, P(t, 28.85, 29.25)) + 158 : 330 - 156 + 0) + 'px';
   if (t < 28.85) addBtn.style.left = '172px';
   addBtn.style.transform = Math.abs(t - 28.72) < .12 ? 'scale(.95)' : '';
   // Title and description typing
   const title = 'Billing shows $0.00 for a paid team plan';
-  const desc = 'Total due is $0.00 in @image2, but the invoice in @image1 says $60.00.';
+  const desc = 'Total due is $0.00 in @image1, but the invoice in @image2 says $60.00.';
   const nT = Math.floor(P(t, 30.5, 31.0, E.lin) * title.length), nD = Math.floor(P(t, 31.08, 32.3, E.lin) * desc.length);
   const blink = Math.floor(t * 2.4) % 2 === 0;
   const fT = $('#fTitle'), fD = $('#fDesc');
