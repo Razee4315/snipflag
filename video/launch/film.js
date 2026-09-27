@@ -840,50 +840,16 @@ function seek(T) {
   globals(t);
 }
 
-/* ---------- Boot and preview ---------- */
-const render = new URLSearchParams(location.search).has('render');
-if (render) document.body.classList.add('render');
-function fit() {
-  const st = $('#stage');
-  if (render) { st.style.transform = ''; return; }
-  const k = Math.min(innerWidth / 1920, (innerHeight - 48) / 1080);
-  st.style.transform = `translate(${(innerWidth - 1920 * k) / 2}px, ${(innerHeight - 48 - 1080 * k) / 2}px) scale(${k})`;
-}
+/* ---------- Boot (preview controls, Lite mode and render mode live in ../shared/player.js) ---------- */
 async function boot() {
   await document.fonts.ready;
   await Promise.all(['700 100px "Inter Tight"', '800 100px "Inter Tight"', '500 100px "Inter Tight"', 'italic 400 100px "Instrument Serif"', '400 15px Inter', '600 15px Inter', '700 15px Inter', '500 20px "JetBrains Mono"', '600 20px "JetBrains Mono"', '400 13px "Open Sans"', '600 13px "Open Sans"'].map(f => document.fonts.load(f)));
   build();
   measure();
   plan();
-  fit(); addEventListener('resize', fit);
-  const q = new URLSearchParams(location.search);
-  let t = parseFloat(q.get('t') || '0');
-  seek(t);
-  window.__film = { seek, DUR, FPS, ready: true };
-  if (render) return;
-  const scrub = $('#scrub'), time = $('#time'), play = $('#play'), snd = $('#snd');
-  let playing = false, t0 = 0, start = 0, src = null, ctx = null, buf = null, sound = false;
-  const set = v => { t = clamp(v, 0, DUR); scrub.value = t; time.textContent = t.toFixed(2); seek(t); };
-  scrub.oninput = () => { stop(); set(+scrub.value); };
-  function stopAudio() { if (src) { try { src.stop(); } catch { } src = null; } }
-  function stop() { playing = false; play.textContent = 'Play'; stopAudio(); }
-  async function startAudio() {
-    if (!sound) return;
-    ctx ??= new AudioContext();
-    buf ??= await window.buildSoundtrack(48000);
-    src = ctx.createBufferSource(); src.buffer = buf; src.connect(ctx.destination); src.start(0, t);
-  }
-  play.onclick = async () => {
-    if (playing) return stop();
-    if (t >= DUR - .01) set(0);
-    await startAudio();
-    playing = true; play.textContent = 'Pause'; t0 = t; start = performance.now();
-    const loop = () => { if (!playing) return; set(t0 + (performance.now() - start) / 1000); if (t >= DUR) return stop(); requestAnimationFrame(loop); };
-    requestAnimationFrame(loop);
-  };
-  snd.onclick = () => { sound = !sound; snd.textContent = 'Sound: ' + (sound ? 'on' : 'off'); if (!sound) stopAudio(); };
-  addEventListener('keydown', e => { if (e.code === 'Space') { e.preventDefault(); play.onclick(); } if (e.key === 'ArrowRight') { stop(); set(t + (e.shiftKey ? 1 : 1 / FPS)); } if (e.key === 'ArrowLeft') { stop(); set(t - (e.shiftKey ? 1 : 1 / FPS)); } });
-  set(t);
+  // checks: random-seek determinism probes (render.mjs jumps to `away` and back); review: stills extracted from the MP4.
+  Player.mount({ seek, DUR, FPS, checks: [3.4, 26, 32.9, 45.5], away: 55.2, poster: 55.2,
+    review: [2.1, 3.4, 4.5, 7.9, 10.2, 13.5, 18.1, 24.2, 26, 27.5, 32.9, 35.3, 36.8, 38.7, 41, 45.5, 55.2] });
 }
 boot();
 })();

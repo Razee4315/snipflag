@@ -27,6 +27,13 @@
 - Local preview inspected old-way Paint/Linear, annotation framing, reordered thumbnails, composer, upload, final issue, feature grid and complete end card. Encoded final contact sheets/stills must still be reviewed. All rendering/encoding/extraction stays on Actions; local Python only serves source/MP4 playback.
 - Next: download run 36313246602 when complete, inspect logs and encoded review images, repair any remaining failures/glitches, deliver the corrected MP4 and record the final result here.
 
+### Multi-demo pipeline and low-power preview — 2026-09-27
+
+- Corrected film [run 36313246602](https://github.com/Razee4315/snipflag/actions/runs/36313246602) at `142867b` **passed** (render/export); encoded review images still to inspect.
+- Restructured `video/` for more demos (owner request): shared `video/render.mjs` (`node render.mjs <demo>`, `QUALITY=draft|final`, `LIMIT_SECONDS`), shared `video/shared/player.js`/`player.css` (preview controls, `?render` hook, WAV export), `video/_template/` starter, and `video/README.md` usage guide. Workflow renamed to `.github/workflows/demo-videos.yml`: renders only changed demo folders (all on shared changes), `[draft]` in the commit message for 720p30, manual dispatch with demo/quality/seconds once the file is on `main`.
+- Preview Lite mode (default): 30 fps playback, no blur/backdrop filters or `will-change` layers while playing, exact frame on pause, auto-pause on hidden tab. Render mode is unaffected.
+- Local check only: the launch film and template were loaded in the in-app browser from `python -m http.server`: player mounted, Lite toggles on play/pause, `?render` hides controls, no console errors. The launch film's output name is now `launch-1080p60.mp4`. Actions verification of the refactor is pending at the commit below; the template has not been rendered on Actions.
+
 ## Website: "Try it" section removed (owner request) — 2026-09-27
 
 - Removed the in-browser "Try it" editor section from `site/index.html`, `site/assets/js/editor.js`, and its CSS.

@@ -1,0 +1,8 @@
+{
+  "name": "snipflag-demo-videos",
+  "private": true,
+  "type": "module",
+  "description": "Snipflag demo and launch videos. Rendered on GitHub Actions only (see README.md).",
+  "scripts": { "render": "node render.mjs" },
+  "dependencies": { "playwright": "1.63.0" }
+}

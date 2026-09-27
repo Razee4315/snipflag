@@ -452,8 +452,3 @@ kbd { display: inline-flex; align-items: center; justify-content: center; min-wi
 .plat { position: absolute; left: 0; right: 0; top: 83%; text-align: center; margin: 0; font: 500 24px var(--ui); color: #8FA59D; letter-spacing: .02em; }
 .plat span { color: #4B655E; margin: 0 8px; }
 
-/* Preview controls (hidden when rendering) */
-#controls { position: fixed; left: 0; right: 0; bottom: 0; height: 48px; display: flex; gap: 12px; align-items: center; padding: 0 14px; background: rgba(0,0,0,.8); font: 13px var(--mono); color: #cfd; z-index: 10; }
-#controls input { flex: 1; }
-#controls button { background: #1d2b28; color: #cfd; border: 1px solid #355; border-radius: 6px; padding: 6px 12px; font: inherit; }
-body.render #controls { display: none; }

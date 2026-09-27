@@ -1,0 +1,9 @@
+/* Shared preview controls and Lite mode. Link after the demo's own CSS. */
+#controls { position: fixed; left: 0; right: 0; bottom: 0; height: 48px; display: flex; gap: 12px; align-items: center; padding: 0 14px; background: rgba(0,0,0,.8); font: 13px ui-monospace, Consolas, monospace; color: #cfd; z-index: 10; }
+#controls input { flex: 1; }
+#controls button { background: #1d2b28; color: #cfd; border: 1px solid #355; border-radius: 6px; padding: 6px 12px; font: inherit; cursor: pointer; }
+#controls button[hidden] { display: none; }
+body.render #controls { display: none; }
+
+/* Lite playback: the expensive GPU work goes away while playing. Paused frames stay exact. */
+body.lite #stage, body.lite #stage * { filter: none !important; backdrop-filter: none !important; will-change: auto !important; }

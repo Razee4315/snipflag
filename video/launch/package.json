@@ -1,8 +1,0 @@
-{
-  "name": "snipflag-launch-film",
-  "private": true,
-  "type": "module",
-  "description": "Snipflag launch film. Rendered on GitHub Actions only.",
-  "scripts": { "render": "node render.mjs" },
-  "dependencies": { "playwright": "1.63.0" }
-}

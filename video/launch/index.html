@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@500;600&family=Open+Sans:wght@400;600;700&display=block" rel="stylesheet">
 <link rel="stylesheet" href="film.css">
+<link rel="stylesheet" href="../shared/player.css">
 </head>
 <body>
 <div id="stage">
@@ -306,12 +307,7 @@
   <div id="fade"></div>
 </div>
 
-<div id="controls">
-  <button id="play">Play</button>
-  <input id="scrub" type="range" min="0" max="57" step="0.001" value="0">
-  <span id="time">0.00</span>
-  <button id="snd">Sound: off</button>
-</div>
+<script src="../shared/player.js"></script>
 <script src="audio.js"></script>
 <script src="film.js"></script>
 </body>

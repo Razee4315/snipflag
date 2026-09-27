@@ -1,0 +1,98 @@
+name: Demo videos
+# Renders demos in video/<demo>/ to MP4 on Actions (never on the owner's laptop). See video/README.md.
+on:
+  push:
+    branches: [launch-video, 'video/**']
+    paths: ['video/**', '.github/workflows/demo-videos.yml']
+  workflow_dispatch:
+    inputs:
+      demo:
+        description: 'Demo folder under video/ (for example: launch). Use "all" for every demo.'
+        required: true
+        default: launch
+      quality:
+        description: 'draft = 720p 30 fps, fast. final = 1080p full quality.'
+        type: choice
+        options: [draft, final]
+        default: draft
+      seconds:
+        description: 'Render only the first N seconds (empty = whole demo)'
+        required: false
+        default: ''
+permissions:
+  contents: read
+concurrency:
+  group: demo-videos-${{ github.ref }}-${{ github.sha }}
+  cancel-in-progress: false
+jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    outputs:
+      demos: ${{ steps.pick.outputs.demos }}
+      quality: ${{ steps.pick.outputs.quality }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: pick
+        env:
+          EVENT: ${{ github.event_name }}
+          INPUT_DEMO: ${{ inputs.demo }}
+          INPUT_QUALITY: ${{ inputs.quality }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        run: |
+          # Every folder in video/ with an index.html, except shared/ and _underscore folders (templates).
+          all=$(for d in video/*/; do n=$(basename "$d"); [[ "$n" == shared || "$n" == _* || ! -f "$d/index.html" ]] || echo "$n"; done)
+          if [[ "$EVENT" == workflow_dispatch ]]; then
+            quality="$INPUT_QUALITY"
+            if [[ "$INPUT_DEMO" == all ]]; then picked="$all"
+            elif [[ "$INPUT_DEMO" =~ ^[a-z0-9][a-z0-9-]*$ && -f "video/$INPUT_DEMO/index.html" ]]; then picked="$INPUT_DEMO"
+            else echo "::error::No demo at video/$INPUT_DEMO/index.html"; exit 1; fi
+          else
+            # Push: final quality, unless the commit message contains [draft].
+            quality=final; [[ "$COMMIT_MSG" == *"[draft]"* ]] && quality=draft
+            if [[ "$BEFORE" =~ ^0+$ ]] || ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then picked="$all"
+            else
+              files=$(git diff --name-only "$BEFORE" "$AFTER" -- video .github/workflows/demo-videos.yml)
+              if grep -qE '^(video/(shared/|render\.mjs|package\.json)|\.github/)' <<<"$files"; then picked="$all"
+              else picked=$(grep -oE '^video/[^/]+/' <<<"$files" | cut -d/ -f2 | sort -u | grep -Fxf <(echo "$all") || true)
+              fi
+            fi
+          fi
+          demos=$(printf '%s\n' $picked | jq -R . | jq -sc 'map(select(length > 0))')
+          echo "Rendering $demos at $quality"
+          echo "demos=$demos" >> "$GITHUB_OUTPUT"
+          echo "quality=$quality" >> "$GITHUB_OUTPUT"
+  render:
+    needs: plan
+    if: needs.plan.outputs.demos != '[]'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        demo: ${{ fromJson(needs.plan.outputs.demos) }}
+    defaults:
+      run:
+        working-directory: video
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg fonts-noto-color-emoji
+      - run: npm install --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - run: node render.mjs "$DEMO"
+        env:
+          DEMO: ${{ matrix.demo }}
+          WORKERS: 4
+          QUALITY: ${{ needs.plan.outputs.quality }}
+          LIMIT_SECONDS: ${{ inputs.seconds }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: video-${{ matrix.demo }}-${{ needs.plan.outputs.quality }}
+          path: video/out/${{ matrix.demo }}/
+          retention-days: 14

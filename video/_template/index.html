@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Demo template</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=block" rel="stylesheet">
+<link rel="stylesheet" href="film.css">
+<link rel="stylesheet" href="../shared/player.css">
+</head>
+<body>
+<!-- The stage is always 1920×1080. Every scene is a child that seek(t) shows, hides and animates. -->
+<div id="stage">
+  <section class="scene" id="title">
+    <h1 id="headline">Your demo title</h1>
+    <p id="sub">One sentence about what it shows.</p>
+  </section>
+
+  <section class="scene" id="work">
+    <div class="card" id="card"><b>Step one</b><span>Something happens here.</span></div>
+    <div id="cursor"></div>
+  </section>
+
+  <section class="scene" id="outro">
+    <h1 id="brand">Snipflag</h1>
+  </section>
+  <div id="fade"></div>
+</div>
+<script src="../shared/player.js"></script>
+<script src="audio.js"></script>
+<script src="film.js"></script>
+</body>
+</html>

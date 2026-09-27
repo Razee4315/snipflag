@@ -1,0 +1,18 @@
+html, body { margin: 0; height: 100%; background: #030605; overflow: hidden; }
+body { font-family: Inter, system-ui, sans-serif; color: #eaf6f1; -webkit-font-smoothing: antialiased; }
+#stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; background: #08100e; transform-origin: 0 0; }
+.scene { position: absolute; inset: 0; display: none; }
+
+h1 { margin: 0; text-align: center; font: 800 120px/1 Inter; letter-spacing: -.03em; }
+#sub { margin: 0; text-align: center; font: 400 40px Inter; color: #9fb8af; }
+#headline, #sub { position: absolute; left: 0; right: 0; }
+#headline { top: 420px; }
+#sub { top: 570px; }
+#brand { position: absolute; left: 0; right: 0; top: 480px; }
+
+.card { position: absolute; left: 660px; top: 380px; width: 600px; padding: 48px; border-radius: 28px; background: #12201c; border: 1px solid #25413a; box-shadow: 0 40px 80px -20px rgba(0,0,0,.7); }
+.card b { display: block; font: 800 56px Inter; }
+.card span { display: block; margin-top: 12px; font: 400 32px Inter; color: #9fb8af; }
+#cursor { position: absolute; width: 28px; height: 28px; border-radius: 50%; background: #fff; border: 3px solid #08100e; box-shadow: 0 6px 16px rgba(0,0,0,.5); }
+
+#fade { position: absolute; inset: 0; background: #000; pointer-events: none; opacity: 0; }
