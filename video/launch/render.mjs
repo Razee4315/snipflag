@@ -42,6 +42,11 @@ async function open() {
   page.on('pageerror', e => { console.error('page error:', e); process.exitCode = 1; });
   await page.goto(url, { waitUntil: 'networkidle' });
   await page.waitForFunction(() => window.__film?.ready, null, { timeout: 60000 });
+  const duplicates = await page.evaluate(() => {
+    const ids = [...document.querySelectorAll('[id]')].map(el => el.id);
+    return ids.filter((id, i) => ids.indexOf(id) !== i);
+  });
+  if (duplicates.length) throw new Error(`Duplicate film IDs: ${duplicates.join(', ')}`);
   return page;
 }
 
@@ -87,5 +92,17 @@ await run('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '
   '-map', '0:v', '-map', '1:a', '-c:v', 'libx264', '-preset', 'slow', '-crf', '14', '-tune', 'animation', '-pix_fmt', 'yuv420p', '-profile:v', 'high',
   '-movflags', '+faststart', '-c:a', 'aac', '-b:a', '320k', '-shortest', join(out, 'snipflag-launch-1080p60.mp4')]);
 // Poster frame.
-await run('ffmpeg', ['-y', '-loglevel', 'error', '-ss', String(Math.min(51.8, (ONLY ?? DUR) - .1)), '-i', join(out, 'snipflag-launch-1080p60.mp4'), '-frames:v', '1', join(out, 'poster.png')]);
+await run('ffmpeg', ['-y', '-loglevel', 'error', '-ss', String(Math.min(55.2, (ONLY ?? DUR) - .1)), '-i', join(out, 'snipflag-launch-1080p60.mp4'), '-frames:v', '1', join(out, 'poster.png')]);
 console.log('Done:', join(out, 'snipflag-launch-1080p60.mp4'));
+
+// Review the encoded deliverable, not just the HTML source. Extraction stays on Actions.
+const review = join(out, 'review');
+await mkdir(review, { recursive: true });
+await run('ffmpeg', ['-y', '-loglevel', 'error', '-i', join(out, 'snipflag-launch-1080p60.mp4'),
+  '-vf', "fps=1,scale=480:270,drawtext=text='%{pts\\:hms}':x=12:y=12:fontsize=20:fontcolor=white:box=1:boxcolor=black@0.7,tile=4x5:padding=4:margin=4",
+  '-fps_mode', 'vfr', join(review, 'contact-%02d.jpg')]);
+for (const t of [2.1, 3.4, 4.5, 7.9, 10.2, 13.5, 18.1, 24.2, 26, 27.5, 32.9, 35.3, 36.8, 38.7, 41, 45.5, 55.2]) {
+  if (t >= (ONLY ?? DUR)) continue;
+  await run('ffmpeg', ['-y', '-loglevel', 'error', '-ss', String(t), '-i', join(out, 'snipflag-launch-1080p60.mp4'),
+    '-frames:v', '1', join(review, `frame-${t.toFixed(1)}.png`)]);
+}

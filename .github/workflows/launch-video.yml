@@ -34,4 +34,5 @@ jobs:
             video/launch/out/snipflag-launch-1080p60.mp4
             video/launch/out/poster.png
             video/launch/out/soundtrack.wav
+            video/launch/out/review/
           retention-days: 14

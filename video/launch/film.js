@@ -417,7 +417,7 @@ function s0(T) {
   w.style.strokeDashoffset = (len * (1 - dp)).toFixed(1);
   const pt = w.getPointAtLength(len * dp), p0 = w.getPointAtLength(0), pen = G.p.pencil;
   const c2 = T < 2.98 ? path([[2.62, pen.cx + 60, pen.cy + 90], [2.78, pen.cx, pen.cy], [2.85, pen.cx, pen.cy], [2.98, p0.x, p0.y + G.p.paintTop]], T) : [pt.x, pt.y + G.p.paintTop];
-  pcur($('#c2'), c2[0], c2[1], T >= 2.62 && T < 3.62, (T > 2.8 && T < 2.9) || (T >= 3 && T < 3.5));
+  pcur($('#oldCursor2'), c2[0], c2[1], T >= 2.62 && T < 3.62, (T > 2.8 && T < 2.9) || (T >= 3 && T < 3.5));
   // P3: Save As
   const fname = 'Screenshot (14).png', n = Math.floor(P(T, 4.0, 4.42, E.lin) * fname.length);
   $('#sname').innerHTML = esc(fname.slice(0, n)) + (T < 4.7 && (Math.floor(T * 2.4) % 2 === 0 || (T > 4 && T < 4.42)) ? '<span class="caret" style="background:#111"></span>' : '');
@@ -425,7 +425,7 @@ function s0(T) {
   const c3 = path([[4.4, sn.x + 260, sn.cy + 6], [4.62, sv.cx, sv.cy], [4.9, sv.cx, sv.cy]], T);
   const saveDown = T >= 4.66 && T < 4.78;
   $('#sSave').style.background = saveDown ? '#1e40af' : '';
-  pcur($('#c3'), c3[0], c3[1], T >= 4.4 && T < 4.95, saveDown);
+  pcur($('#oldCursor3'), c3[0], c3[1], T >= 4.4 && T < 4.95, saveDown);
   // P4: the tracker; zoom inside the window per step.
   const Z = [{ t: 4.9, s: 1, px: 520, py: 330 }, { t: 5.3, s: 1.3, px: 560, py: 250 }, { t: 6.0, s: 1.32, px: 575, py: 262, e: E.lin }, { t: 6.35, s: 1.28, px: 590, py: 300 }, { t: 7.2, s: 1.25, px: 590, py: 312, e: E.lin }, { t: 7.5, s: 1, px: 520, py: 330 }];
   const z = kf(Z, T);
@@ -441,7 +441,7 @@ function s0(T) {
   const hit = G.p.hit, drop = G.p.drop, ti = G.p.title, de = G.p.desc;
   const c4 = path([[5.02, ti.x + 300, ti.cy + 60], [5.2, ti.x + 8, ti.cy], [6.0, ti.x + 190, ti.cy + 4], [6.12, de.x + 12, de.y + 16], [7.12, de.x + 260, de.y + 70], [7.42, hit.x + 60, hit.cy], [7.5, hit.x + 60, hit.cy], [8.0, drop.cx, drop.cy], [8.4, drop.cx + 20, drop.cy + 10]], T);
   const dragging = T >= 7.48 && T < 8.0;
-  pcur($('#c4'), c4[0], c4[1], T >= 5.02 && T < 8.4, dragging || (T > 5.18 && T < 5.26) || (T > 6.1 && T < 6.18));
+  pcur($('#oldCursor4'), c4[0], c4[1], T >= 5.02 && T < 8.4, dragging || (T > 5.18 && T < 5.26) || (T > 6.1 && T < 6.18));
   const chip = $('#dragchip');
   chip.style.opacity = dragging ? 1 : 0;
   chip.style.transform = `translate(${(c4[0] + 12).toFixed(1)}px,${(c4[1] + 14).toFixed(1)}px) rotate(-3deg)`;

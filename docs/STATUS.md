@@ -6,6 +6,14 @@
 - Soundtrack is synthesized with OfflineAudioContext in `audio.js` (120 BPM music plus the app's own shutter, pop and success cues from `src/sound.ts`), sample-locked to the picture.
 - `.github/workflows/launch-video.yml` renders it on Actions (Playwright frame capture, ffmpeg H.264 + AAC) on pushes to `launch-video`; nothing was rendered or installed locally. The Linear issue shown is a mock-up of the result, not a captured Linear page.
 
+### Render review checkpoint — 2026-09-27
+
+- Baseline `b5cb480`: [Launch video 36311487293](https://github.com/Razee4315/snipflag/actions/runs/36311487293) still rendering at this checkpoint; setup passed. No success claimed yet.
+- Realistic old-way screens are committed in `6a54595`, awaiting push after the baseline run completes.
+- Local preview/source review found duplicate `c2`/`c3`/`c4` IDs: old-way cursors intercepted the feature-card animation selectors. Renamed the cursor IDs; the renderer now rejects duplicate IDs before capture. Aligned the old-way shutter cue to its 2.16 s flash, corrected noise filter routing, and moved the poster to the complete 55.2 s end card.
+- Added Actions-only extraction of timestamped contact sheets and key full-resolution frames from the encoded MP4. Final encoded visual/audio review remains pending. No local dependency installation, build, encoding or frame extraction.
+- Next: finish baseline inspection, push corrected realistic film, inspect its Actions results/artifacts, polish any remaining faults, and deliver the MP4.
+
 ## Website: "Try it" section removed (owner request) — 2026-09-27
 
 - Removed the in-browser "Try it" editor section from `site/index.html`, `site/assets/js/editor.js`, and its CSS.
