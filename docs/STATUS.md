@@ -1,6 +1,14 @@
 # Current state / handoff
 
-## Website: launch film section after the hero (owner request) — 2026-09-27
+## Website: launch film is the hero video (owner request) — 2026-09-27
+
+- The owner asked for the launch film first, not next to the demo recording, with muted autoplay once visitors scroll a little, and a better mobile layout.
+- The hero figure now plays `launch.mp4` (poster `launch-poster.webp`). It starts muted when at least 55% of it is on screen, and pauses below 20%. A speaker button turns sound on or off, and a pause button stops it. Reduced motion: no autoplay. The separate `#film` section was removed.
+- The real demo recording moved to a new `#demo` section ("From capture to issue in 30 seconds.") after "How it works", so the two videos are never next to each other. `preload="metadata"`.
+- Mobile (≤640 px): the hero is tighter, both videos run almost edge to edge (10 px margins), and the video controls are smaller.
+- Local check (built-in browser): `check_site.py` passes on 7 pages; at 1366x800 the film is paused on load and plays muted after a short scroll; the speaker button unmutes it; at 375 px the film is 355x200, plays muted after a scroll, and there is no horizontal overflow. Section order: hero, how, demo, features, compare, faq, download.
+
+### Earlier the same day: launch film section after the hero
 
 - New `#film` section follows the hero on the home page. It has the heading "Make it clear.", the owner's 57 s launch film, and a "Play film" button. The film loads only on click (`preload="none"`), plays with sound and native controls, pauses when scrolled away, and resets at the end.
 - Source: the owner's `snipflag-launch-1080p60.mp4` (34 MB, rendered by the launch-film workflow). Re-encoded locally with ffmpeg to `site/assets/video/launch.mp4` (1920x1080, 60 fps, H.264 CRF 23, AAC 128k, faststart, 14 MB). The poster `launch-poster.webp` is the frame at 20 s.

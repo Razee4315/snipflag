@@ -63,21 +63,33 @@
     sync();
   })();
 
-  /* ---------- Launch film: loads only on play, with sound and native controls ---------- */
+  /* ---------- Launch film: muted autoplay once scrolled into view; sound on request ---------- */
   (function film() {
-    var v = $('[data-film]'), btn = $('[data-film-play]');
-    if (!v || !btn) return;
-    var frame = v.parentNode;
-    btn.addEventListener('click', function () {
-      v.controls = true;
-      frame.classList.add('playing');
-      var p = v.play(); if (p && p.catch) p.catch(function () { frame.classList.remove('playing'); });
-      v.focus();
+    var v = $('[data-film]'), btn = $('[data-film-toggle]'), snd = $('[data-film-sound]');
+    if (!v || !btn || !snd) return;
+    var userPaused = false;
+    var sync = function () {
+      btn.classList.toggle('paused', v.paused);
+      btn.setAttribute('aria-label', v.paused ? 'Play video' : 'Pause video');
+      snd.classList.toggle('on', !v.muted);
+      snd.setAttribute('aria-label', v.muted ? 'Turn sound on' : 'Turn sound off');
+    };
+    var play = function () { var p = v.play(); if (p && p.catch) p.catch(sync); };
+    btn.addEventListener('click', function () { userPaused = !v.paused; v.paused ? play() : v.pause(); });
+    snd.addEventListener('click', function () {
+      v.muted = !v.muted;
+      if (!v.muted && v.paused) { userPaused = false; play(); }
+      sync();
     });
-    v.addEventListener('ended', function () { v.controls = false; v.currentTime = 0; frame.classList.remove('playing'); });
-    if ('IntersectionObserver' in window) {
-      new IntersectionObserver(function (e) { if (!e[0].isIntersecting && !v.paused) v.pause(); }, { threshold: 0.2 }).observe(v);
+    v.addEventListener('play', sync); v.addEventListener('pause', sync); v.addEventListener('volumechange', sync);
+    if (!reduce && 'IntersectionObserver' in window) {
+      // Starts once a good part of the film is on screen (after a little scroll), pauses when it leaves.
+      new IntersectionObserver(function (e) {
+        if (e[0].intersectionRatio >= 0.55) { if (!userPaused && v.paused) play(); }
+        else if (e[0].intersectionRatio < 0.2 && !v.paused) v.pause();
+      }, { threshold: [0, 0.2, 0.55] }).observe(v);
     }
+    sync();
   })();
 
   /* ---------- Header ---------- */

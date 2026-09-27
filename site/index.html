@@ -32,7 +32,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@500&display=swap">
-<link rel="preload" as="image" href="assets/video/demo-poster.webp" type="image/webp" fetchpriority="high">
+<link rel="preload" as="image" href="assets/video/launch-poster.webp" type="image/webp" fetchpriority="high">
 <link rel="stylesheet" href="assets/css/site.css">
 <script src="assets/js/boot.js"></script>
 
@@ -107,39 +107,25 @@
       </div>
       <p class="hero-meta" data-hero-fade>Windows, macOS, Linux · Open source · <a href="#faq-unsigned">Unsigned preview</a></p>
       <figure class="hero-shot hero-video" data-hero-shot>
-        <video data-demo width="1280" height="680" autoplay muted loop playsinline preload="auto" poster="assets/video/demo-poster.webp" aria-label="Snipflag in action: capture a checkout page, mark the problems, pixelate the email and card, create the Linear issue, and open it in Linear.">
-          <source src="assets/video/demo.webm" type="video/webm">
-          <source src="assets/video/demo.mp4" type="video/mp4">
-        </video>
-        <button class="video-toggle" type="button" data-demo-toggle aria-label="Pause video">
-          <svg class="i-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
-          <svg class="i-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>
-        </button>
-        <figcaption>Real recording: from capture to a Linear issue in about 30 seconds.</figcaption>
-      </figure>
-    </div>
-  </section>
-
-  <section class="section film" id="film" aria-labelledby="film-title">
-    <div class="wrap">
-      <div class="head center">
-        <p class="eyebrow">The launch film</p>
-        <h2 id="film-title" data-split>Make it clear.</h2>
-        <p>One minute on the old way, and the one-issue way. Sound on.</p>
-      </div>
-      <figure class="film-frame" data-reveal>
-        <video data-film width="1920" height="1080" preload="none" playsinline poster="assets/video/launch-poster.webp" aria-label="Snipflag launch film: the old screenshot-to-issue routine, then Snipflag capturing, marking up, pixelating and sending one Linear issue.">
+        <video data-film width="1920" height="1080" muted loop playsinline preload="metadata" poster="assets/video/launch-poster.webp" aria-label="Snipflag launch film: the old screenshot-to-issue routine, then Snipflag capturing, marking up, pixelating and sending one Linear issue.">
           <source src="assets/video/launch.mp4" type="video/mp4">
         </video>
-        <button class="film-play" type="button" data-film-play aria-label="Play the launch film with sound">
-          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>
-          <span>Play film <small>0:57</small></span>
-        </button>
+        <div class="video-controls">
+          <button class="video-toggle sound" type="button" data-film-sound aria-label="Turn sound on">
+            <svg class="i-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5z" fill="currentColor"/><path d="m23 9-6 6m0-6 6 6"/></svg>
+            <svg class="i-sound" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5z" fill="currentColor"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>
+          </button>
+          <button class="video-toggle" type="button" data-film-toggle aria-label="Pause video">
+            <svg class="i-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+            <svg class="i-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>
+          </button>
+        </div>
+        <figcaption>The launch film, 0:57. Tap the speaker for sound.</figcaption>
       </figure>
     </div>
   </section>
 
-  <section class="section pt0" id="how" aria-labelledby="how-title">
+  <section class="section" id="how" aria-labelledby="how-title">
     <div class="wrap">
       <div class="head center">
         <p class="eyebrow">How it works</p>
@@ -150,6 +136,26 @@
         <li data-reveal><h3>Mark it up</h3><p>Arrows, boxes, numbered steps, text and highlights. Pixelate anything private.</p></li>
         <li data-reveal><h3>Send one issue</h3><p>Add more screenshots, then create one Linear issue with all of them, in order.</p></li>
       </ol>
+    </div>
+  </section>
+
+  <section class="section pt0" id="demo" aria-labelledby="demo-title">
+    <div class="wrap">
+      <div class="head center">
+        <p class="eyebrow">Real recording</p>
+        <h2 id="demo-title" data-split>From capture to issue in 30 seconds.</h2>
+      </div>
+      <figure class="demo-frame hero-video" data-reveal>
+        <video data-demo width="1280" height="680" autoplay muted loop playsinline preload="metadata" poster="assets/video/demo-poster.webp" aria-label="Snipflag in action: capture a checkout page, mark the problems, pixelate the email and card, create the Linear issue, and open it in Linear.">
+          <source src="assets/video/demo.webm" type="video/webm">
+          <source src="assets/video/demo.mp4" type="video/mp4">
+        </video>
+        <button class="video-toggle" type="button" data-demo-toggle aria-label="Pause video">
+          <svg class="i-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+          <svg class="i-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>
+        </button>
+        <figcaption>Capture a checkout page, mark it up, pixelate the private fields, and open the issue in Linear.</figcaption>
+      </figure>
     </div>
   </section>
 
