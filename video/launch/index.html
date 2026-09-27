@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Snipflag launch film</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@500;600&display=block" rel="stylesheet">
+<link rel="stylesheet" href="film.css">
+</head>
+<body>
+<div id="stage">
+  <div id="bg"><div class="glow g1"></div><div class="glow g2"></div><div class="glow g3"></div></div>
+
+  <!-- 1. Cold open -->
+  <section id="s1" class="scene">
+    <h1 class="kin" id="s1a">You found a <span class="bugword">bug<svg viewBox="0 0 300 150" class="scribble"><path d="M232 34C196 10 92 8 42 38 4 61 12 112 78 128c70 17 170 6 200-40 18-28-6-56-58-66"/></svg></span>.</h1>
+  </section>
+
+  <!-- 1b. The old way, step by step -->
+  <section id="s0" class="scene">
+    <div class="oldcol">
+      <span class="oldlabel">The old way</span>
+      <span class="oldstep" id="oldStep">01 / 06</span>
+      <div class="oldtitles">
+        <h2 class="kin ot">Screenshot it.</h2>
+        <h2 class="kin ot">Paste it into an editor. Scribble.</h2>
+        <h2 class="kin ot">Save it. Somewhere.</h2>
+        <h2 class="kin ot">Open Linear. New issue.</h2>
+        <h2 class="kin ot">Explain it all in words.</h2>
+        <h2 class="kin ot">Find the file. Attach it.</h2>
+      </div>
+      <div class="rail" id="rail"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="timer"><b id="timer">00:00</b><span>spent on one screenshot</span></div>
+    </div>
+    <div id="win">
+      <!-- P1: the page, PrtSc -->
+      <div class="pane" id="p1">
+        <div class="wbar"><i></i><i></i><i></i><span class="wurl">app.acme.dev/account/billing</span></div>
+        <div class="wbody light"><div class="p1shot" id="p1shot"></div></div>
+        <kbd class="prt" id="prt">PrtSc</kbd>
+        <div class="toast" id="toast">Screenshot copied to clipboard</div>
+        <div class="pflash" id="p1flash"></div>
+      </div>
+      <!-- P2: generic image editor -->
+      <div class="pane" id="p2">
+        <div class="wbar gray"><span class="wtitle">Untitled - Image editor</span></div>
+        <div class="ribbon"><span class="rb"></span><span class="rb"></span><span class="rb on" id="pencil">✎</span><span class="rb"></span><span class="rb"></span><span class="rsep"></span><i style="background:#111"></i><i style="background:#e11d48"></i><i style="background:#2563eb"></i><i style="background:#16a34a"></i><i style="background:#eab308"></i></div>
+        <div class="paintbg"><div class="p2shot" id="p2shot"></div><svg class="wobble" viewBox="0 0 1000 640"><path id="wob"/></svg></div>
+        <div class="pcur" id="c2"><svg viewBox="0 0 28 28"><path d="M6 3.5v18.2l4.6-4.4 3.1 7 3.1-1.3-3.1-6.9h6.6z"/></svg></div>
+      </div>
+      <!-- P3: Save As -->
+      <div class="pane" id="p3">
+        <div class="wbar gray"><span class="wtitle">Save As</span></div>
+        <div class="saveb">
+          <div class="snav"><span>Desktop</span><span class="on">Downloads</span><span>Documents</span><span>Pictures</span></div>
+          <div class="slist">
+            <div class="sh"><span>Name</span><span>Date modified</span></div>
+            <div><span>Screenshot (9).png</span><span>09:12</span></div><div><span>Screenshot (10).png</span><span>09:14</span></div>
+            <div><span>image (3).png</span><span>10:02</span></div><div><span>Screenshot (11).png</span><span>10:40</span></div>
+            <div><span>final-FINAL.png</span><span>11:05</span></div><div><span>Screenshot (12).png</span><span>13:51</span></div>
+            <div><span>Screenshot (13).png</span><span>14:07</span></div>
+          </div>
+          <div class="sfoot"><label>File name:</label><div class="sfield" id="sname"></div><span class="sbtn" id="sSave">Save</span><span class="sbtn ghost">Cancel</span></div>
+        </div>
+        <div class="pcur" id="c3"><svg viewBox="0 0 28 28"><path d="M6 3.5v18.2l4.6-4.4 3.1 7 3.1-1.3-3.1-6.9h6.6z"/></svg></div>
+      </div>
+      <!-- P4: the tracker, new issue -->
+      <div class="pane" id="p4">
+        <div class="p4in" id="p4in">
+          <div class="wbar dark"><i></i><i></i><i></i><span class="wurl dark">linear.app/acme/team/ENG/new</span></div>
+          <div class="trk">
+            <div class="tside"><b></b><i></i><i></i><i></i><i></i></div>
+            <div class="tmodal">
+              <div class="tcrumb">ENG › New issue</div>
+              <div class="ttitle" id="tTitle"></div>
+              <div class="tdesc" id="tDesc"></div>
+              <div class="tdrop" id="tDrop"><span id="tDropTxt">Drop files to attach</span><div class="tprog"><i id="tProg"></i></div></div>
+              <div class="tfoot"><span></span><span></span><b>Create issue</b></div>
+            </div>
+          </div>
+          <div class="dl" id="dl">
+            <div class="wbar gray sm"><span class="wtitle">Downloads</span></div>
+            <div class="dlist"><div>Screenshot (11).png</div><div>final-FINAL.png</div><div>Screenshot (12).png</div><div>Screenshot (13).png</div><div class="hit">Screenshot (14).png</div></div>
+          </div>
+          <div class="dragchip" id="dragchip">Screenshot (14).png</div>
+          <div class="pcur" id="c4"><svg viewBox="0 0 28 28"><path d="M6 3.5v18.2l4.6-4.4 3.1 7 3.1-1.3-3.1-6.9h6.6z"/></svg></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. Repeat -->
+  <section id="s2" class="scene">
+    <div id="pile"></div>
+    <div id="chats"></div>
+    <div class="s2-head">
+      <h2 class="kin" id="s2a">Now do that twelve times.</h2>
+      <h2 class="kin serif" id="s2b">For one bug.</h2>
+    </div>
+  </section>
+
+  <!-- 3. Brand -->
+  <section id="s3" class="scene">
+    <div id="rays"></div>
+    <div class="lockup">
+      <div class="logo" id="logo3">
+        <div class="tile"></div>
+        <svg viewBox="96 96 320 320"><path class="b1" d="M204 135h-69v69"/><path class="b2" d="M308 377h69v-69"/><path class="b3" d="M135 308v69h69"/><path class="ar1" d="M235 277l139-139"/><path class="ar2" d="M285 138h89v89"/></svg>
+      </div>
+      <div class="word" id="word3">Snipflag</div>
+    </div>
+    <p class="tagline" id="tag3"><span>Many screenshots.</span> <span class="teal">One Linear issue.</span></p>
+  </section>
+
+  <!-- 4. Capture -->
+  <section id="s4" class="scene">
+    <div id="desk">
+      <div class="wall"></div>
+      <div class="browser" id="browser">
+        <div class="bchrome"><i></i><i></i><i></i><div class="url">app.acme.dev/account/billing</div></div>
+        <div class="bbody">
+          <aside class="side"><b>Acme</b><span>Overview</span><span>Projects</span><span>Members</span><span class="on">Billing</span><span>Settings</span></aside>
+          <main class="bmain">
+            <div class="crumbs">Account / Billing</div>
+            <div class="shotwrap" id="srcShot"></div>
+            <div class="ghostrows"><i></i><i></i><i></i></div>
+          </main>
+        </div>
+      </div>
+    </div>
+    <div id="keys"><kbd id="k1">Ctrl</kbd><span>+</span><kbd id="k2">Shift</kbd><span>+</span><kbd id="k3">2</kbd></div>
+    <div id="freeze"></div>
+    <div id="sel"><i class="c tl"></i><i class="c tr"></i><i class="c bl"></i><i class="c br"></i><span id="dims">0 × 0</span></div>
+    <div id="cross"><i class="h"></i><i class="v"></i><svg viewBox="0 0 32 32"><path d="M16 3v26M3 16h26"/></svg></div>
+  </section>
+
+  <!-- 5-7. The editor (real Snipflag UI, rebuilt) -->
+  <section id="s5" class="scene">
+    <div id="edWrap">
+      <div id="ed">
+        <div class="stagecard" id="stagecard">
+          <div class="toolbar" id="toolbar"></div>
+          <div class="canvas" id="canvas">
+            <div class="img" id="edImg"></div>
+          </div>
+          <div class="bottombar" id="bottombar">
+            <div class="caption" id="capField">Billing</div>
+            <span class="dimtxt">640 × 400</span>
+            <div class="zoom"><i data-i="zoomOut"></i><b>100%</b><i data-i="zoomIn"></i><i class="fitb" data-i="fit"></i></div>
+            <span class="act"><i data-i="copy"></i>Copy image</span>
+            <span class="act"><i data-i="save"></i>Save image</span>
+          </div>
+          <div class="film" id="film">
+            <div class="tile" id="tileB"><div class="thumb"></div><span class="num">1</span><label>Billing</label></div>
+            <div class="tile" id="tileI"><div class="thumb"></div><span class="num">2</span><label>Invoice</label></div>
+            <div class="addimg" id="addImg"><i data-i="image"></i>Add images</div>
+          </div>
+        </div>
+        <div class="util" id="util"><span class="mk"></span><span class="grip">⠿</span><span class="sp"></span><i data-i="history"></i><i data-i="settings"></i></div>
+        <div class="composer" id="composer">
+          <div class="form" id="form">
+            <label>Title</label>
+            <div class="field" id="fTitle"><span class="ph">What went wrong?</span><span class="val"></span></div>
+            <label>Description</label>
+            <div class="field area" id="fDesc"><span class="ph">Steps, expected and actual. Use @image to reference a screenshot.</span><span class="val"></span></div>
+            <label>Team</label>
+            <div class="field select" id="fTeam"><span class="val">Choose a team</span><i class="chev"></i></div>
+            <div class="menu" id="teamMenu"><div class="opt">Design</div><div class="opt" id="optEng">Engineering</div><div class="opt">Mobile</div><div class="opt">Web platform</div></div>
+            <div class="rule"></div>
+            <div class="details" id="details"><i class="chev r"></i>Issue details</div>
+            <div class="drows" id="drows">
+              <div class="drow"><span>Priority</span><b class="pri"><i></i>Urgent</b></div>
+              <div class="drow"><span>Labels</span><b class="lab"><i></i>Bug</b></div>
+              <div class="drow"><span>Project</span><b>Billing v2</b></div>
+            </div>
+          </div>
+          <div class="sent" id="sent">
+            <div class="sent-mark"><div class="burst" id="burst"></div><svg viewBox="0 0 56 56"><circle cx="28" cy="28" r="23"/><path d="M18 29l7 7 13-15"/></svg></div>
+            <span class="sent-badge">Sent to Linear</span>
+            <p class="sent-id">ENG-142</p>
+            <p class="sent-title">Billing shows $0.00 for a paid team plan</p>
+            <span class="openl">Open issue <i data-i="external"></i></span>
+          </div>
+          <div class="foot">
+            <div class="btn ghost"><i data-i="plus"></i>New session</div>
+            <div class="btn primary" id="createBtn"><div class="fill" id="createFill"></div><span id="createTxt">Create issue</span><i data-i="right" id="createChev"></i></div>
+          </div>
+        </div>
+        <div id="cursor"><svg viewBox="0 0 28 28"><path d="M6 3.5v18.2l4.6-4.4 3.1 7 3.1-1.3-3.1-6.9h6.6z"/></svg><i class="ring"></i></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7b. The resulting issue -->
+  <section id="s7" class="scene">
+    <div id="issueWrap">
+      <div class="issue" id="issue">
+        <div class="ihead"><span class="crumb">Engineering <b>›</b> ENG-142</span><span class="ichip created">Created by Snipflag · just now</span></div>
+        <div class="ibody">
+          <div class="imain" id="imain">
+            <h3>Billing shows $0.00 for a paid team plan</h3>
+            <p>Total due is $0.00 in <b class="ref">Image 2</b>, but the invoice in <b class="ref">Image 1</b> says $60.00.</p>
+            <div class="isec"><h4>Image 1 · Invoice</h4><div class="ishot" id="iShot1"></div></div>
+            <div class="isec"><h4>Image 2 · Billing</h4><div class="ishot" id="iShot2"></div></div>
+          </div>
+          <aside class="iside">
+            <div><span>Status</span><b><i class="st"></i>Todo</b></div>
+            <div><span>Priority</span><b><i class="pr"></i>Urgent</b></div>
+            <div><span>Labels</span><b><i class="lb"></i>Bug</b></div>
+            <div><span>Project</span><b>Billing v2</b></div>
+            <div><span>Attachments</span><b>2 images</b></div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8. Features -->
+  <section id="s8" class="scene">
+    <div class="s8-head"><h2 class="kin" id="s8a">Small app.</h2><h2 class="kin serif" id="s8b">Complete report.</h2></div>
+    <div class="bento" id="bento">
+      <div class="cell wide" id="c1">
+        <div class="ctext"><h5>Private until you press Create.</h5><p>Screenshots stay on your machine. Nothing uploads until you send.</p></div>
+        <div class="vis boundary"><div class="dots" id="bDots"></div><div class="line"></div><div class="lock"><i data-i="lock"></i></div><div class="bytes"><b id="bytes">0 B</b><span>uploaded</span></div></div>
+      </div>
+      <div class="cell" id="c2"><div class="vis pix" id="pixGrid"></div><div class="ctext"><h5>Real pixelation.</h5><p>Averaged blocks burned into every export.</p></div></div>
+      <div class="cell" id="c3"><div class="vis keys2"><kbd id="kk1">Ctrl</kbd><kbd id="kk2">Shift</kbd><kbd id="kk3">2</kbd></div><div class="ctext"><h5>One shortcut.</h5><p>Capture any region on any monitor.</p></div></div>
+      <div class="cell" id="c4"><div class="vis restore"><svg viewBox="0 0 80 80"><circle class="trk" cx="40" cy="40" r="30"/><circle class="arc" id="rArc" cx="40" cy="40" r="30"/></svg><span id="rTxt">Draft restored</span></div><div class="ctext"><h5>Drafts that survive.</h5><p>Quit, crash or restart. Your session is still there.</p></div></div>
+      <div class="cell" id="c5"><div class="vis funnel" id="funnel"></div><div class="ctext"><h5>Up to 10 images.</h5><p>In order, in one issue.</p></div></div>
+    </div>
+    <p class="s8-foot" id="s8foot">Free and open source <span>·</span> Windows <span>·</span> macOS <span>·</span> Linux</p>
+  </section>
+
+  <!-- 9. Outro -->
+  <section id="s9" class="scene">
+    <div class="lockup big">
+      <div class="logo" id="logo9">
+        <div class="tile"></div>
+        <svg viewBox="96 96 320 320"><path class="b1" d="M204 135h-69v69"/><path class="b2" d="M308 377h69v-69"/><path class="b3" d="M135 308v69h69"/><path class="ar1" d="M235 277l139-139"/><path class="ar2" d="M285 138h89v89"/></svg>
+      </div>
+      <div class="word" id="word9">Snipflag</div>
+    </div>
+    <p class="tagline" id="tag9"><span>Snip it.</span> <span>Mark it.</span> <span class="teal">Flag it.</span></p>
+    <div class="cta" id="cta"><span class="pill">Download free</span><span class="url">razee4315.github.io/snipflag</span></div>
+    <p class="plat" id="plat">Windows · macOS · Linux <span>·</span> v1.2.0</p>
+  </section>
+
+  <!-- Stage-level overlays -->
+  <div id="flyer"></div>
+  <div class="bigword" id="bw1"><span class="step">01</span><b>Snip.</b><small>Any region. Any monitor.</small></div>
+  <div class="bigword" id="bw2"><span class="step">02</span><b>Mark it.</b><small>Boxes, arrows, steps and real pixelation.</small></div>
+  <div class="bigword" id="bw3"><span class="step">03</span><b>Flag it.</b><small>Every image, in order, in one Linear issue.</small></div>
+  <div id="cap"><span id="capTxt"></span></div>
+  <div id="flash"></div>
+  <div id="vignette"></div>
+  <div id="grain"></div>
+  <div id="fade"></div>
+</div>
+
+<div id="controls">
+  <button id="play">Play</button>
+  <input id="scrub" type="range" min="0" max="57" step="0.001" value="0">
+  <span id="time">0.00</span>
+  <button id="snd">Sound: off</button>
+</div>
+<script src="audio.js"></script>
+<script src="film.js"></script>
+</body>
+</html>

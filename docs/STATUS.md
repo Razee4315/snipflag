@@ -1,5 +1,11 @@
 # Current state / handoff
 
+## Launch video (owner request) — branch `launch-video`, 2026-09-27
+
+- `video/launch/` is a 57 s, 1920×1080, 60 fps launch film built as a deterministic HTML timeline (`film.js` `seek(t)`), with the Snipflag editor rebuilt in HTML/CSS from `src/style.css` tokens and `src/components/icons.tsx`, and the same synthetic Acme fixtures the website hero uses. Story: "You found a bug" → the old way in six steps (PrtSc, paint-style scribble, Save As, open Linear, type the description, attach the file) → "Now do that twelve times" → brand reveal → capture with Ctrl+Shift+2 → annotate (box, pixelation, arrow, step) → multiple images and @image references → Create issue → resulting issue → feature grid → outro.
+- Soundtrack is synthesized with OfflineAudioContext in `audio.js` (120 BPM music plus the app's own shutter, pop and success cues from `src/sound.ts`), sample-locked to the picture.
+- `.github/workflows/launch-video.yml` renders it on Actions (Playwright frame capture, ffmpeg H.264 + AAC) on pushes to `launch-video`; nothing was rendered or installed locally. The Linear issue shown is a mock-up of the result, not a captured Linear page.
+
 ## Website: "Try it" section removed (owner request) — 2026-09-27
 
 - Removed the in-browser "Try it" editor section from `site/index.html`, `site/assets/js/editor.js`, and its CSS.

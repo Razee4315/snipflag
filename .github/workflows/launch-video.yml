@@ -1,0 +1,37 @@
+name: Launch video
+on:
+  push:
+    branches: [launch-video]
+    paths: ['video/**', '.github/workflows/launch-video.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: launch-video-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  render:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: video/launch
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg fonts-noto-color-emoji
+      - run: npm install --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - run: node render.mjs
+        env:
+          WORKERS: 4
+      - uses: actions/upload-artifact@v4
+        with:
+          name: snipflag-launch-video
+          path: |
+            video/launch/out/snipflag-launch-1080p60.mp4
+            video/launch/out/poster.png
+            video/launch/out/soundtrack.wav
+          retention-days: 14
