@@ -1,5 +1,9 @@
 # Current state / handoff
 
+## Independent studio launch film — 2026-09-27
+
+Owner requested a fresh launch video, ignoring the earlier film. Work starts from `6a54595` on `codex/launch-film`; `video/launch/` remains untouched. Direction and isolated Actions source-inspection workflow are in `video/studio/` and `.github/workflows/studio-film.yml`. Intended delivery is a 42-second 1080p60 film with actual product UI, the existing owner demo and original motion/sound. Not rendered or verified yet. Next: inspect source contact sheet, implement timeline, render remotely and visually review output. No local builds/installations or release changes.
+
 ## Launch video (owner request) — branch `launch-video`, 2026-09-27
 
 - `video/launch/` is a 57 s, 1920×1080, 60 fps launch film built as a deterministic HTML timeline (`film.js` `seek(t)`), with the Snipflag editor rebuilt in HTML/CSS from `src/style.css` tokens and `src/components/icons.tsx`, and the same synthetic Acme fixtures the website hero uses. Story: "You found a bug" → the old way in six steps (PrtSc, paint-style scribble, Save As, open Linear, type the description, attach the file) → "Now do that twelve times" → brand reveal → capture with Ctrl+Shift+2 → annotate (box, pixelation, arrow, step) → multiple images and @image references → Create issue → resulting issue → feature grid → outro.

@@ -1,0 +1,28 @@
+name: Studio launch film
+on:
+  push:
+    branches: [codex/launch-film]
+    paths: ['video/studio/**', '.github/workflows/studio-film.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  render:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: sudo apt-get update -qq && sudo apt-get install -y ffmpeg
+      - name: Inspect source recording
+        run: |
+          mkdir -p video/studio/out
+          ffprobe -v quiet -show_format -show_streams -of json site/assets/video/demo.mp4 > video/studio/out/source.json
+          ffmpeg -i site/assets/video/demo.mp4 -vf "fps=1/3,scale=480:-1,tile=4x4" -frames:v 1 video/studio/out/source-contact.jpg
+      - uses: actions/upload-artifact@v4
+        with:
+          name: snipflag-studio-film
+          path: video/studio/out/
+          retention-days: 14
