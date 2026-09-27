@@ -8,7 +8,7 @@ permissions:
   contents: read
 concurrency:
   group: launch-video-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 jobs:
   render:
     runs-on: ubuntu-24.04
