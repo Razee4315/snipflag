@@ -1,0 +1,6 @@
+out/
+review*/
+footage/
+node_modules/
+font.ttf
+package-lock.json
