@@ -15,6 +15,7 @@
 - Product-fidelity review also corrected stable image aliases after reorder (Billing remains `@image1`, Invoice remains `@image2`), matched resulting issue section headings to `src/report.ts`, and made the billing thumbnail retain its annotations/pixelation. Follow-up source edits are awaiting remote rendering.
 - Work moved to managed `launch-video-review` worktree after another chat switched the shared checkout to `codex/launch-film`. Polish is on `launch-video` as `0da5243`; unrelated studio work is excluded.
 - Corrections committed as `0da5243` and `d945c51`. Baseline still rendering after about 30 minutes. Workflow now queues new renders instead of cancelling an in-progress render, preserving the baseline while corrected work is pushed.
+- Corrected render queued in [Launch video 36313048868](https://github.com/Razee4315/snipflag/actions/runs/36313048868) at `a7d2ace`. Adding a focused Actions check that seeking backward from the outro reproduces identical frames in the old-way, annotation, reorder and feature scenes; new push will supersede only the pending run.
 - Next: record baseline result, inspect the queued corrected render and its encoded review artifacts, fix failures/glitches, and deliver the MP4.
 
 ## Website: "Try it" section removed (owner request) — 2026-09-27

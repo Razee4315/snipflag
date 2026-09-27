@@ -9,6 +9,7 @@ import { spawn } from 'node:child_process';
 import { createServer } from 'node:http';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { extname, join, dirname } from 'node:path';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 const root = dirname(fileURLToPath(import.meta.url));
@@ -54,6 +55,17 @@ async function open() {
 const first = await open();
 const { DUR, FPS } = await first.evaluate(() => ({ DUR: window.__film.DUR, FPS: window.__film.FPS }));
 const total = Math.round((ONLY ?? DUR) * FPS);
+// Random seeking must reproduce the exact same frame, including after later scenes.
+const frameHash = async t => {
+  await first.evaluate(t => { window.__film.seek(t); return new Promise(r => requestAnimationFrame(r)); }, t);
+  return createHash('sha256').update(await first.screenshot({ type: 'png' })).digest('hex');
+};
+for (const t of [3.4, 26, 32.9, 45.5]) {
+  const before = await frameHash(t);
+  await frameHash(55.2);
+  if (before !== await frameHash(t)) throw new Error(`Non-deterministic seek at ${t}s`);
+}
+console.log('Random-seek frame checks passed');
 console.log(`Rendering ${total} frames at ${FPS} fps with ${WORKERS} workers`);
 const audio = await first.evaluate(() => window.soundtrackWavBase64());
 await writeFile(join(out, 'soundtrack.wav'), Buffer.from(audio.b64, 'base64'));
