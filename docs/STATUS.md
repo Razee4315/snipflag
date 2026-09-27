@@ -2,6 +2,8 @@
 
 ## Independent studio launch film — 2026-09-27
 
+First full-render attempt at `267543a`, [36312544787](https://github.com/Razee4315/snipflag/actions/runs/36312544787), failed before proof capture: renderer expected Chromium headless shell 1208 but the implicit parent-package installation installed a different browser. Added an isolated film package and invoke that package's exact Playwright CLI. Source extraction, font download, score synthesis and syntax checks passed. Next: rerun proofs and final render; no finished video claimed yet.
+
 Source inspection at `1569dfd` passed [Studio launch film 36312253810](https://github.com/Razee4315/snipflag/actions/runs/36312253810). Inspected the downloaded source contact sheet: existing public demo is 32.6 seconds, 1280×680, 30 fps, and contains the actual editor and Linear result. New timeline, original synthesized score, four-part 1080p60 renderer, proof frames and encoded-stream checks are now authored; first full render remains pending. Existing privacy masking is retained; no new Linear requests are made. Next: inspect proof frames, correct visual defects, then download and verify the completed film.
 
 Owner requested a fresh launch video, ignoring the earlier film. Work starts from `6a54595` on `codex/launch-film`; `video/launch/` remains untouched. Direction and isolated Actions source-inspection workflow are in `video/studio/` and `.github/workflows/studio-film.yml`. Intended delivery is a 42-second 1080p60 film with actual product UI, the existing owner demo and original motion/sound. Not rendered or verified yet. Next: inspect source contact sheet, implement timeline, render remotely and visually review output. No local builds/installations or release changes.

@@ -24,8 +24,8 @@ jobs:
       - name: Prepare renderer and source edit
         working-directory: video/studio
         run: |
-          npm install --no-save --package-lock=false playwright@1.58.2
-          npx playwright install --with-deps chromium
+          npm install --package-lock=false
+          node node_modules/playwright/cli.js install --with-deps chromium
           curl -fL 'https://raw.githubusercontent.com/google/fonts/main/ofl/manrope/Manrope%5Bwght%5D.ttf' -o font.ttf
           curl -fL 'https://raw.githubusercontent.com/google/fonts/main/ofl/manrope/OFL.txt' -o out/Manrope-OFL.txt
           mkdir footage
