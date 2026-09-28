@@ -13,6 +13,7 @@ SITE = Path(__file__).resolve().parent.parent
 BASE = "https://razee4315.github.io/snipflag/"
 CHECKED = "26 September 2026"
 CHECKED_ISO = "2026-09-26"
+UPDATED_ISO = "2026-09-28"  # last site-wide change; sitemap lastmod
 REL = "https://github.com/Razee4315/snipflag/releases/download/v1.2.0/"
 
 FONTS = "https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@500&display=swap"
@@ -89,7 +90,7 @@ def header(p, current=""):
 def footer(p):
     return f"""<footer class="site-footer">
   <div class="wrap">
-    <div class="fine"><a class="brand" href="{p}"><img src="{p}favicon.svg" width="28" height="28" alt="">Snipflag</a><p class="tagline">Snip it. Mark it. Flag it.</p><p>© 2026 Snipflag contributors. Not affiliated with Linear or any product compared here. Product names belong to their owners.</p></div>
+    <div class="fine"><a class="brand" href="{p}"><img src="{p}favicon.svg" width="28" height="28" alt="">Snipflag</a><p class="tagline">Snip it. Mark it. Flag it.</p><p>© 2026 Snipflag contributors. Not affiliated with Linear or any product compared here. Product names belong to their owners.</p><p class="more">More by Saqlain Razee: <a href="https://razee4315.github.io/Paperling/">Paperling</a> · <a href="https://razee4315.github.io/Vuoom/">Vuoom</a> · <a href="https://razee4315.github.io/coldframe/">coldframe</a> · <a href="https://razee4315.github.io/">All projects</a></p></div>
     <nav aria-label="Product"><h2>Product</h2><a href="{p}#how">How it works</a><a href="{p}#download">Download</a></nav>
     <nav aria-label="Compare"><h2>Compare</h2><a href="{p}compare/">All tools</a><a href="{p}compare/screenpresso/">Screenpresso</a><a href="{p}compare/jam/">Jam</a><a href="{p}compare/bugshot/">BugShot</a><a href="{p}compare/sharex-greenshot-flameshot/">ShareX and others</a></nav>
     <nav aria-label="Project"><h2>Project</h2><a href="https://github.com/Razee4315/snipflag">GitHub</a><a href="https://github.com/Razee4315/snipflag/releases">Releases</a><a href="https://github.com/Razee4315/snipflag/blob/main/LICENSE">MIT License</a></nav>
@@ -421,7 +422,7 @@ def main():
         print("wrote", out.relative_to(SITE))
     urls = [("", "1.0"), ("compare/", "0.8")] + [(f"compare/{s}/", "0.7") for s in COMPETITORS]
     sm = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
-    sm += "".join(f"  <url><loc>{BASE}{u}</loc><lastmod>{CHECKED_ISO}</lastmod><priority>{pr}</priority></url>\n" for u, pr in urls)
+    sm += "".join(f"  <url><loc>{BASE}{u}</loc><lastmod>{UPDATED_ISO}</lastmod><priority>{pr}</priority></url>\n" for u, pr in urls)
     sm += "</urlset>\n"
     (SITE / "sitemap.xml").write_text(sm, encoding="utf-8", newline="\n")
     print("wrote sitemap.xml")

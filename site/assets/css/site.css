@@ -149,6 +149,8 @@ p { margin: 0; }
 .steps-short strong { color: var(--text); font-weight: 600; }
 .flow-foot { margin-top: auto; padding-top: 1.25rem; font-size: .9375rem; color: var(--faint); }
 .flow-card.new .flow-foot { color: var(--mint); }
+.site-footer .fine .more { margin-top: .6rem; }
+.site-footer .fine .more a { color: var(--muted); text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; }
 .site-footer .fine .tagline { margin-bottom: .6rem; color: var(--muted); font-size: .9375rem; }
 
 /* Compare */
