@@ -89,7 +89,7 @@ def header(p, current=""):
 def footer(p):
     return f"""<footer class="site-footer">
   <div class="wrap">
-    <div class="fine"><a class="brand" href="{p}"><img src="{p}favicon.svg" width="28" height="28" alt="">Snipflag</a><p>© 2026 Snipflag contributors. Not affiliated with Linear or any product compared here. Product names belong to their owners.</p></div>
+    <div class="fine"><a class="brand" href="{p}"><img src="{p}favicon.svg" width="28" height="28" alt="">Snipflag</a><p class="tagline">Snip it. Mark it. Flag it.</p><p>© 2026 Snipflag contributors. Not affiliated with Linear or any product compared here. Product names belong to their owners.</p></div>
     <nav aria-label="Product"><h2>Product</h2><a href="{p}#how">How it works</a><a href="{p}#download">Download</a></nav>
     <nav aria-label="Compare"><h2>Compare</h2><a href="{p}compare/">All tools</a><a href="{p}compare/screenpresso/">Screenpresso</a><a href="{p}compare/jam/">Jam</a><a href="{p}compare/bugshot/">BugShot</a><a href="{p}compare/sharex-greenshot-flameshot/">ShareX and others</a></nav>
     <nav aria-label="Project"><h2>Project</h2><a href="https://github.com/Razee4315/snipflag">GitHub</a><a href="https://github.com/Razee4315/snipflag/releases">Releases</a><a href="https://github.com/Razee4315/snipflag/blob/main/LICENSE">MIT License</a></nav>

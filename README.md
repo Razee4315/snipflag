@@ -5,8 +5,9 @@
 <h1 align="center">Snipflag</h1>
 
 <p align="center">
-  <strong>Snip it. Mark it. Flag it.</strong><br>
-  Turn one or more screenshots into one clear Linear issue.
+  <strong>Turn screenshots into Linear issues.</strong><br>
+  Free, open-source, local-first visual bug reporting for Linear.<br>
+  <sub>Snip it. Mark it. Flag it.</sub>
 </p>
 
 <p align="center">
@@ -19,7 +20,9 @@
 
 ---
 
-Snipflag is a focused desktop app for reporting visual problems. Capture a region of your screen, mark what matters, capture another, add a title, and send everything to Linear as a single issue with the screenshots in order. It runs on Windows (primary), macOS, and Linux, and is built with Tauri 2, Rust, React, and TypeScript.
+See a bug anywhere on your screen, snip it, mark it up, and send it to Linear without breaking your flow. Snipflag is a small desktop app for people who work in Linear every day and report visual bugs themselves. Capture any app, mark what matters, add more screenshots if you need them, pick the team, project, labels and priority, and create one Linear issue with the screenshots in order. Your screenshots stay on your computer until you click **Create issue**; there is no Snipflag cloud.
+
+It runs on Windows (primary), macOS, and Linux, and is built with Tauri 2, Rust, React, and TypeScript.
 
 > **Website:** [razee4315.github.io/snipflag](https://razee4315.github.io/snipflag/) · **v1.2.0:** [Download the release (unsigned installers)](https://github.com/Razee4315/snipflag/releases/tag/v1.2.0). Native runtime acceptance and signing are still pending; see [verification status](docs/STATUS.md).
 

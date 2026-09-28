@@ -1,7 +1,7 @@
 {
   "name": "Snipflag",
   "short_name": "Snipflag",
-  "description": "Capture, annotate and send several screenshots to one Linear issue.",
+  "description": "Visual bug reporting for Linear. Turn screenshots into Linear issues.",
   "start_url": "./",
   "display": "browser",
   "background_color": "#0B1F1B",

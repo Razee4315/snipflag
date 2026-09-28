@@ -1,5 +1,16 @@
 # Current state / handoff
 
+## Website: Linear-first positioning (owner request) — 2026-09-28
+
+- Why: early Reddit replies ("ShareX already does this", "use Snagit") showed visitors read Snipflag as a screenshot tool. The site now positions it as "Visual bug reporting for Linear".
+- Home hero: eyebrow "Visual bug reporting for Linear", headline "Turn screenshots into Linear issues.", new lede, secondary CTA "View source" (GitHub) in place of "See how it works", meta line adds "Free and open source" and "No Snipflag cloud". The launch film stays directly under it.
+- `#how` now sets "The usual way" (nine struck-through steps) beside "With Snipflag" (Snip it / Mark it up / Send it to Linear), under "Screenshot tools stop at the image."
+- Features: six cards led by "Works outside the browser" and "Linear fields in the app" (3 columns, 2 below 1060 px, 1 below 900 px). New `#privacy` statement: screenshots stay on your computer until Create issue, no Snipflag server/account/analytics.
+- FAQ: new "How is this different from ShareX or Snagit?" and "Who is Snipflag for?"; **fixed a stale answer** that told people to register their own Linear OAuth app (v1.2.0 has built-in Connect Linear); the Jira answer now says Linear-only is deliberate. FAQ JSON-LD regenerated from the visible answers.
+- Title, description, OG/Twitter text, schema description, manifest and `og.png` (text redrawn with Pillow over the existing app screenshot) use the new line. "Snip it. Mark it. Flag it." moved to the footer (home and generated pages). README header matches.
+- Local check (Python static server plus the built-in browser, 1024 px and 375 px): `check_site.py` passes on 7 pages; generated pages up to date; no console errors; no horizontal overflow at 375 px. Not deployed at this checkpoint.
+- Open risk worth checking before any distribution push: the built-in Linear OAuth app has not been verified from a workspace other than the owner's (see the onboarding native gates in TESTING.md). If it is restricted to one workspace, Connect Linear fails for new users.
+
 ## Website: launch film is the hero video (owner request) — 2026-09-27
 
 - The owner asked for the launch film first, not next to the demo recording, with muted autoplay once visitors scroll a little, and a better mobile layout.

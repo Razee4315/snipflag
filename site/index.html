@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Snipflag: Screenshots to one Linear issue, free desktop app</title>
-<meta name="description" content="Capture, annotate and send several screenshots to one Linear issue. Free, open-source desktop app for Windows, macOS and Linux. Nothing uploads early.">
+<title>Snipflag: Turn screenshots into Linear issues</title>
+<meta name="description" content="Visual bug reporting for Linear. Capture anything on screen, mark it up, pixelate private data and create the issue. Free, open source, local-first.">
 <link rel="canonical" href="https://razee4315.github.io/snipflag/">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="theme-color" content="#0C1F1B">
@@ -13,16 +13,16 @@
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Snipflag">
-<meta property="og:title" content="Snipflag: Many screenshots. One Linear issue.">
-<meta property="og:description" content="A free, open-source desktop app that captures, annotates and sends several screenshots to one Linear issue.">
+<meta property="og:title" content="Snipflag: Turn screenshots into Linear issues">
+<meta property="og:description" content="See a bug. Snip it. Send it to Linear. A free, open-source desktop app for visual bug reports. Screenshots stay on your computer until you create the issue.">
 <meta property="og:url" content="https://razee4315.github.io/snipflag/">
 <meta property="og:image" content="https://razee4315.github.io/snipflag/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="The Snipflag editor with an annotated billing screenshot, next to the words Many screenshots. One Linear issue.">
+<meta property="og:image:alt" content="The Snipflag editor with an annotated billing screenshot, next to the words Turn screenshots into Linear issues.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Snipflag: Many screenshots. One Linear issue.">
-<meta name="twitter:description" content="Capture, annotate and send several screenshots to one Linear issue. Free for Windows, macOS and Linux.">
+<meta name="twitter:title" content="Snipflag: Turn screenshots into Linear issues">
+<meta name="twitter:description" content="See a bug. Snip it. Send it to Linear. Free, open-source visual bug reporting for Windows, macOS and Linux.">
 <meta name="twitter:image" content="https://razee4315.github.io/snipflag/og.png">
 
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -44,7 +44,7 @@
       "@type": "SoftwareApplication",
       "@id": "https://razee4315.github.io/snipflag/#app",
       "name": "Snipflag",
-      "description": "Desktop app that captures, annotates and sends several screenshots to one Linear issue.",
+      "description": "Visual bug reporting for Linear: a desktop app that captures anything on screen, annotates it and creates a Linear issue. Screenshots stay local until you submit.",
       "applicationCategory": "DeveloperApplication",
       "applicationSubCategory": "Bug reporting",
       "operatingSystem": "Windows, macOS, Linux",
@@ -59,17 +59,19 @@
       "image": "https://razee4315.github.io/snipflag/og.png",
       "screenshot": "https://razee4315.github.io/snipflag/assets/img/hero-dark.webp",
       "video": { "@type": "VideoObject", "name": "Snipflag in action", "description": "Capture a checkout page, annotate it, pixelate private fields, and create one Linear issue.", "thumbnailUrl": "https://razee4315.github.io/snipflag/assets/video/demo-poster.webp", "contentUrl": "https://razee4315.github.io/snipflag/assets/video/demo.mp4", "uploadDate": "2026-09-26", "duration": "PT33S" },
-      "featureList": ["Region capture across monitors", "Arrow, rectangle, ellipse, pen, highlighter, text, numbered steps and pixelate", "Up to 10 screenshots per Linear issue", "Linear OAuth with PKCE", "Drafts that survive restarts", "Duplicate-safe retries"]
+      "featureList": ["Screenshot to Linear issue in one window", "Region capture of any app on any monitor", "Arrow, rectangle, ellipse, pen, highlighter, text, numbered steps and pixelate", "Up to 10 screenshots per Linear issue", "Linear OAuth with PKCE", "Drafts that survive restarts", "Duplicate-safe retries"]
     },
     { "@type": "WebSite", "@id": "https://razee4315.github.io/snipflag/#site", "name": "Snipflag", "url": "https://razee4315.github.io/snipflag/" },
     {
       "@type": "FAQPage",
       "mainEntity": [
-        { "@type": "Question", "name": "Is Snipflag free?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. It's free and open source under the MIT License. No account, subscription or screenshot cloud." } },
-        { "@type": "Question", "name": "How does Snipflag connect to Linear?", "acceptedAnswer": { "@type": "Answer", "text": "With Linear OAuth and PKCE. In this version you create an OAuth application in Linear, add the callback http://127.0.0.1:47839/callback, and paste its client ID into Snipflag." } },
-        { "@type": "Question", "name": "Why does my computer warn about the installer?", "acceptedAnswer": { "@type": "Answer", "text": "v1.2.0 is an unsigned preview. Installers are built on GitHub Actions with published checksums, but they are not code-signed yet." } },
-        { "@type": "Question", "name": "Does it record video or console logs?", "acceptedAnswer": { "@type": "Answer", "text": "No, Snipflag is screenshots only. For recordings or browser logs, Jam or BugShot is a better fit." } },
-        { "@type": "Question", "name": "Does it work with Jira or GitHub Issues?", "acceptedAnswer": { "@type": "Answer", "text": "No, Linear only. You can still copy or save any annotated screenshot as a PNG." } }
+        { "@type": "Question", "name": "How is this different from ShareX or Snagit?", "acceptedAnswer": {"@type": "Answer", "text": "ShareX and Snagit are great screenshot tools. They give you an image, and filing the issue is still up to you. Snipflag is built for that last step: you pick the team, project, labels and priority in the app and create the Linear issue with every screenshot in order." } },
+        { "@type": "Question", "name": "Who is Snipflag for?", "acceptedAnswer": {"@type": "Answer", "text": "People who work in Linear every day and report visual bugs themselves: developers, designers, founders and small product teams. If you need session recordings, console logs or a feedback widget for customers, Jam or BugShot fits better." } },
+        { "@type": "Question", "name": "Is Snipflag free?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. It's free and open source under the MIT License. No account, subscription or screenshot cloud." } },
+        { "@type": "Question", "name": "How does Snipflag connect to Linear?", "acceptedAnswer": {"@type": "Answer", "text": "Choose Connect Linear, approve access in your browser, and go back to Snipflag. It uses Linear OAuth with PKCE, keeps the token in your system's credential store, and never uses a client secret." } },
+        { "@type": "Question", "name": "Why does my computer warn about the installer?", "acceptedAnswer": {"@type": "Answer", "text": "v1.2.0 is an unsigned preview. Installers are built on GitHub Actions with published checksums, but they are not code-signed yet." } },
+        { "@type": "Question", "name": "Does it record video or console logs?", "acceptedAnswer": {"@type": "Answer", "text": "No, Snipflag is screenshots only. For recordings or browser logs, Jam or BugShot is a better fit." } },
+        { "@type": "Question", "name": "Does it work with Jira or GitHub Issues?", "acceptedAnswer": {"@type": "Answer", "text": "No, and that's on purpose. Snipflag is built only for Linear so it can follow Linear's fields and workflow closely. You can still copy or save any annotated screenshot as a PNG." } }
       ]
     }
   ]
@@ -96,16 +98,17 @@
 <main id="main">
   <section class="hero" aria-labelledby="hero-title">
     <div class="wrap">
-      <h1 id="hero-title" data-split>Many screenshots. <span class="accent">One Linear issue.</span></h1>
-      <p class="lede" data-hero-fade>Capture your screen, mark what's wrong, and send it all to Linear in one clear issue.</p>
+      <p class="eyebrow" data-hero-fade>Visual bug reporting for Linear</p>
+      <h1 id="hero-title" data-split>Turn screenshots into <span class="accent">Linear issues.</span></h1>
+      <p class="lede" data-hero-fade>See a bug anywhere on your screen. Snip it, mark it up, and send it to Linear without breaking your flow.</p>
       <div class="hero-actions" data-hero-fade>
         <a class="btn btn-primary" id="dl-main" data-download href="#download">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12m0 0-5-5m5 5 5-5M5 20h14"/></svg>
           <span data-dl-label>Download free</span> <small data-dl-meta></small>
         </a>
-        <a class="btn btn-ghost" href="#how">See how it works</a>
+        <a class="btn btn-ghost" href="https://github.com/Razee4315/snipflag">View source <span aria-hidden="true">→</span></a>
       </div>
-      <p class="hero-meta" data-hero-fade>Windows, macOS, Linux · Open source · <a href="#faq-unsigned">Unsigned preview</a></p>
+      <p class="hero-meta" data-hero-fade>Free and open source · Windows, macOS, Linux · No Snipflag cloud · <a href="#faq-unsigned">Unsigned preview</a></p>
       <figure class="hero-shot hero-video" data-hero-shot>
         <video data-film width="1920" height="1080" muted loop playsinline preload="metadata" poster="assets/video/launch-poster.webp" aria-label="Snipflag launch film: the old screenshot-to-issue routine, then Snipflag capturing, marking up, pixelating and sending one Linear issue.">
           <source src="assets/video/launch.mp4" type="video/mp4">
@@ -129,13 +132,27 @@
     <div class="wrap">
       <div class="head center">
         <p class="eyebrow">How it works</p>
-        <h2 id="how-title" data-split>Three steps. No file juggling.</h2>
+        <h2 id="how-title" data-split>Screenshot tools stop at the image.</h2>
+        <p>Snipflag keeps going until the Linear issue exists. One shortcut replaces the whole routine.</p>
       </div>
-      <ol class="steps">
-        <li data-reveal><h3>Capture</h3><p>Press <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>2</kbd> and drag over anything on screen.</p></li>
-        <li data-reveal><h3>Mark it up</h3><p>Arrows, boxes, numbered steps, text and highlights. Pixelate anything private.</p></li>
-        <li data-reveal><h3>Send one issue</h3><p>Add more screenshots, then create one Linear issue with all of them, in order.</p></li>
-      </ol>
+      <div class="flow">
+        <div class="flow-card old" data-reveal>
+          <h3 class="label">The usual way</h3>
+          <ol class="chain">
+            <li><span>Screenshot</span></li><li><span>Paste into an editor</span></li><li><span>Draw a box</span></li><li><span>Save the file</span></li><li><span>Open Linear</span></li><li><span>New issue</span></li><li><span>Drag the file in</span></li><li><span>Pick project and assignee</span></li><li><span>Describe the picture</span></li>
+          </ol>
+          <p class="flow-foot">Then again for the next screenshot.</p>
+        </div>
+        <div class="flow-card new" data-reveal>
+          <h3 class="label">With Snipflag</h3>
+          <ol class="steps-short">
+            <li><span><strong>Snip it.</strong> Press <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>2</kbd> and drag over anything on screen, in any app.</span></li>
+            <li><span><strong>Mark it up.</strong> Arrows, boxes, numbered steps and text. Pixelate anything private.</span></li>
+            <li><span><strong>Send it to Linear.</strong> Pick team, project, labels and priority, then Create issue. Add more screenshots first if you need them.</span></li>
+          </ol>
+          <p class="flow-foot">One Linear issue, every screenshot in order.</p>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -163,13 +180,26 @@
     <div class="wrap">
       <div class="head center">
         <p class="eyebrow">Features</p>
-        <h2 id="features-title" data-split>Small app. Complete report.</h2>
+        <h2 id="features-title" data-split>Small app. Complete Linear issue.</h2>
       </div>
       <div class="features">
-        <div class="feature" data-reveal><h3>Up to 10 screenshots per issue</h3><p>Each keeps its own marks and undo history. Reorder them, caption them, and mention them with @image.</p></div>
-        <div class="feature" data-reveal><h3>Private by default</h3><p>Nothing uploads until you click Create issue. Pixelation is burned into the image.</p></div>
-        <div class="feature" data-reveal><h3>Never lose a draft</h3><p>Drafts save automatically and come back after a restart.</p></div>
-        <div class="feature" data-reveal><h3>No duplicate issues</h3><p>If the network drops, a retry checks Linear first instead of creating a second issue.</p></div>
+        <div class="feature" data-reveal><h3>Works outside the browser</h3><p>Capture any app on any monitor: desktop apps, design tools, terminals, the browser. No extension needed.</p></div>
+        <div class="feature" data-reveal><h3>Linear fields in the app</h3><p>Team, project, assignee, labels, priority and description templates. It remembers what you used for each team.</p></div>
+        <div class="feature" data-reveal><h3>Many screenshots, one issue</h3><p>Up to 10 per issue, each with its own marks and undo history. Reorder, caption, and mention them with @image.</p></div>
+        <div class="feature" data-reveal><h3>Pixelate before you send</h3><p>Real block pixelation burned into the pixels, not a layer someone can peel off.</p></div>
+        <div class="feature" data-reveal><h3>Never lose a draft</h3><p>Drafts save as you work and come back after a restart.</p></div>
+        <div class="feature" data-reveal><h3>No duplicate issues</h3><p>If the network drops, a retry checks Linear first instead of filing a second issue.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section pt0 statement-wrap" id="privacy" aria-labelledby="privacy-title">
+    <div class="wrap">
+      <div class="statement" data-reveal>
+        <p class="eyebrow">Local-first</p>
+        <h2 id="privacy-title">Your screenshots stay on your computer until you click Create issue.</h2>
+        <p>Then they go straight to Linear. There is no Snipflag server, no account and no analytics, and the code is open for anyone to check.</p>
+        <p class="statement-link"><a class="inline-link" href="https://github.com/Razee4315/snipflag">Read the source on GitHub</a></p>
       </div>
     </div>
   </section>
@@ -210,11 +240,13 @@
         <h2 id="faq-title" data-split>Questions.</h2>
       </div>
       <div class="faq">
+        <details class="qa"><summary>How is this different from ShareX or Snagit?</summary><div class="a"><p>ShareX and Snagit are great screenshot tools. They give you an image, and filing the issue is still up to you. Snipflag is built for that last step: you pick the team, project, labels and priority in the app and create the Linear issue with every screenshot in order. <a href="compare/sharex-greenshot-flameshot/">Snipflag vs ShareX, Greenshot and Flameshot</a></p></div></details>
+        <details class="qa"><summary>Who is Snipflag for?</summary><div class="a"><p>People who work in Linear every day and report visual bugs themselves: developers, designers, founders and small product teams. If you need session recordings, console logs or a feedback widget for customers, <a href="compare/jam/">Jam</a> or <a href="compare/bugshot/">BugShot</a> fits better.</p></div></details>
         <details class="qa"><summary>Is Snipflag free?</summary><div class="a"><p>Yes. It's free and open source under the MIT License. No account, subscription or screenshot cloud.</p></div></details>
-        <details class="qa"><summary>How does Snipflag connect to Linear?</summary><div class="a"><p>With Linear OAuth and PKCE. In this version you create an OAuth application in Linear, add the callback <code>http://127.0.0.1:47839/callback</code>, and paste its client ID into Snipflag. <a href="https://github.com/Razee4315/snipflag/blob/main/docs/LINEAR.md">Setup guide</a></p></div></details>
+        <details class="qa"><summary>How does Snipflag connect to Linear?</summary><div class="a"><p>Choose Connect Linear, approve access in your browser, and go back to Snipflag. It uses Linear OAuth with PKCE, keeps the token in your system's credential store, and never uses a client secret. <a href="https://github.com/Razee4315/snipflag#connecting-linear">Details</a></p></div></details>
         <details class="qa" id="faq-unsigned"><summary>Why does my computer warn about the installer?</summary><div class="a"><p>v1.2.0 is an unsigned preview. Installers are built on GitHub Actions with <a href="https://github.com/Razee4315/snipflag/releases/download/v1.2.0/SHA256SUMS.txt">published checksums</a>, but they are not code-signed yet.</p></div></details>
         <details class="qa"><summary>Does it record video or console logs?</summary><div class="a"><p>No, Snipflag is screenshots only. For recordings or browser logs, <a href="compare/jam/">Jam</a> or <a href="compare/bugshot/">BugShot</a> is a better fit.</p></div></details>
-        <details class="qa"><summary>Does it work with Jira or GitHub Issues?</summary><div class="a"><p>No, Linear only. You can still copy or save any annotated screenshot as a PNG.</p></div></details>
+        <details class="qa"><summary>Does it work with Jira or GitHub Issues?</summary><div class="a"><p>No, and that's on purpose. Snipflag is built only for Linear so it can follow Linear's fields and workflow closely. You can still copy or save any annotated screenshot as a PNG.</p></div></details>
       </div>
     </div>
   </section>
@@ -241,8 +273,8 @@
 
 <footer class="site-footer">
   <div class="wrap">
-    <div class="fine"><a class="brand" href="./"><img src="favicon.svg" width="28" height="28" alt="">Snipflag</a><p>© 2026 Snipflag contributors. Not affiliated with Linear.</p></div>
-    <nav aria-label="Product"><h2>Product</h2><a href="#how">How it works</a><a href="#faq">FAQ</a></nav>
+    <div class="fine"><a class="brand" href="./"><img src="favicon.svg" width="28" height="28" alt="">Snipflag</a><p class="tagline">Snip it. Mark it. Flag it.</p><p>© 2026 Snipflag contributors. Not affiliated with Linear.</p></div>
+    <nav aria-label="Product"><h2>Product</h2><a href="#how">How it works</a><a href="#privacy">Privacy</a><a href="#faq">FAQ</a></nav>
     <nav aria-label="Compare"><h2>Compare</h2><a href="compare/">All tools</a><a href="compare/screenpresso/">Screenpresso</a><a href="compare/jam/">Jam</a><a href="compare/bugshot/">BugShot</a></nav>
     <nav aria-label="Project"><h2>Project</h2><a href="https://github.com/Razee4315/snipflag">GitHub</a><a href="https://github.com/Razee4315/snipflag/releases">Releases</a><a href="https://github.com/Razee4315/snipflag/blob/main/LICENSE">MIT License</a></nav>
   </div>
