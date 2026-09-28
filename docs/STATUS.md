@@ -1,5 +1,12 @@
 # Current state / handoff
 
+## Search Console: crawl-demand fixes — 2026-09-28
+
+- Research (Google's Sitemaps report help, Mueller's statements, GitHub community threads, DEV write-ups): "Couldn't fetch" on healthy github.io sitemaps usually means low crawl demand (new site, shared host, no links). Google calls sitemaps "merely a hint". Reports show sitemaps stuck for weeks while URL Inspection → Request indexing still works; a custom domain fixed it for some. The sitemap ping endpoint was removed in 2023.
+- New repo [Razee4315/razee4315.github.io](https://github.com/Razee4315/razee4315.github.io) (owner-approved) serves `https://razee4315.github.io/`: a hub page linking Snipflag, Paperling, Vuoom and coldframe; the root `robots.txt` (the only one crawlers read on this host) lists all five sitemaps; a 404 page that sends wrong-case project paths (e.g. `/paperling/`) to the real one. Verified live: all 12 checked URLs as expected, and the lowercase redirect works in the browser.
+- Snipflag `a9d61f8`: "More by Saqlain Razee" footer links on every page; sitemap `lastmod` now uses `UPDATED_ISO` (last site-wide change, 2026-09-28) instead of the competitor fact-check date. [Website 36366747463](https://github.com/Razee4315/snipflag/actions/runs/36366747463) green; the live footer has the links.
+- Owner actions still needed: Request indexing for each site's home page; resubmit `sitemap.xml?v=2` (a fresh URL for the stuck entry); add a URL-prefix property for `https://razee4315.github.io/`; import the sites into Bing Webmaster Tools. If still stuck after about two weeks, consider a custom domain on the root repo (all project sites move under it, and canonicals and sitemaps then need updating).
+
 ## Website: Linear-first positioning (owner request) — 2026-09-28
 
 - Why: early Reddit replies ("ShareX already does this", "use Snagit") showed visitors read Snipflag as a screenshot tool. The site now positions it as "Visual bug reporting for Linear".
