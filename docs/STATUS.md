@@ -14,6 +14,14 @@ Verification: [Checks 36923352373](https://github.com/Razee4315/snipflag/actions
 
 **Not verified:** no capture has been run with this build, so the speed gain is unmeasured. Open native gates are in TESTING.md "Capture speed": measured times, no editor in the frame, no stale or black flash on a reused overlay, keyboard focus (Escape/Enter, and no focus theft at warm-up), tray capture, display changes, idle memory, and the `snipframe` image on macOS/Linux webviews. No release, tag or version change.
 
+### Owner test of `9dd39bf` and follow-up — 2026-10-02
+
+Owner installed the Windows build (Windows 10 19045): capture with the editor in the tray is good; with the editor open it is faster but **a half-faded editor appeared in the screenshot** (Windows fades a hiding window for about 200 ms; two compositor passes were not enough). No timing numbers were reported.
+- `d6f850f`: during a capture the editor hides with `DWMWA_TRANSITIONS_FORCEDISABLED` and content protection (excluded from capture), both removed when the editor returns; settle margin 40 ms after the two `DwmFlush` passes (300 ms if DWM does not flush). Windows only.
+- `907ba7e` (owner chose "adjust before confirm"): the selection stays after the drag with eight handles, move, arrow/Shift+arrow nudges; Enter, double-click or Capture confirms; Escape clears the selection, then cancels. Drag-and-release no longer captures at once. `adjustRect` in `model.ts` with a unit test.
+- [Checks 36928897037](https://github.com/Razee4315/snipflag/actions/runs/36928897037) **passed** at `907ba7e`. Checks 36928677816 for `d6f850f` was cancelled by the newer push, not failed. [Development installers 36929504653](https://github.com/Razee4315/snipflag/actions/runs/36929504653) **passed all four targets** at `907ba7e`: [Windows NSIS/MSI](https://github.com/Razee4315/snipflag/actions/runs/36929504653/artifacts/11195422879).
+- **Not verified:** whether the ghost is gone, and the adjustable selection in WebView2 (pointer capture, double-click, focus). Both need the owner's test of this build.
+
 Next: the owner installs the Windows artifact, captures a few times, and reports the Settings → Capture timing line. If the "save" or "show" step dominates, tune that step; a native (non-webview) selection overlay is the fallback if this is still too slow.
 
 ## Search Console: crawl-demand fixes — 2026-09-28
