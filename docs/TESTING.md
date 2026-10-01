@@ -1,5 +1,11 @@
 # Test and release gates
 
+## Capture speed (warm overlays, raw frames)
+
+Automated coverage: Rust tests for the BMP frame layout (bottom-up BGR, padded rows), overlay slot parsing, and crop clamping; strict typecheck of the overlay. CI cannot run a capture.
+
+Native gates (Windows first): Settings → Capture shows the last capture's time and steps; record it for shortcut captures with the editor open and in the tray, at 1080p and 4K, and compare with the previous build. The editor must never appear in the frozen frame (hide now waits two compositor passes, not 300 ms). A reused overlay must not flash the previous screenshot or a black frame. Escape and Enter work without clicking the overlay first. Creating hidden overlays 1.5 s after launch must not take keyboard focus from the editor. Capture from the tray menu has no menu remnant. Plug in or remove a display between captures; mixed-DPI and negative-origin displays still align. Cancel then capture again at once. Large selections return to the editor quickly and still save and upload. Idle memory with the warm overlays. macOS/Linux: overlays reuse correctly and the `snipframe` image loads in WKWebView/WebKitGTK.
+
 ## Signed updates
 
 Automated coverage: fixed HTTPS release endpoint, bounded release notes, `autoUpdate` settings validation, build-time public key format check, workflow preflight requiring both or neither key halves, browser About section without updates. CI cannot prove an update installs.

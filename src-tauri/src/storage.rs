@@ -47,7 +47,8 @@ pub fn decode_png(value: &str) -> Result<(Vec<u8>, u32, u32), String> {
 pub fn png_url(bytes: &[u8]) -> String { format!("data:image/png;base64,{}", STANDARD.encode(bytes)) }
 pub fn encode_png(image: &RgbaImage, fast: bool) -> Result<Vec<u8>, String> {
     let mut out = Vec::new();
-    let encoder = if fast { PngEncoder::new_with_quality(&mut out, CompressionType::Fast, FilterType::NoFilter) } else { PngEncoder::new_with_quality(&mut out, CompressionType::Default, FilterType::Adaptive) };
+    // Fast keeps a cheap row filter: flat screenshot areas still compress well at a fraction of the adaptive cost.
+    let encoder = if fast { PngEncoder::new_with_quality(&mut out, CompressionType::Fast, FilterType::Up) } else { PngEncoder::new_with_quality(&mut out, CompressionType::Default, FilterType::Adaptive) };
     encoder.write_image(image.as_raw(), image.width(), image.height(), ExtendedColorType::Rgba8).map_err(|_| "Could not encode the image.")?;
     Ok(out)
 }

@@ -2,6 +2,12 @@
 
 All notable changes to Snipflag are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Faster capture: overlay windows are opened ahead of time and reused, the frozen frame goes to the overlay uncompressed from memory, the wait after hiding the editor follows the Windows compositor instead of a fixed 300 ms, and the selection is encoded with fast compression. Settings → Capture shows how long the last capture took.
+
 ## [1.2.0] - 2026-09-26
 
 ### Added

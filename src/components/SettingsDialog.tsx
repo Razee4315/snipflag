@@ -1,7 +1,7 @@
-import { useState, type CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { acceleratorFromEvent, REDIRECT_URI, shortcutLabel, type Connection, type Settings, type Template } from '../model';
 import { TEMPLATE_LIMITS, templatesOf, tidyTemplates } from '../templates';
-import { copyText, desktop, errorText, openAboutLink, openLinearSetup, type AboutLink, type AppStatus, type AvailableUpdate } from '../native';
+import { captureTiming, copyText, desktop, errorText, openAboutLink, openLinearSetup, type AboutLink, type AppStatus, type AvailableUpdate, type CaptureTiming } from '../native';
 import Dialog from './Dialog';
 import { Icon, Mark, type IconName } from './icons';
 import { play } from '../sound';
@@ -27,6 +27,8 @@ export default function SettingsDialog(p: Props) {
   const [recording, setRecording] = useState(false); const [confirmClear, setConfirmClear] = useState(false);
   const [added, setAdded] = useState('');
   const [updateState, setUpdateState] = useState<{ checking?: boolean; found?: AvailableUpdate | null; error?: string }>({});
+  const [timing, setTiming] = useState<CaptureTiming | null>(null);
+  useEffect(() => { captureTiming().then(setTiming).catch(() => undefined); }, []);
   const builtin = !!p.status?.builtinLinearClient;
   const dirty = JSON.stringify(draft) !== JSON.stringify(p.settings);
   const save = async (next = draft) => {
@@ -136,6 +138,7 @@ export default function SettingsDialog(p: Props) {
           <small id="shortcut-help" className="muted">Focus the field and press a combination with Ctrl, Alt, or Shift. It captures even when Snipflag is in the tray.</small>
         </label>
         {p.status?.shortcutError && <p className="warn small">{p.status.shortcutError}</p>}
+        {timing && <p className="small muted">Last capture was ready in {timing.total} ms (save {timing.editor}, hide {timing.settle}, read screen {timing.grab}, show {timing.overlay}).</p>}
         <label className="check switch">
           <input type="checkbox" role="switch" checked={draft.launchAtLogin} disabled={!desktop} onChange={e => setDraft({ ...draft, launchAtLogin: e.target.checked })} />
           Start Snipflag in the tray when I sign in

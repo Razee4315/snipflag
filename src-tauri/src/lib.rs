@@ -56,7 +56,8 @@ pub fn show_main(app: &AppHandle) {
     REVEALED.store(true, Ordering::SeqCst);
     if let Some(window) = app.get_webview_window("main") { let _ = window.unminimize(); let _ = window.show(); let _ = window.set_focus(); }
 }
-fn request_capture(app: &AppHandle) {
+fn request_capture(app: &AppHandle, tray: bool) {
+    capture::requested(app, tray);
     // The editor saves its draft first, then calls start_capture.
     let _ = app.emit_to("main", "capture-requested", ());
 }
@@ -205,7 +206,7 @@ fn build_tray(app: &AppHandle) -> tauri::Result<()> {
     let menu = Menu::with_items(app, &[&capture, &show, &separator, &quit])?;
     let mut tray = TrayIconBuilder::with_id("main").tooltip("Snipflag").menu(&menu).show_menu_on_left_click(false)
         .on_menu_event(|app, event| match event.id().as_ref() {
-            "capture" => request_capture(app),
+            "capture" => request_capture(app, true),
             "show" => show_main(app),
             "quit" => request_quit(app),
             _ => {}
@@ -227,13 +228,14 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_autostart::init(MacosLauncher::LaunchAgent, Some(vec!["--minimized"])))
         .plugin(tauri_plugin_global_shortcut::Builder::new().with_handler(|app, _shortcut, event| {
-            if event.state == ShortcutState::Pressed { request_capture(app); }
+            if event.state == ShortcutState::Pressed { request_capture(app, false); }
         }).build())
         .plugin(tauri_plugin_updater::Builder::new().build())
+        .register_asynchronous_uri_scheme_protocol("snipframe", capture::frame_protocol)
         .manage(update::PendingUpdate(tokio::sync::Mutex::new(None)))
         .manage(auth::NetworkLock(tokio::sync::Mutex::new(())))
         .manage(auth::LoginCancel(Mutex::new(None)))
-        .manage(capture::CaptureState(Mutex::new(None)))
+        .manage(capture::CaptureState::default())
         .manage(files::ClipboardState(Mutex::new(None)))
         .manage(ShortcutStatus(Mutex::new(None)))
         .manage(QuitState::default())
@@ -253,6 +255,12 @@ pub fn run() {
             tauri::async_runtime::spawn(async move {
                 tokio::time::sleep(std::time::Duration::from_secs(4)).await;
                 reveal(&handle);
+            });
+            // Capture overlays are opened hidden once the editor has had time to start.
+            let handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                tokio::time::sleep(std::time::Duration::from_millis(1500)).await;
+                capture::prewarm(&handle);
             });
             Ok(())
         })
@@ -274,7 +282,7 @@ pub fn run() {
             save_settings, app_status, editor_window, finish_quit,
             auth::connect_linear, auth::cancel_login, auth::disconnect_linear,
             linear::linear_connection, linear::linear_team_options, linear::submit_issue, linear::reconcile_issue, linear::open_issue, linear::open_linear_setup, linear::open_about_link,
-            capture::start_capture, capture::capture_frame, capture::capture_ready, capture::capture_select, capture::capture_cancel,
+            capture::start_capture, capture::capture_state, capture::capture_ready, capture::capture_timing, capture::capture_select, capture::capture_cancel,
             files::export_png, files::read_clipboard_image, files::copy_text,
             update::check_update, update::install_update,
         ])

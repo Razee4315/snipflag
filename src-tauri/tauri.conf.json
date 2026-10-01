@@ -12,8 +12,8 @@
   "app": {
     "windows": [{ "label": "main", "title": "Snipflag", "width": 1280, "height": 840, "center": true, "minWidth": 640, "minHeight": 480, "decorations": false, "visible": false, "dragDropEnabled": false }],
     "security": {
-      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src ipc: http://ipc.localhost; object-src 'none'; frame-src 'none'; base-uri 'self'",
-      "devCsp": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src ipc: http://ipc.localhost ws://localhost:1420 ws://127.0.0.1:1420 http://localhost:1420; object-src 'none'"
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: snipframe: http://snipframe.localhost; connect-src ipc: http://ipc.localhost; object-src 'none'; frame-src 'none'; base-uri 'self'",
+      "devCsp": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: snipframe: http://snipframe.localhost; connect-src ipc: http://ipc.localhost ws://localhost:1420 ws://127.0.0.1:1420 http://localhost:1420; object-src 'none'"
     }
   },
   "bundle": {

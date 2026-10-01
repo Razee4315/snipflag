@@ -93,6 +93,9 @@ export const checkUpdate = () => native<AvailableUpdate | null>('check_update');
 /** Downloads, verifies and installs the checked update, then restarts. Save the draft first. */
 export const installUpdate = () => native<void>('install_update');
 export const startCapture = () => native<void>('start_capture');
+/** Milliseconds of the last capture: saving the draft, hiding the editor, reading the screen, showing the overlay. */
+export interface CaptureTiming { total: number; editor: number; settle: number; grab: number; overlay: number }
+export const captureTiming = () => desktop ? native<CaptureTiming | null>('capture_timing') : Promise.resolve(null);
 export const finishQuit = (requestId: string, saved: boolean) => native<void>('finish_quit', { requestId, saved });
 
 export interface RawImage { dataUrl: string; width: number; height: number }

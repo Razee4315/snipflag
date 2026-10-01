@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "capture",
-  "description": "Capture overlays use role-checked Rust frame/select/cancel commands only.",
+  "description": "Capture overlays listen for capture begin/end and use role-checked Rust state/ready/select/cancel commands only.",
   "windows": ["capture-*"],
   "permissions": ["core:default"]
 }
