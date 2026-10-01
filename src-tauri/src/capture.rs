@@ -15,7 +15,26 @@ static GENERATION: AtomicU64 = AtomicU64::new(0);
 
 #[cfg(windows)]
 #[link(name = "dwmapi")]
-extern "system" { fn DwmFlush() -> i32; }
+extern "system" {
+    fn DwmFlush() -> i32;
+    fn DwmSetWindowAttribute(hwnd: isize, attribute: u32, value: *const std::ffi::c_void, size: u32) -> i32;
+}
+
+/// Windows fades a hiding window out over about 200 ms, which left a ghost of the editor in the frozen frame.
+/// While `on`, the editor hides and shows without that transition and is excluded from screen capture.
+fn out_of_frame(window: &WebviewWindow, on: bool) {
+    #[cfg(windows)]
+    {
+        let _ = window.set_content_protected(on);
+        if let Ok(hwnd) = window.hwnd() {
+            let disabled = on as i32;
+            // DWMWA_TRANSITIONS_FORCEDISABLED
+            unsafe { DwmSetWindowAttribute(hwnd.0 as isize, 3, &disabled as *const i32 as *const std::ffi::c_void, 4); }
+        }
+    }
+    #[cfg(not(windows))]
+    { let _ = (window, on); }
+}
 
 fn ms(duration: Duration) -> u64 { duration.as_millis() as u64 }
 fn unavailable() -> String {
@@ -125,8 +144,8 @@ async fn settle(main: Option<&WebviewWindow>, was_visible: bool, since_tray: Opt
         let _ = main.map(|w| w.is_visible());
         let flushing = Instant::now();
         let _ = tauri::async_runtime::spawn_blocking(|| for _ in 0..2 { unsafe { DwmFlush(); } }).await;
-        // Two composition passes remove the editor. Without composition DwmFlush returns at once; wait a fixed time instead.
-        tokio::time::sleep(Duration::from_millis(if flushing.elapsed() < Duration::from_millis(3) { 120 } else { 12 })).await;
+        // Two composition passes remove the editor, plus a margin. Without composition DwmFlush returns at once; wait a fixed time instead.
+        tokio::time::sleep(Duration::from_millis(if flushing.elapsed() < Duration::from_millis(3) { 300 } else { 40 })).await;
     }
     #[cfg(not(windows))]
     { let _ = main; tokio::time::sleep(Duration::from_millis(300)).await; }
@@ -140,6 +159,7 @@ fn finish(app: &AppHandle) {
     // A capture always returns to the full workspace; a larger size the user chose is kept.
     if let Some(main) = app.get_webview_window("main") { let _ = crate::fit_workspace(&main, false); }
     crate::show_main(app);
+    if let Some(main) = app.get_webview_window("main") { out_of_frame(&main, false); }
 }
 pub fn cancel(app: &AppHandle) {
     let active = app.state::<CaptureState>().active.lock().map(|s| s.is_some()).unwrap_or(false);
@@ -167,7 +187,7 @@ pub async fn begin(app: AppHandle) -> Result<(), String> {
     };
     let main = app.get_webview_window("main");
     let was_visible = main.as_ref().and_then(|w| w.is_visible().ok()).unwrap_or(false);
-    if let Some(w) = &main { let _ = w.hide(); }
+    if let Some(w) = &main { if was_visible { out_of_frame(w, true); } let _ = w.hide(); }
     settle(main.as_ref(), was_visible, request.filter(|r| r.1).map(|r| r.0.elapsed())).await;
     let settled = Instant::now();
     let frames = match tauri::async_runtime::spawn_blocking(grab).await {
