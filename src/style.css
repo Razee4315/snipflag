@@ -60,7 +60,7 @@
   --glow-a: rgba(164, 80, 44, 0.1); --glow-b: rgba(217, 164, 65, 0.18);
   --sheen: inset 0 1px 0 rgba(255, 252, 244, 0.85);
   /* Laid paper: long horizontal fibres. */
-  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.02 .7' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .36 0 0 0 0 .25 0 0 0 0 .12 0 0 0 .2 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.05 .45' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .36 0 0 0 0 .25 0 0 0 0 .12 0 0 0 .1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   --grain-opacity: 1; color-scheme: light;
 }
 :root[data-theme="blossom"] {
@@ -104,7 +104,7 @@
   color-scheme: dark;
   --glow-a: rgba(255, 180, 84, 0.07); --glow-b: rgba(255, 255, 255, 0.04);
   /* Brushed metal: long horizontal streaks. */
-  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.006 .8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .075 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.01 .8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .04 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   --grain-opacity: 1;
 }
 
@@ -488,7 +488,9 @@ option { background: var(--surface); color: var(--text); }
 .dialog-body { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 16px; padding: 4px 24px 20px; overflow-y: auto; scrollbar-gutter: stable; }
 .dialog-foot { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--border); background: var(--surface-2); }
 .dialog-foot > span { margin-right: auto; }
-.settings-nav { position: sticky; top: 0; z-index: 2; flex-shrink: 0; display: grid; grid-template-columns: repeat(var(--n, 5), 1fr); padding: 4px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); }
+.settings-nav { position: sticky; top: 0; z-index: 2; flex-shrink: 0; display: grid; grid-template-columns: repeat(var(--n, 5), 1fr); padding: 4px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border);
+  /* Opaque surround: scrolled content never shows around the rounded tabs. */
+  box-shadow: 0 0 0 8px var(--surface); }
 .settings-nav::before {
   content: ""; position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc((100% - 8px) / var(--n, 5)); border-radius: 9px;
   background: var(--surface); box-shadow: var(--shadow-sm), 0 0 0 1px var(--border); transform: translateX(calc(var(--i, 0) * 100%)); transition: transform 320ms var(--spring);
