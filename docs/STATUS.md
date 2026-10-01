@@ -1,5 +1,21 @@
 # Current state / handoff
 
+## Capture speed (owner request) — implemented, not runtime-verified, 2026-10-02
+
+The owner reported that capture is slow next to Windows Snipping Tool and asked whether to rewrite in Qt. Decision: keep Tauri; the delay came from the capture flow. Implemented in `9dd39bf`:
+- **Warm overlays:** one hidden overlay window per display is opened 1.5 s after launch and reused (hidden, not destroyed, after each capture; created on demand for a new display). Previously a WebView2 window was created for every capture.
+- **Raw frames:** the overlay loads its frozen frame from the new in-memory `snipframe` protocol as an uncompressed 24-bit BMP. The PNG encode, base64 and IPC string for the preview are gone. Each capture has a generation; other windows and ended captures get 404.
+- **Hide wait:** on Windows, two `DwmFlush` passes after the editor hide is applied (was a fixed 300 ms; 0 instead of 60 ms when the editor was already hidden). macOS/Linux keep 300 ms. Tray-menu captures wait 350 ms from the click.
+- **After selection:** fast PNG compression (Up filter), dense encoder only if the result exceeds 20 MB.
+- **Timing:** Settings → Capture shows the last capture's total and steps (save, hide, read screen, show). Durations only.
+- Overlays are created unfocused and get window and webview focus when shown. The overlay waits for the frame to paint (at most 120 ms) before showing.
+
+Verification: [Checks 36923352373](https://github.com/Razee4315/snipflag/actions/runs/36923352373) **passed** at `9dd39bf` (frontend build, unit and browser tests; Rust tests and all-target checks on Windows, macOS, Linux). [Development installers 36924611540](https://github.com/Razee4315/snipflag/actions/runs/36924611540) **passed all four targets** at `9dd39bf`, version 1.2.0, 7-day retention: [Windows NSIS/MSI](https://github.com/Razee4315/snipflag/actions/runs/36924611540/artifacts/11193562887). No local build or install.
+
+**Not verified:** no capture has been run with this build, so the speed gain is unmeasured. Open native gates are in TESTING.md "Capture speed": measured times, no editor in the frame, no stale or black flash on a reused overlay, keyboard focus (Escape/Enter, and no focus theft at warm-up), tray capture, display changes, idle memory, and the `snipframe` image on macOS/Linux webviews. No release, tag or version change.
+
+Next: the owner installs the Windows artifact, captures a few times, and reports the Settings → Capture timing line. If the "save" or "show" step dominates, tune that step; a native (non-webview) selection overlay is the fallback if this is still too slow.
+
 ## Search Console: crawl-demand fixes — 2026-09-28
 
 - Research (Google's Sitemaps report help, Mueller's statements, GitHub community threads, DEV write-ups): "Couldn't fetch" on healthy github.io sitemaps usually means low crawl demand (new site, shared host, no links). Google calls sitemaps "merely a hint". Reports show sitemaps stuck for weeks while URL Inspection → Request indexing still works; a custom domain fixed it for some. The sitemap ping endpoint was removed in 2023.
