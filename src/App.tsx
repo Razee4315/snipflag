@@ -175,9 +175,13 @@ export default function App() {
   useEffect(() => {
     const subs = [
       on('capture-requested', () => { void captureRef.current(); }),
-      on<RawImage>('capture-complete', p => {
+      on<RawImage & { copied?: boolean | null }>('capture-complete', p => {
         useStore.getState().setBusy(false);
-        if (addImages([{ id: crypto.randomUUID(), name: '', width: p.width, height: p.height, dataUrl: p.dataUrl, annotations: [] }])) { play('capture'); setFlash(f => f + 1); }
+        if (addImages([{ id: crypto.randomUUID(), name: '', width: p.width, height: p.height, dataUrl: p.dataUrl, annotations: [] }])) {
+          play('capture'); setFlash(f => f + 1);
+          if (p.copied) notify('Capture copied to the clipboard.');
+          else if (p.copied === false) notify('The capture was added, but it could not be copied to the clipboard.', 'error');
+        }
       }),
       on('capture-cancelled', () => useStore.getState().setBusy(false)),
       on<string>('capture-failed', m => { useStore.getState().setBusy(false); notify(m, 'error'); play('error'); }),

@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { acceleratorFromEvent, REDIRECT_URI, shortcutLabel, type Connection, type Settings, type Template } from '../model';
 import { TEMPLATE_LIMITS, templatesOf, tidyTemplates } from '../templates';
 import { captureTiming, copyText, desktop, errorText, openAboutLink, openLinearSetup, type AboutLink, type AppStatus, type AvailableUpdate, type CaptureTiming } from '../native';
@@ -17,7 +17,17 @@ const CREATOR: { target: AboutLink; label: string; detail: string; icon: IconNam
   { target: 'github', label: 'GitHub', detail: 'Razee4315', icon: 'github' },
   { target: 'linkedin', label: 'LinkedIn', detail: 'saqlainrazee', icon: 'linkedin' },
 ];
-const THEMES: { value: Settings['theme']; label: string }[] = [{ value: 'system', label: 'Match system' }, { value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' }];
+/** Preview colors mirror each theme's background, surface and primary tokens in style.css. */
+const THEMES: { value: Settings['theme']; label: string; colors: [string, string, string] }[] = [
+  { value: 'system', label: 'Match system', colors: ['#EFEEE8', '#FCFBF8', '#8CDCC1'] },
+  { value: 'light', label: 'Light', colors: ['#EFEEE8', '#FCFBF8', '#0F6B62'] },
+  { value: 'dark', label: 'Dark', colors: ['#111C1A', '#1A2A27', '#8CDCC1'] },
+  { value: 'paper', label: 'Paper', colors: ['#EADFCB', '#FAF3E4', '#A4502C'] },
+  { value: 'blossom', label: 'Blossom', colors: ['#F1E4E9', '#FFF9FB', '#B03A68'] },
+  { value: 'midnight', label: 'Midnight', colors: ['#0C0F1F', '#171B33', '#9DA8FF'] },
+  { value: 'graphite', label: 'Graphite', colors: ['#121212', '#1F1F1F', '#FFB454'] },
+];
+const DELAYS = [{ v: 0, l: 'No delay' }, { v: 3, l: '3 seconds' }, { v: 5, l: '5 seconds' }, { v: 10, l: '10 seconds' }];
 const RETENTION = [{ v: 7, l: '7 days' }, { v: 30, l: '30 days' }, { v: 90, l: '90 days' }, { v: 365, l: '1 year' }, { v: 0, l: 'Keep until I delete' }];
 
 export default function SettingsDialog(p: Props) {
@@ -30,6 +40,14 @@ export default function SettingsDialog(p: Props) {
   const [timing, setTiming] = useState<CaptureTiming | null>(null);
   useEffect(() => { captureTiming().then(setTiming).catch(() => undefined); }, []);
   const builtin = !!p.status?.builtinLinearClient;
+  // A picked theme previews at once; closing without saving returns to the saved one.
+  const savedTheme = useRef(p.settings.theme); savedTheme.current = p.settings.theme;
+  useEffect(() => {
+    const root = document.documentElement;
+    const apply = (theme: Settings['theme']) => { if (theme === 'system') delete root.dataset.theme; else root.dataset.theme = theme; };
+    apply(draft.theme);
+    return () => apply(savedTheme.current);
+  }, [draft.theme]);
   const dirty = JSON.stringify(draft) !== JSON.stringify(p.settings);
   const save = async (next = draft) => {
     setError(''); setSaved('');
@@ -143,6 +161,30 @@ export default function SettingsDialog(p: Props) {
           <input type="checkbox" role="switch" checked={draft.launchAtLogin} disabled={!desktop} onChange={e => setDraft({ ...draft, launchAtLogin: e.target.checked })} />
           Start Snipflag in the tray when I sign in
         </label>
+        <h3 className="subhead">Selecting an area</h3>
+        <label className="check switch">
+          <input type="checkbox" role="switch" checked={draft.adjustSelection} onChange={e => setDraft({ ...draft, adjustSelection: e.target.checked })} />
+          Adjust the selection before capturing
+        </label>
+        <small className="muted">Off: releasing the drag captures at once. On: resize or move the selection, then press Enter or Capture.</small>
+        <label className="check switch">
+          <input type="checkbox" role="switch" checked={draft.magnifier} onChange={e => setDraft({ ...draft, magnifier: e.target.checked })} />
+          Show a magnifier at the pointer
+        </label>
+        <small className="muted">A zoomed pixel view with the position, for exact edges.</small>
+        <h3 className="subhead">Clipboard and timing</h3>
+        <label className="check switch">
+          <input type="checkbox" role="switch" checked={draft.copyOnCapture} onChange={e => setDraft({ ...draft, copyOnCapture: e.target.checked })} />
+          Copy every capture to the clipboard
+        </label>
+        <small className="muted">The capture still opens in the editor; the unmarked image is also ready to paste elsewhere.</small>
+        <label className="field">
+          <span>Delay before the screen is frozen</span>
+          <select value={draft.captureDelay} onChange={e => setDraft({ ...draft, captureDelay: Number(e.target.value) })}>
+            {DELAYS.map(d => <option key={d.v} value={d.v}>{d.l}</option>)}
+          </select>
+          <small className="muted">Time to open a menu or tooltip. Snipflag hides, waits, then shows the selection screen.</small>
+        </label>
       </section>
 
       <section className="settings-section" hidden={section !== 'Appearance'}><h3>Appearance</h3>
@@ -150,7 +192,7 @@ export default function SettingsDialog(p: Props) {
           {THEMES.map(t => (
             <label key={t.value} className={draft.theme === t.value ? 'theme-option selected' : 'theme-option'}>
               <input type="radio" name="theme" value={t.value} checked={draft.theme === t.value} onChange={() => setDraft({ ...draft, theme: t.value })} />
-              <span className={`theme-swatch ${t.value}`} aria-hidden="true"><i /><b /><b /></span>
+              <span className={`theme-swatch ${t.value}`} aria-hidden="true" style={{ '--sw-bg': t.colors[0], '--sw-surface': t.colors[1], '--sw-primary': t.colors[2] } as CSSProperties}><i /><b /><b /></span>
               <span className="theme-name">{t.label}</span>
             </label>
           ))}

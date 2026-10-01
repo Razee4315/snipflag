@@ -2,11 +2,23 @@ use serde_json::{json, Value};
 use std::{sync::{atomic::{AtomicU64, Ordering}, Arc, Mutex}, time::{Duration, Instant}};
 use tauri::{http, AppHandle, Emitter, Manager, Runtime, UriSchemeContext, UriSchemeResponder, Webview, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 use xcap::{image::{imageops, RgbaImage}, Monitor};
-use crate::storage::{encode_png, main_only, png_url, MAX_IMAGE_BYTES};
+use crate::storage::{encode_png, main_only, png_url, Storage, MAX_IMAGE_BYTES};
 
 pub struct Frame { x: i32, y: i32, width: u32, height: u32, image: Arc<RgbaImage> }
 /// One capture from request to selection. `frames` is empty until the screen has been read.
-pub struct Active { generation: u64, frames: Vec<Frame>, started: Instant, editor: u64, settle: u64, grab: u64, shown: bool }
+pub struct Active { generation: u64, frames: Vec<Frame>, started: Instant, editor: u64, settle: u64, grab: u64, shown: bool, options: Options }
+/// Capture preferences read from settings when a capture starts.
+#[derive(Clone, Copy, Default)]
+struct Options { adjust: bool, magnifier: bool, copy: bool, delay: u64 }
+impl Options {
+    fn read(app: &AppHandle) -> Self {
+        let Ok(settings) = app.state::<Storage>().settings() else { return Options::default() };
+        let on = |key: &str| settings[key].as_bool().unwrap_or(false);
+        Options { adjust: on("adjustSelection"), magnifier: on("magnifier"), copy: on("copyOnCapture"), delay: settings["captureDelay"].as_u64().unwrap_or(0).min(10) }
+    }
+    /// What an overlay needs to know about a capture.
+    fn overlay(&self, generation: u64) -> Value { json!({"generation": generation, "adjust": self.adjust, "magnifier": self.magnifier}) }
+}
 /// `active` is `Some` while a capture is in progress and holds the frozen frame of every monitor.
 #[derive(Default)]
 pub struct CaptureState { active: Mutex<Option<Active>>, requested: Mutex<Option<(Instant, bool)>>, last: Mutex<Option<Value>> }
@@ -177,11 +189,12 @@ pub fn crop(image: &RgbaImage, x: f64, y: f64, width: f64, height: f64) -> Optio
 pub async fn begin(app: AppHandle) -> Result<(), String> {
     let started = Instant::now();
     let generation = GENERATION.fetch_add(1, Ordering::SeqCst) + 1;
+    let options = Options::read(&app);
     let request = {
         let state = app.state::<CaptureState>();
         let mut guard = state.active.lock().map_err(|_| "Capture is unavailable.")?;
         if guard.is_some() { return Err("A capture is already in progress.".into()); }
-        *guard = Some(Active { generation, frames: Vec::new(), started, editor: 0, settle: 0, grab: 0, shown: false });
+        *guard = Some(Active { generation, frames: Vec::new(), started, editor: 0, settle: 0, grab: 0, shown: false, options });
         let request = state.requested.lock().ok().and_then(|mut r| r.take()).filter(|(at, _)| at.elapsed() < Duration::from_secs(10));
         request
     };
@@ -189,6 +202,8 @@ pub async fn begin(app: AppHandle) -> Result<(), String> {
     let was_visible = main.as_ref().and_then(|w| w.is_visible().ok()).unwrap_or(false);
     if let Some(w) = &main { if was_visible { out_of_frame(w, true); } let _ = w.hide(); }
     settle(main.as_ref(), was_visible, request.filter(|r| r.1).map(|r| r.0.elapsed())).await;
+    // An optional delay leaves time to open a menu or tooltip before the screen is frozen.
+    if options.delay > 0 { tokio::time::sleep(Duration::from_secs(options.delay)).await; }
     let settled = Instant::now();
     let frames = match tauri::async_runtime::spawn_blocking(grab).await {
         Ok(Ok(frames)) => frames,
@@ -204,7 +219,7 @@ pub async fn begin(app: AppHandle) -> Result<(), String> {
             Some(active) if active.generation == generation => {
                 active.frames = frames;
                 active.editor = request.map(|r| ms(started.saturating_duration_since(r.0))).unwrap_or(0);
-                active.settle = ms(settled.duration_since(started));
+                active.settle = ms(settled.duration_since(started)).saturating_sub(options.delay * 1000);
                 active.grab = ms(grabbed.duration_since(settled));
             }
             // Cancelled while the screen was being read; the editor is already back.
@@ -220,7 +235,7 @@ pub async fn begin(app: AppHandle) -> Result<(), String> {
         { let _ = window.set_position(tauri::PhysicalPosition::new(x, y)); let _ = window.set_size(tauri::PhysicalSize::new(width, height)); }
     }
     // Warm overlays load the frame on this event; one created just now asks with capture_state once it has loaded.
-    let _ = app.emit("capture-begin", generation);
+    let _ = app.emit("capture-begin", options.overlay(generation));
     // Overlays show themselves once the frozen frame is painted. Never leave the user without a visible window.
     let handle = app.clone();
     tauri::async_runtime::spawn(async move {
@@ -237,12 +252,12 @@ pub async fn begin(app: AppHandle) -> Result<(), String> {
 pub async fn start_capture(window: WebviewWindow, app: AppHandle) -> Result<(), String> { main_only(&window)?; begin(app).await }
 /// The capture this overlay should show, if one is in progress for its monitor slot.
 #[tauri::command]
-pub fn capture_state(window: WebviewWindow, app: AppHandle) -> Result<Option<u64>, String> {
+pub fn capture_state(window: WebviewWindow, app: AppHandle) -> Result<Option<Value>, String> {
     let index = overlay_index(&window)?;
     let state = app.state::<CaptureState>();
     let guard = state.active.lock().map_err(|_| "Capture is unavailable.")?;
-    let generation = guard.as_ref().filter(|a| index < a.frames.len()).map(|a| a.generation);
-    Ok(generation)
+    let capture = guard.as_ref().filter(|a| index < a.frames.len()).map(|a| a.options.overlay(a.generation));
+    Ok(capture)
 }
 #[tauri::command]
 pub fn capture_ready(window: WebviewWindow, app: AppHandle, generation: u64) -> Result<(), String> {
@@ -254,7 +269,7 @@ pub fn capture_ready(window: WebviewWindow, app: AppHandle, generation: u64) -> 
         let active = guard.as_mut().filter(|a| a.generation == generation).ok_or("This capture has ended.")?;
         if !active.shown {
             active.shown = true;
-            let since_start = ms(active.started.elapsed());
+            let since_start = ms(active.started.elapsed()).saturating_sub(active.options.delay * 1000);
             let report = json!({
                 "total": active.editor + since_start, "editor": active.editor, "settle": active.settle, "grab": active.grab,
                 "overlay": since_start.saturating_sub(active.settle + active.grab),
@@ -275,20 +290,23 @@ pub fn capture_timing(window: WebviewWindow, app: AppHandle) -> Result<Option<Va
 #[tauri::command]
 pub async fn capture_select(window: WebviewWindow, app: AppHandle, x: f64, y: f64, width: f64, height: f64) -> Result<(), String> {
     let index = overlay_index(&window)?;
-    let frame = {
+    let (frame, copy) = {
         let state = app.state::<CaptureState>(); let mut guard = state.active.lock().map_err(|_| "Capture is unavailable.")?;
         let mut active = guard.take().ok_or("This capture has ended.")?;
         if index >= active.frames.len() { return Err("This capture has ended.".into()); }
-        active.frames.swap_remove(index).image
+        (active.frames.swap_remove(index).image, active.options.copy)
     };
     finish(&app);
+    let handle = app.clone();
     let result = tauri::async_runtime::spawn_blocking(move || -> Result<Value, String> {
         let cropped = crop(&frame, x, y, width, height).ok_or("Select a larger area.")?;
+        // `copied` is null unless the setting is on; false tells the editor the copy failed.
+        let copied = copy.then(|| crate::files::copy_image(&handle, &cropped).is_ok());
         // Fast compression returns to the editor sooner; only an oversized result gets the slower, denser pass.
         let mut bytes = encode_png(&cropped, true)?;
         if bytes.len() > MAX_IMAGE_BYTES { bytes = encode_png(&cropped, false)?; }
         if bytes.len() > MAX_IMAGE_BYTES { return Err("The captured area exceeds 20 MB. Select a smaller area.".to_string()); }
-        Ok(json!({"dataUrl": png_url(&bytes), "width": cropped.width(), "height": cropped.height()}))
+        Ok(json!({"dataUrl": png_url(&bytes), "width": cropped.width(), "height": cropped.height(), "copied": copied}))
     }).await.map_err(|_| "Could not finish the capture.".to_string()).and_then(|r| r);
     match result {
         Ok(payload) => { let _ = app.emit_to("main", "capture-complete", payload); }

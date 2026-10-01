@@ -12,7 +12,7 @@ Issue panel: workspace chip (initial, workspace, account, refresh), title, descr
 
 ## Repeated capture
 
-Save session → hide main window → capture monitor frames → region overlay (drag a selection, adjust it with handles, move or arrow keys, confirm with Enter, double-click or Capture; Escape reselects, then cancels) → crop → hide all overlays → append image to current session → restore editor. Cancel restores the same session untouched. Capture shortcut appends to the active draft; submitted sessions start a fresh draft before new capture.
+Save session → hide main window → capture monitor frames → region overlay (releasing the drag captures; with the Adjust setting on, the selection stays for handles, move or arrow keys and is confirmed with Enter, double-click or Capture, and Escape reselects, then cancels) → crop → hide all overlays → append image to current session → restore editor. Cancel restores the same session untouched. Capture shortcut appends to the active draft; submitted sessions start a fresh draft before new capture.
 
 ## Submission
 

@@ -6,7 +6,8 @@ All notable changes to Snipflag are documented here. The format follows [Keep a 
 
 ### Added
 
-- Adjustable capture selection: after dragging, resize with handles, move it, or nudge with arrow keys, then confirm with Enter, a double-click or Capture. Escape clears the selection first.
+- Four more themes, each with its own texture: Paper, Blossom, Midnight and Graphite. A picked theme previews at once.
+- Capture options in Settings, all off by default: adjust the selection before capturing (handles, move, arrow keys, then Enter, a double-click or Capture), a magnifier at the pointer, copy every capture to the clipboard, and a 3, 5 or 10 second delay.
 
 ### Changed
 

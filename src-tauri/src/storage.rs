@@ -60,7 +60,7 @@ fn write_atomic(path: &Path, bytes: &[u8]) -> Result<(), String> {
 
 pub fn default_settings() -> Value {
     // Empty means use this build's public client. Never persist a build default as a user override.
-    json!({"clientId": "", "shortcut": "CommandOrControl+Shift+Digit2", "theme": "system", "retentionDays": 30, "launchAtLogin": false, "sounds": true, "motion": true, "teamMemory": {}, "templates": null, "teamDefaults": {}, "autoUpdate": true})
+    json!({"clientId": "", "shortcut": "CommandOrControl+Shift+Digit2", "theme": "system", "retentionDays": 30, "launchAtLogin": false, "sounds": true, "motion": true, "teamMemory": {}, "templates": null, "teamDefaults": {}, "autoUpdate": true, "adjustSelection": false, "magnifier": false, "copyOnCapture": false, "captureDelay": 0})
 }
 /// Returns a complete, validated settings object. Unknown keys are dropped.
 pub fn normalize_settings(input: &Value) -> Result<Value, String> {
@@ -77,7 +77,7 @@ pub fn normalize_settings(input: &Value) -> Result<Value, String> {
     }
     if let Some(v) = input.get("theme") {
         let v = v.as_str().ok_or("Invalid theme.")?;
-        if !["system", "light", "dark"].contains(&v) { return Err("Invalid theme.".into()); }
+        if !["system", "light", "dark", "paper", "blossom", "midnight", "graphite"].contains(&v) { return Err("Invalid theme.".into()); }
         out["theme"] = json!(v);
     }
     if let Some(v) = input.get("retentionDays") {
@@ -88,6 +88,13 @@ pub fn normalize_settings(input: &Value) -> Result<Value, String> {
     if let Some(v) = input.get("sounds") { out["sounds"] = json!(v.as_bool().ok_or("Invalid sound setting.")?); }
     if let Some(v) = input.get("motion") { out["motion"] = json!(v.as_bool().ok_or("Invalid animation setting.")?); }
     if let Some(v) = input.get("autoUpdate") { out["autoUpdate"] = json!(v.as_bool().ok_or("Invalid update setting.")?); }
+    for key in ["adjustSelection", "magnifier", "copyOnCapture"] {
+        if let Some(v) = input.get(key) { out[key] = json!(v.as_bool().ok_or("Invalid capture setting.")?); }
+    }
+    if let Some(v) = input.get("captureDelay") {
+        let v = v.as_u64().filter(|d| [0, 3, 5, 10].contains(d)).ok_or("The capture delay must be 0, 3, 5 or 10 seconds.")?;
+        out["captureDelay"] = json!(v);
+    }
     if let Some(v) = input.get("teamMemory") {
         let map = v.as_object().ok_or("Invalid team memory.")?;
         let mut clean = Map::new();
@@ -474,6 +481,14 @@ mod tests {
     #[test] fn settings_are_validated() {
         assert!(normalize_settings(&json!({"clientId":"abc 123"})).is_err());
         assert!(normalize_settings(&json!({"theme":"neon"})).is_err());
+        assert_eq!(normalize_settings(&json!({"theme":"midnight"})).unwrap()["theme"], "midnight");
+        let capture = normalize_settings(&json!({"adjustSelection":true,"captureDelay":3})).unwrap();
+        assert_eq!(capture["adjustSelection"], json!(true));
+        assert_eq!(capture["magnifier"], json!(false));
+        assert_eq!(capture["copyOnCapture"], json!(false));
+        assert_eq!(capture["captureDelay"], json!(3));
+        assert!(normalize_settings(&json!({"captureDelay":4})).is_err());
+        assert!(normalize_settings(&json!({"magnifier":"yes"})).is_err());
         assert!(normalize_settings(&json!({"teamMemory":{"../x":"y"}})).is_err());
         let team = "00000000-0000-4000-8000-000000000001"; let label = "00000000-0000-4000-8000-000000000002";
         let kept = normalize_settings(&json!({"templates":[{"id":"bug","name":"  Bug  ","body":"## Steps"}],"teamDefaults":{team:{"projectId":"","labelIds":[label],"priority":2,"extra":1}}})).unwrap();

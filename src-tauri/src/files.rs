@@ -14,6 +14,10 @@ fn with_clipboard<T>(app: &AppHandle, f: impl FnOnce(&mut arboard::Clipboard) ->
     if guard.is_none() { *guard = Some(arboard::Clipboard::new().map_err(|_| "Clipboard is unavailable.")?); }
     f(guard.as_mut().ok_or("Clipboard is unavailable.")?)
 }
+/// Puts a captured image on the clipboard.
+pub fn copy_image(app: &AppHandle, image: &RgbaImage) -> Result<(), String> {
+    with_clipboard(app, |c| c.set_image(arboard::ImageData { width: image.width() as usize, height: image.height() as usize, bytes: Cow::Borrowed(image.as_raw()) }).map_err(|_| "Could not copy the image.".into()))
+}
 /// Turns a user-chosen file name into a safe default for the save picker.
 pub fn safe_name(name: &str) -> String {
     let cleaned: String = name.chars().filter(|c| c.is_alphanumeric() || " -_().".contains(*c)).take(80).collect();

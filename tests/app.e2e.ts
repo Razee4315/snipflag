@@ -459,6 +459,53 @@ test('image mentions support keyboard selection, undo, reordering and missing-im
   await expect(page.getByRole('listbox')).toHaveCount(0);
 });
 
+test('themes preview at once, revert when not saved, and capture options persist', async ({ page }, testInfo) => {
+  const html = page.locator('html');
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Settings' });
+  await dialog.getByRole('button', { name: 'Appearance', exact: true }).click();
+  for (const theme of ['Paper', 'Blossom', 'Midnight', 'Graphite']) {
+    await dialog.getByText(theme, { exact: true }).click();
+    await expect(html).toHaveAttribute('data-theme', theme.toLowerCase());
+    await page.screenshot({ path: testInfo.outputPath(`theme-${theme.toLowerCase()}-settings.png`), animations: 'disabled' });
+  }
+  // Closing without saving returns to the saved theme.
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+  await expect(html).not.toHaveAttribute('data-theme', 'graphite');
+
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Capture', exact: true }).click();
+  const adjust = dialog.getByRole('switch', { name: 'Adjust the selection before capturing' });
+  const magnifier = dialog.getByRole('switch', { name: 'Show a magnifier at the pointer' });
+  const copy = dialog.getByRole('switch', { name: 'Copy every capture to the clipboard' });
+  for (const option of [adjust, magnifier, copy]) await expect(option).not.toBeChecked();
+  await adjust.click();
+  await copy.click();
+  await page.screenshot({ path: testInfo.outputPath('settings-capture.png'), animations: 'disabled' });
+  await dialog.getByRole('button', { name: 'Appearance', exact: true }).click();
+  await dialog.getByText('Midnight', { exact: true }).click();
+  await dialog.getByRole('button', { name: 'Save settings' }).click();
+  await page.keyboard.press('Escape');
+  await expect(html).toHaveAttribute('data-theme', 'midnight');
+  await page.screenshot({ path: testInfo.outputPath('theme-midnight-workspace.png'), animations: 'disabled' });
+  await page.reload();
+  await expect(html).toHaveAttribute('data-theme', 'midnight');
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await dialog.getByRole('button', { name: 'Capture', exact: true }).click();
+  await expect(adjust).toBeChecked();
+  await expect(copy).toBeChecked();
+  await expect(magnifier).not.toBeChecked();
+  for (const theme of ['Paper', 'Graphite', 'Blossom']) {
+    await dialog.getByRole('button', { name: 'Appearance', exact: true }).click();
+    await dialog.getByText(theme, { exact: true }).click();
+    await dialog.getByRole('button', { name: 'Save settings' }).click();
+    await page.keyboard.press('Escape');
+    await page.screenshot({ path: testInfo.outputPath(`theme-${theme.toLowerCase()}-workspace.png`), animations: 'disabled' });
+    await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  }
+});
+
 test('sound and animation preferences persist and apply', async ({ page }, testInfo) => {
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Settings' });
