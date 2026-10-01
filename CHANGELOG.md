@@ -4,6 +4,10 @@ All notable changes to Snipflag are documented here. The format follows [Keep a 
 
 ## [Unreleased]
 
+### Added
+
+- Adjustable capture selection: after dragging, resize with handles, move it, or nudge with arrow keys, then confirm with Enter, a double-click or Capture. Escape clears the selection first.
+
 ### Changed
 
 - Faster capture: overlay windows are opened ahead of time and reused, the frozen frame goes to the overlay uncompressed from memory, the wait after hiding the editor follows the Windows compositor instead of a fixed 300 ms, and the selection is encoded with fast compression. Settings → Capture shows how long the last capture took.

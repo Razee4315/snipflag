@@ -83,6 +83,18 @@ export function clampRect(r: { x: number; y: number; width: number; height: numb
   const x = Math.max(0, Math.min(r.x, width)); const y = Math.max(0, Math.min(r.y, height));
   return { x, y, width: Math.max(0, Math.min(r.x + r.width, width) - x), height: Math.max(0, Math.min(r.y + r.height, height) - y) };
 }
+export type RectHandle = 'move' | 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
+/** Moves or resizes a capture selection by a pointer delta, kept inside `bounds`. An edge dragged past its opposite flips the rectangle. */
+export function adjustRect(r: { x: number; y: number; width: number; height: number }, handle: RectHandle, dx: number, dy: number, bounds: { width: number; height: number }) {
+  const within = (value: number, max: number) => Math.min(Math.max(value, 0), Math.max(0, max));
+  if (handle === 'move') return { ...r, x: within(r.x + dx, bounds.width - r.width), y: within(r.y + dy, bounds.height - r.height) };
+  let x0 = r.x; let y0 = r.y; let x1 = r.x + r.width; let y1 = r.y + r.height;
+  if (handle.includes('w')) x0 += dx;
+  if (handle.includes('e')) x1 += dx;
+  if (handle.includes('n')) y0 += dy;
+  if (handle.includes('s')) y1 += dy;
+  return normalizeRect(within(x0, bounds.width), within(y0, bounds.height), within(x1, bounds.width), within(y1, bounds.height));
+}
 /** Converts a selection in overlay CSS pixels to frame pixels. */
 export function toFramePixels(sel: { x: number; y: number; width: number; height: number }, viewport: { width: number; height: number }, frame: { width: number; height: number }) {
   const sx = frame.width / viewport.width; const sy = frame.height / viewport.height;

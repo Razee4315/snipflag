@@ -510,7 +510,23 @@ option { background: var(--surface); color: var(--text); }
 .capture-guides { --x: -10px; --y: -10px; position: absolute; inset: 0; pointer-events: none;
   background: linear-gradient(rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.55)) var(--x) 0 / 1px 100% no-repeat, linear-gradient(90deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.55)) 0 var(--y) / 100% 1px no-repeat; }
 .capture-selection { position: absolute; border: 1.5px solid #fff; outline: 1px solid rgba(20, 184, 166, 0.9); box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.45); pointer-events: none; }
-.capture-size { position: absolute; left: 0; top: -28px; padding: 3px 8px; border-radius: 7px; background: rgba(10, 10, 10, 0.82); color: #fff; font: 600 12px/1.3 var(--font); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.capture-selection.adjust { pointer-events: auto; cursor: move; }
+.capture-handle { position: absolute; width: 13px; height: 13px; margin: -7px 0 0 -7px; border-radius: 50%; background: #fff; border: 1.5px solid rgb(20, 184, 166); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5); }
+.capture-handle[data-handle="nw"] { left: 0; top: 0; cursor: nwse-resize; }
+.capture-handle[data-handle="n"] { left: 50%; top: 0; cursor: ns-resize; }
+.capture-handle[data-handle="ne"] { left: 100%; top: 0; cursor: nesw-resize; }
+.capture-handle[data-handle="e"] { left: 100%; top: 50%; cursor: ew-resize; }
+.capture-handle[data-handle="se"] { left: 100%; top: 100%; cursor: nwse-resize; }
+.capture-handle[data-handle="s"] { left: 50%; top: 100%; cursor: ns-resize; }
+.capture-handle[data-handle="sw"] { left: 0; top: 100%; cursor: nesw-resize; }
+.capture-handle[data-handle="w"] { left: 0; top: 50%; cursor: ew-resize; }
+.capture-actions { position: absolute; right: 0; top: calc(100% + 10px); display: flex; gap: 6px; padding: 4px; border-radius: 10px; background: rgba(10, 10, 10, 0.82); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35); cursor: default; white-space: nowrap; }
+.capture-actions.inside { top: auto; bottom: 10px; right: 10px; }
+.capture-actions button { border: 0; border-radius: 7px; padding: 5px 12px; background: transparent; color: #fff; font: 600 12px/1.3 var(--font); cursor: pointer; }
+.capture-actions button:hover { background: rgba(255, 255, 255, 0.14); }
+.capture-actions button.confirm { background: rgb(13, 148, 136); }
+.capture-actions button.confirm:hover { background: rgb(15, 118, 110); }
+.capture-size { pointer-events: none; position: absolute; left: 0; top: -28px; padding: 3px 8px; border-radius: 7px; background: rgba(10, 10, 10, 0.82); color: #fff; font: 600 12px/1.3 var(--font); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .capture-hint { position: absolute; top: 18px; left: 50%; transform: translateX(-50%); padding: 8px 14px; border-radius: 999px; background: rgba(10, 10, 10, 0.78); color: #fff; font: 13px/1.3 var(--font); backdrop-filter: blur(8px); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35); animation: toast-in 360ms var(--spring) both; }
 .capture-hint button { margin-left: 8px; border: 1px solid rgba(255, 255, 255, 0.4); background: transparent; color: #fff; border-radius: 999px; padding: 2px 10px; cursor: pointer; }
 
