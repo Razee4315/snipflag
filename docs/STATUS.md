@@ -1,5 +1,16 @@
 # Current state / handoff
 
+## Themes, capture options, Windows-only builds (owner requests) — 2026-10-02
+
+- **Build policy (`b5811b3`):** the owner asked that builds stop running for every OS. `ci.yml` native job runs on Windows only unless dispatched with `all_platforms`; `build.yml` has `platforms` (`windows` default, `all`). Use all platforms only when the owner explicitly asks. A release still needs the four-platform installer run, so ask first. The in-progress three-OS Checks 36931783259 was cancelled at the owner's request.
+- **Capture default (`c4d9d42`):** releasing the drag captures at once again. Adjusting the selection is the setting `adjustSelection`, off by default.
+- **New Capture settings, all off by default, validated in Rust:** `magnifier` (13 x 13 frame pixels at 10x beside the pointer, with position), `copyOnCapture` (Rust copies the cropped pixels; the editor reports success or failure), `captureDelay` (0/3/5/10 s, applied by Rust after the editor hides). Rust reads them when a capture starts and sends adjust/magnifier to the overlay with the generation.
+- **Themes (`c4d9d42`, `4bdf01d`):** Paper, Blossom, Midnight, Graphite, each a full palette with its own grain; lit top edge (`--sheen`) on titlebar, panel, toolbar and dialogs; grain on the stage and toolbar; theme cards in four columns with colors from the card; a picked theme previews at once and reverts if Settings closes unsaved. After reviewing CI screenshots, Paper and Graphite textures were made calmer, and the sticky Settings tabs now cover scrolled content (they showed it around the rounded corners once the Capture section grew).
+- **Verification:** [Checks 36932626923](https://github.com/Razee4315/snipflag/actions/runs/36932626923) **passed** at `4bdf01d` (frontend build, unit tests, browser tests including the new theme/capture-options test; Rust tests and all-target check on **Windows only**). [Development installers 36933161414](https://github.com/Razee4315/snipflag/actions/runs/36933161414) **passed, Windows only**: [NSIS/MSI](https://github.com/Razee4315/snipflag/actions/runs/36933161414/artifacts/11197131918). macOS and Linux were **not** compiled or tested for `c4d9d42` onward.
+- **Not verified:** everything in the overlay (default release-to-capture, adjust mode, magnifier, delay, clipboard copy) and the ghost-editor fix, on a real machine; theme appearance in WebView2; the final Paper/Graphite textures were not re-screenshotted after tuning.
+
+Next: owner tests the Windows artifact. Before any release, run all platforms (with the owner's go-ahead) since three commits have not been compiled for macOS/Linux.
+
 ## Capture speed (owner request) — implemented, not runtime-verified, 2026-10-02
 
 The owner reported that capture is slow next to Windows Snipping Tool and asked whether to rewrite in Qt. Decision: keep Tauri; the delay came from the capture flow. Implemented in `9dd39bf`:
