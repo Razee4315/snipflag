@@ -2,6 +2,11 @@ name: Development installers
 on:
   workflow_dispatch:
     inputs:
+      platforms:
+        description: Windows only by default; choose all only when the owner asks for every platform
+        type: choice
+        options: [windows, all]
+        default: windows
       custom_client_only:
         description: Build without a built-in Linear connection (advanced self-build)
         type: boolean
@@ -13,19 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: windows-latest
-            target: x86_64-pc-windows-msvc
-            bundles: nsis,msi
-          - os: macos-latest
-            target: aarch64-apple-darwin
-            bundles: app,dmg
-          - os: macos-latest
-            target: x86_64-apple-darwin
-            bundles: app,dmg
-          - os: ubuntu-24.04
-            target: x86_64-unknown-linux-gnu
-            bundles: deb,appimage
+        include: ${{ fromJSON(inputs.platforms == 'all' && '[{"os":"windows-latest","target":"x86_64-pc-windows-msvc","bundles":"nsis,msi"},{"os":"macos-latest","target":"aarch64-apple-darwin","bundles":"app,dmg"},{"os":"macos-latest","target":"x86_64-apple-darwin","bundles":"app,dmg"},{"os":"ubuntu-24.04","target":"x86_64-unknown-linux-gnu","bundles":"deb,appimage"}]' || '[{"os":"windows-latest","target":"x86_64-pc-windows-msvc","bundles":"nsis,msi"}]') }}
     runs-on: ${{ matrix.os }}
     env:
       SNIPFLAG_LINEAR_CLIENT_ID: ${{ vars.SNIPFLAG_LINEAR_CLIENT_ID }}

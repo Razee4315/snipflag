@@ -5,6 +5,7 @@ Read `docs/STATUS.md`, `docs/PRODUCT.md`, `docs/ARCHITECTURE.md`, and `docs/TEST
 ## User constraints
 
 - All builds, dependency installation, Rust compilation, browser test installation, and packaging run on GitHub Actions. Do not run npm install, cargo check/build/test, tauri dev/build, or install SDKs on the owner's computer. Local source edits, git, small scripts, and remote CI inspection are allowed.
+- Build and check **Windows only** by default (owner, 2026-10-02). Run macOS/Linux checks (`ci.yml` input `all_platforms`) or installers (`build.yml` input `platforms=all`) only when the owner explicitly asks for all platforms. A release still needs the four-platform installer run, so ask first.
 - Windows is the primary experience; macOS and Linux are supported targets with explicit runtime verification gates.
 - A session can contain multiple independently annotated images and creates ONE Linear issue.
 - Keep screenshots local until explicit submission. Never log tokens, screenshot content, or signed upload URLs.

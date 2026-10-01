@@ -5,6 +5,11 @@ on:
     paths-ignore: ['docs/**', '*.md', 'site/**', '.github/workflows/pages.yml']
   pull_request:
   workflow_dispatch:
+    inputs:
+      all_platforms:
+        description: Also check macOS and Linux (only when the owner asks for all platforms)
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -37,7 +42,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-24.04]
+        # Windows only by default; pushes never build the other platforms.
+        os: ${{ fromJSON(inputs.all_platforms && '["windows-latest","macos-latest","ubuntu-24.04"]' || '["windows-latest"]') }}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
