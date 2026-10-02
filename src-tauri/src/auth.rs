@@ -2,7 +2,7 @@ use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sha2::{Digest, Sha256};
-use std::{collections::HashMap, sync::Mutex, time::Duration};
+use std::{collections::HashMap, sync::{Mutex, OnceLock}, time::Duration};
 use tauri::{AppHandle, Manager, WebviewWindow};
 use tauri_plugin_opener::OpenerExt;
 use tokio::{io::{AsyncReadExt, AsyncWriteExt}, sync::oneshot};
@@ -47,9 +47,13 @@ fn store(value: &Value, client_id: &str, previous_refresh: &str) -> Result<Crede
     entry()?.set_password(&raw).map_err(|_| "Could not securely store the connection. Unlock your system credential store.")?;
     Ok(credential)
 }
+/// One client for the whole process, so requests reuse connections instead of a new TLS handshake each time.
 pub fn client() -> Result<reqwest::Client, String> {
-    reqwest::Client::builder().timeout(Duration::from_secs(60)).connect_timeout(Duration::from_secs(15)).redirect(reqwest::redirect::Policy::none())
-        .user_agent(concat!("Snipflag/", env!("CARGO_PKG_VERSION"))).build().map_err(|_| "Cannot initialize network client.".into())
+    static CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
+    if let Some(client) = CLIENT.get() { return Ok(client.clone()); }
+    let built = reqwest::Client::builder().timeout(Duration::from_secs(60)).connect_timeout(Duration::from_secs(15)).redirect(reqwest::redirect::Policy::none())
+        .user_agent(concat!("Snipflag/", env!("CARGO_PKG_VERSION"))).build().map_err(|_| "Cannot initialize network client.")?;
+    Ok(CLIENT.get_or_init(|| built).clone())
 }
 /// Linear did not answer at all. Being offline is not a reason to sign in again.
 const UNREACHABLE: &str = "Could not reach Linear. Check your connection and retry.";
