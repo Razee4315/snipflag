@@ -15,7 +15,7 @@ interface Props {
   /** Tucked away for quick sharing; the form keeps its state. */
   hidden?: boolean;
   connection: Connection | null; connectionState: ConnectionState; connectionError: string; hasClientId: boolean;
-  progress: string; submitError: string; pendingState: string | null;
+  progress: string; progressFraction: number | null; submitError: string; pendingState: string | null;
   templates: Template[]; teamMemory: Record<string, string>; teamDefaults: Record<string, TeamDefaults>;
   onConnect: () => void; onCancelConnect: () => void; onRetryConnection: () => void; onOpenSettings: () => void;
   onSubmit: (report?: PreparedReport) => void; onNewSession: () => void; onTeamChosen: (teamId: string) => void; notify: (text: string, kind?: 'error' | 'info') => void;
@@ -214,6 +214,11 @@ export default function IssuePanel(p: Props) {
         {submissionLocked && !busy && <p className="small warn">A previous attempt may already have created this issue. This report is locked to the attempted revision. Check its outcome before editing; checking does not upload or create another issue.</p>}
         {footError && <p className="error small" role="alert">{footError}</p>}
         {busy && p.progress && <div role="status" aria-live="polite" className="small progress"><span className="spinner" aria-hidden="true" /> {p.progress}</div>}
+        {busy && p.progress && p.progressFraction !== null && (
+          <div className="progress-bar" role="progressbar" aria-label="Submission progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(p.progressFraction * 100)}>
+            <i style={{ transform: `scaleX(${Math.max(0, Math.min(1, p.progressFraction))})` }} />
+          </div>
+        )}
         <div className="foot-actions">
           <button type="button" className="button" onClick={p.onNewSession} disabled={busy}><Icon name="plus" size={16} /> New session</button>
           <button type="button" className="button square" onClick={() => setPreviewing(true)} disabled={busy || !count} aria-label="Preview report" title="Preview report"><Icon name="eye" size={16} /></button>

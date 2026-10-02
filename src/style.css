@@ -248,6 +248,8 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 0.85; 
 .foot-actions .primary svg { transition: transform 200ms var(--ease); }
 .foot-actions > .button:not(.primary) { min-height: 40px; }
 .progress { display: flex; align-items: center; gap: 8px; }
+.progress-bar { height: 4px; border-radius: 2px; background: var(--border); overflow: hidden; }
+.progress-bar i { display: block; height: 100%; background: var(--primary); transform-origin: left center; transition: transform 240ms var(--ease); }
 
 /* Tactile edges: raised surfaces catch light along the top. */
 .titlebar { box-shadow: var(--sheen), var(--shadow-sm); }

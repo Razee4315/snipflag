@@ -127,7 +127,9 @@ pub fn plan(receipt: Option<(&str, &str, Option<&str>)>, workspace: &str) -> Pla
     }
 }
 
-fn progress(app: &AppHandle, message: &str) { let _ = app.emit_to("main", "submission-progress", message); }
+/// Tells the editor what the submission is doing. `fraction` is how far the whole of it is (the editor's own
+/// preparation takes the first third); `None` when that cannot be estimated.
+fn progress(app: &AppHandle, message: &str, fraction: Option<f64>) { let _ = app.emit_to("main", "submission-progress", json!({"message": message, "fraction": fraction})); }
 async fn upload(token: &str, bytes: Vec<u8>, index: usize) -> Result<String, String> {
     let data = graphql(token, "mutation($type:String!,$name:String!,$size:Int!) { fileUpload(contentType:$type,filename:$name,size:$size) { success uploadFile { uploadUrl assetUrl headers { key value } } } }",
         json!({"type": "image/png", "name": format!("screenshot-{}.png", index + 1), "size": bytes.len()})).await?;
@@ -178,7 +180,7 @@ async fn reconcile_attempt(app: &AppHandle, session_id: &str, receipt: (String, 
     match decision {
         Plan::Receipt(result) => complete(app, workspace, snapshot, serde_json::from_str(&result).map_err(|_| "Submission receipt is damaged.")?).map(Some),
         Plan::Reconcile => {
-            progress(app, "Checking the exact report from the previous attempt…");
+            progress(app, "Checking the exact report from the previous attempt…", None);
             match find_issue(&token, session_id).await {
                 Ok(Some(issue)) => complete(app, workspace, snapshot, issue).map(Some),
                 Ok(None) => { storage.set_submission(session_id, workspace, "retryable", None)?; Ok(None) }
@@ -229,7 +231,7 @@ pub async fn submit_issue(window: WebviewWindow, app: AppHandle, session: Value,
     }
     let storage = app.state::<Storage>();
     storage.save(&session)?;
-    progress(&app, "Checking your Linear connection…");
+    progress(&app, "Checking your Linear connection…", Some(0.32));
     let token = access_token(&app).await?;
     let who = identity(&token).await?;
     let workspace = who["organization"]["id"].as_str().ok_or("Workspace is unavailable.")?.to_string();
@@ -247,7 +249,7 @@ pub async fn submit_issue(window: WebviewWindow, app: AppHandle, session: Value,
         let batch: Vec<(usize, Vec<u8>)> = waiting.by_ref().take(3).collect();
         if batch.is_empty() { break; }
         let (first, last) = (batch[0].0 + 1, batch[batch.len() - 1].0 + 1);
-        progress(&app, &if first == last { format!("Uploading screenshot {first} of {count}…") } else { format!("Uploading screenshots {first} to {last} of {count}…") });
+        progress(&app, &if first == last { format!("Uploading screenshot {first} of {count}…") } else { format!("Uploading screenshots {first} to {last} of {count}…") }, Some(0.36 + 0.54 * (first - 1) as f64 / count as f64));
         let tasks: Vec<_> = batch.into_iter().map(|(i, bytes)| { let token = token.clone(); (i, tauri::async_runtime::spawn(async move { upload(&token, bytes, i).await })) }).collect();
         // Every upload of the batch finishes before a failure is reported, so none keeps running behind an error.
         let mut failure: Option<String> = None;
@@ -265,7 +267,7 @@ pub async fn submit_issue(window: WebviewWindow, app: AppHandle, session: Value,
     if !labels.is_empty() { input["labelIds"] = json!(labels); }
     for field in ["projectId", "assigneeId"] { if let Some(value) = session[field].as_str().filter(|s| !s.is_empty()) { input[field] = json!(id(value)?); } }
     storage.set_submission(&session_id, &workspace, "creating", None)?;
-    progress(&app, "Creating the Linear issue…");
+    progress(&app, "Creating the Linear issue…", Some(0.92));
     let body = request(&token, "mutation($input:IssueCreateInput!) { issueCreate(input:$input) { success issue { id identifier url } } }", json!({"input": input})).await
         .map_err(|e| format!("{e} The outcome is unknown; Retry checks this same issue first."))?;
     if first_error(&body).is_some() {

@@ -47,7 +47,10 @@ export default function App() {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const toastId = useRef(0);
   const [zoom, setZoom] = useState<Zoom>('fit'); const [scale, setScale] = useState(1);
-  const [progress, setProgress] = useState(''); const [submitError, setSubmitError] = useState('');
+  /** What a submission is doing, and how far it is (0 to 1) when that can be estimated. */
+  const [progress, setProgress] = useState<{ text: string; fraction: number | null }>({ text: '', fraction: null });
+  const report = useCallback((text = '', fraction: number | null = null) => setProgress({ text, fraction }), []);
+  const [submitError, setSubmitError] = useState('');
   const [pendingState, setPendingState] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [flash, setFlash] = useState(0);
@@ -160,7 +163,7 @@ export default function App() {
   // A field error goes away once that field is filled in.
   useEffect(() => { setSubmitError(e => (e === FIELD_ERRORS.title && session.title.trim()) || (e === FIELD_ERRORS.team && session.teamId) ? '' : e); }, [session.title, session.teamId]);
   useEffect(() => {
-    setPendingState(null); setSubmitError(''); setProgress('');
+    setPendingState(null); setSubmitError(''); report();
     let live = true;
     submissionStatus(session.id).then(s => { if (live) setPendingState(s?.state ?? null); }).catch(() => undefined);
     return () => { live = false; };
@@ -230,10 +233,10 @@ export default function App() {
       }),
       on('capture-cancelled', () => useStore.getState().setBusy(false)),
       on<string>('capture-failed', m => { useStore.getState().setBusy(false); notify(m, 'error'); play('error'); }),
-      on<string>('submission-progress', m => setProgress(m)),
+      on<{ message: string; fraction: number | null }>('submission-progress', p => report(p.message, p.fraction)),
     ];
     return () => { subs.forEach(p => p.then(u => u())); };
-  }, [addImages, notify]);
+  }, [addImages, notify, report]);
 
   /** Saves the open session before another takes its place. Returns whether an unsent draft stays behind in History. */
   const leaveSession = useCallback(async () => {
@@ -278,7 +281,7 @@ export default function App() {
     const fail = (message: string) => { setSubmitError(message); play('error'); };
     if (!desktop) { fail(PREVIEW_MESSAGE); return; }
     if (s.submissionLocked) {
-      s.setBusy(true); setSubmitError(''); setProgress('Checking the previous report…');
+      s.setBusy(true); setSubmitError(''); report('Checking the previous report…');
       try {
         const issue = await reconcileIssue(s.session.id);
         if (issue) {
@@ -289,7 +292,7 @@ export default function App() {
           notify('Linear confirmed no issue exists. You can edit this report and choose Create issue when ready.');
         }
       } catch (e) { fail(errorText(e)); }
-      finally { useStore.getState().setBusy(false); setProgress(''); }
+      finally { useStore.getState().setBusy(false); report(); }
       return;
     }
     // The connection comes first: without it the team cannot be chosen, so field errors would point at a disabled picker.
@@ -298,18 +301,18 @@ export default function App() {
     if (invalid) { fail(invalid); return; }
     const missing = missingImageReferences(s.session.description, s.session.images, s.session.imageReferences ?? {});
     if (missing.length) { fail(`Fix the missing image reference: @${missing[0]}.`); return; }
-    s.setBusy(true); setSubmitError(''); setProgress('Saving draft…');
+    s.setBusy(true); setSubmitError(''); report('Saving draft…', 0.02);
     try {
       await flush();
       const { session: snapshot, persisted } = useStore.getState();
       // A reviewed preview supplies the exact pixels shown, valid only for the unchanged revision.
       const exports: { id: string; dataUrl: string }[] = prepared && prepared.session === snapshot ? prepared.exports : [];
       if (!exports.length) for (const [i, img] of snapshot.images.entries()) {
-        setProgress(`Preparing screenshot ${i + 1} of ${snapshot.images.length}…`);
+        report(`Preparing screenshot ${i + 1} of ${snapshot.images.length}…`, 0.05 + 0.25 * i / snapshot.images.length);
         exports.push({ id: img.id, dataUrl: await flatten(img) });
       }
       await submitIssue(snapshot, persisted, exports);
-      useStore.getState().hydrate(await loadSession(snapshot.id)); useStore.getState().setBusy(false); setPendingState('sent'); setProgress('');
+      useStore.getState().hydrate(await loadSession(snapshot.id)); useStore.getState().setBusy(false); setPendingState('sent'); report();
       play('success');
       // New drafts for this team start from what was just sent; failing to remember never affects the sent issue.
       void updateSettings(v => ({ ...v, teamDefaults: rememberDetails(v.teamDefaults, snapshot) })).catch(() => undefined);
@@ -319,9 +322,9 @@ export default function App() {
         setPendingState(status?.state ?? null);
         useStore.getState().setSubmissionLocked(status?.state === 'creating' || status?.state === 'sent');
       } catch { useStore.getState().setSubmissionLocked(true); }
-      useStore.getState().setBusy(false); setProgress(''); fail(errorText(e));
+      useStore.getState().setBusy(false); report(); fail(errorText(e));
     }
-  }, [connection, connectionState, flush, notify, updateSettings]);
+  }, [connection, connectionState, flush, notify, report, updateSettings]);
 
   const connect = useCallback(async () => {
     setConnectionState('connecting'); setConnectionError('');
@@ -513,7 +516,7 @@ export default function App() {
         {count > 0 && <Filmstrip canCapture={desktop} onCapture={() => void capture()} onAdd={() => fileInput.current?.click()} onRemove={removeImage} />}
       </main>
       <IssuePanel hidden={!panelOpen} connection={connection} connectionState={connectionState} connectionError={connectionError} hasClientId={!!settings.clientId || !!status?.builtinLinearClient}
-        progress={progress} submitError={submitError} pendingState={pendingState}
+        progress={progress.text} progressFraction={progress.fraction} submitError={submitError} pendingState={pendingState}
         templates={templatesOf(settings)} teamMemory={settings.teamMemory} teamDefaults={settings.teamDefaults}
         onConnect={() => void connect()} onCancelConnect={() => void cancelLogin().catch(() => undefined)} onRetryConnection={() => void refreshConnection()}
         onOpenSettings={() => setDialog('settings')} onSubmit={report => void submit(report)} onNewSession={() => void newSession()} onTeamChosen={rememberTeam} notify={notify} />
