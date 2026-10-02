@@ -170,8 +170,10 @@ export default function App() {
     if (!desktop) { notify(PREVIEW_MESSAGE, 'error'); return; }
     const s = useStore.getState();
     if (s.busy) return;
-    if (s.submissionLocked) { notify('Check the previous submission or start a new session before capturing.', 'error'); return; }
-    if (!s.session.issue && s.session.images.length >= 10) { notify('This session already has 10 screenshots. Start a new session to capture more.', 'error'); return; }
+    // The shortcut also works from the tray: a refusal has to bring the editor forward, or nothing seems to happen.
+    const refuse = (text: string) => { void editorWindow('show').catch(() => undefined); notify(text, 'error'); play('error'); };
+    if (s.submissionLocked) { refuse('Check the previous submission or start a new session before capturing.'); return; }
+    if (!s.session.issue && s.session.images.length >= 10) { refuse('This session already has 10 screenshots. Start a new session to capture more.'); return; }
     s.setBusy(true);
     try { await flush(); await startCapture(); } catch (e) { useStore.getState().setBusy(false); notify(errorText(e), 'error'); }
   }, [flush, notify]);

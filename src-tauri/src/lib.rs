@@ -170,6 +170,8 @@ fn editor_window(window: WebviewWindow, app: AppHandle, action: String, image_wi
             _ => fit_workspace(&window, false),
         },
         "reveal" => { reveal(&app); Ok(()) }
+        // Brings the editor forward from the tray when it has something to tell the user.
+        "show" => { show_main(&app); Ok(()) }
         _ => return Err("Unknown editor window action.".into()),
     };
     result.map_err(|_| "Could not update the editor window.".into())

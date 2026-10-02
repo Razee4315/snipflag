@@ -6,7 +6,7 @@ import { defaults, type Connection, type IssueResult, type Session, type Setting
 export const desktop = isTauri();
 export const PREVIEW_MESSAGE = 'This action is available in the installed desktop app.';
 /** `workspace` with image dimensions maximizes the editor when that screenshot cannot fit the normal workspace. */
-export async function editorWindow(action: 'hide' | 'minimize' | 'maximize' | 'drag' | 'workspace' | 'reveal', imageWidth?: number, imageHeight?: number) {
+export async function editorWindow(action: 'hide' | 'minimize' | 'maximize' | 'drag' | 'workspace' | 'reveal' | 'show', imageWidth?: number, imageHeight?: number) {
   if (desktop) await native<void>('editor_window', { action, imageWidth, imageHeight });
 }
 export async function native<T>(command: string, args?: Record<string, unknown>): Promise<T> {
