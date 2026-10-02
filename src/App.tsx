@@ -15,7 +15,7 @@ import {
   copyText, loadSettings, on, PREVIEW_MESSAGE, readClipboardImage, saveSession, saveSettings, startCapture, submissionStatus, submitIssue, reconcileIssue, finishQuit, checkUpdate, installUpdate, shareImages, type AppStatus, type AvailableUpdate, type RawImage,
 } from './native';
 import type { Box } from './geometry';
-import { cropImage, fileBaseName, flatten, importImage } from './render';
+import { cropImage, fileBaseName, flatten, importImage, thumbnail } from './render';
 import { activeImage, isLocked, useStore } from './store';
 import { missingImageReferences } from './mentions';
 import { smooth } from './motion';
@@ -76,7 +76,9 @@ export default function App() {
       saveAttempts.current.add(s.id); // A failed save can have committed metadata before cleanup failed.
       setSaveState('saving');
       try {
-        await saveSession(s, persisted); markPersisted(s.id, s.images.map(i => i.id));
+        // History shows this protected thumbnail; a failed render only leaves the entry without a picture.
+        const preview = s.images[0] ? await thumbnail(s.images[0]).catch(() => '') : '';
+        await saveSession({ ...s, preview }, persisted); markPersisted(s.id, s.images.map(i => i.id));
         if (useStore.getState().session.id === s.id) setSaveState(useStore.getState().session === s ? 'saved' : 'saving');
       } catch (e) { if (useStore.getState().session.id === s.id) setSaveState('error', errorText(e)); throw e; }
     };

@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react';
+import { useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
 import { imageLabel, LIMITS } from '../model';
 import { smooth } from '../motion';
 import { isLocked, useStore } from '../store';
@@ -7,43 +7,65 @@ import { imageReference } from '../mentions';
 import ProtectedThumbnail from './ProtectedThumbnail';
 
 interface Props { onCapture: () => void; onAdd: () => void; onRemove: (id: string) => void; canCapture: boolean }
+/** Pointer travel, in pixels, before a press on a tile becomes a drag instead of a click. */
+const DRAG_START = 6;
 
 /**
- * The session's screenshots in upload order. Drag a tile to reorder (the arrow buttons do the same from the
- * keyboard); tiles glide to their new place. `over` is the slot a dragged tile would be inserted at.
+ * The session's screenshots in upload order. Drag a tile sideways to reorder (the arrow buttons do the same from
+ * the keyboard): the tile follows the pointer, a marker shows where it will land, and tiles glide into place.
+ * `to` is the dragged tile's index once it is dropped.
  */
 export default function Filmstrip({ onCapture, onAdd, onRemove, canCapture }: Props) {
   const images = useStore(s => s.session.images); const activeId = useStore(s => s.activeId); const locked = useStore(isLocked);
   const references = useStore(s => s.session.imageReferences);
   const { select, moveImage } = useStore.getState();
-  const [drag, setDrag] = useState<{ from: number; over: number | null } | null>(null);
+  const strip = useRef<HTMLOListElement>(null);
+  /** Set when a drag ends on a tile, so the click that follows the release does not also select it. */
+  const dragged = useRef(false);
+  const [drag, setDrag] = useState<{ from: number; to: number; dx: number } | null>(null);
   const full = images.length >= LIMITS.images;
   const move = (from: number, to: number) => { if (to !== from && to >= 0 && to < images.length) smooth(() => moveImage(from, to)); };
-  const drop = () => {
-    if (drag && drag.over !== null) move(drag.from, drag.over > drag.from ? drag.over - 1 : drag.over);
-    setDrag(null);
+
+  const press = (from: number) => (e: ReactPointerEvent) => {
+    if (e.button !== 0 || locked || images.length < 2) return;
+    const startX = e.clientX; let to: number | null = null;
+    const follow = (ev: PointerEvent) => {
+      const dx = ev.clientX - startX;
+      if (to === null && Math.abs(dx) < DRAG_START) return;
+      // Where the tile lands: after every other tile whose middle is left of the pointer.
+      const tiles = [...(strip.current?.querySelectorAll<HTMLElement>('[data-testid="tile"]') ?? [])];
+      to = tiles.filter((tile, i) => { const box = tile.getBoundingClientRect(); return i !== from && box.left + box.width / 2 < ev.clientX; }).length;
+      setDrag({ from, to, dx });
+    };
+    const finish = (ev: PointerEvent) => {
+      window.removeEventListener('pointermove', follow); window.removeEventListener('pointerup', finish); window.removeEventListener('pointercancel', finish);
+      setDrag(null);
+      if (to === null) return;
+      dragged.current = true; window.setTimeout(() => { dragged.current = false; }, 0);
+      if (ev.type === 'pointerup') move(from, to);
+    };
+    window.addEventListener('pointermove', follow); window.addEventListener('pointerup', finish); window.addEventListener('pointercancel', finish);
+  };
+  /** The marker sits before the tile that will follow the dragged one, or after the last tile. */
+  const marker = (index: number) => {
+    if (!drag || drag.to === drag.from || index === drag.from) return '';
+    const among = index < drag.from ? index : index - 1;
+    if (among === drag.to) return 'drop-before';
+    return drag.to === images.length - 1 && among === images.length - 2 ? 'drop-after' : '';
   };
   return (
     <nav className="filmstrip" aria-label={`${images.length} ${images.length === 1 ? 'image' : 'images'} · one issue`}>
-      <ol>
+      <ol ref={strip}>
         {images.map((image, index) => {
           const label = imageLabel(image, index); const marks = image.annotations.length;
-          const classes = ['tile', image.id === activeId && 'active', drag?.from === index && 'dragging',
-            drag && drag.over === index && 'drop-before', drag && drag.over === images.length && index === images.length - 1 && 'drop-after'].filter(Boolean).join(' ');
+          const moving = drag?.from === index;
+          const classes = ['tile', image.id === activeId && 'active', moving && 'dragging', marker(index)].filter(Boolean).join(' ');
+          const style = { viewTransitionName: `tile-${image.id}`, ...(moving ? { transform: `translateX(${drag.dx}px)` } : {}) } as CSSProperties;
           return (
-            <li key={image.id} className={classes} data-testid="tile" style={{ viewTransitionName: `tile-${image.id}` } as CSSProperties}
-              onDragOver={e => {
-                if (!drag) return;
-                e.preventDefault(); e.dataTransfer.dropEffect = 'move';
-                const box = e.currentTarget.getBoundingClientRect();
-                const over = e.clientX > box.left + box.width / 2 ? index + 1 : index;
-                if (drag.over !== over) setDrag({ ...drag, over });
-              }}
-              onDrop={e => { if (drag) { e.preventDefault(); e.stopPropagation(); drop(); } }}>
-              <button type="button" className="tile-select" aria-current={image.id === activeId ? 'true' : undefined} draggable={!locked && images.length > 1}
-                aria-label={`Screenshot ${index + 1}: ${label}, ${marks} ${marks === 1 ? 'mark' : 'marks'}`} onClick={() => select(image.id)}
-                onDragStart={e => { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', label); setDrag({ from: index, over: null }); }}
-                onDragEnd={() => setDrag(null)}>
+            <li key={image.id} className={classes} data-testid="tile" style={style}>
+              <button type="button" className="tile-select" aria-current={image.id === activeId ? 'true' : undefined}
+                aria-label={`Screenshot ${index + 1}: ${label}, ${marks} ${marks === 1 ? 'mark' : 'marks'}`}
+                onPointerDown={press(index)} onClick={() => { if (!dragged.current) select(image.id); }}>
                 <span className="tile-number" aria-hidden="true" title={`@${imageReference(image.id, references ?? {}) ?? `image${index + 1}`}`}>{(imageReference(image.id, references ?? {}) ?? `image${index + 1}`).slice(5)}</span>
                 <ProtectedThumbnail image={image} />
                 <span className="tile-caption" aria-hidden="true">{label}</span>

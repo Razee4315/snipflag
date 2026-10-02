@@ -12,6 +12,7 @@ pub const MAX_SESSION_BYTES: usize = 100 * 1024 * 1024;
 pub const MAX_PIXELS: u64 = 40_000_000;
 const MAX_ANNOTATIONS: usize = 2000;
 const MAX_TEXT: usize = 100_000;
+const MAX_PREVIEW: usize = 300_000;
 
 pub struct Storage { pub root: PathBuf, pub db: Mutex<Connection>, mutations: Mutex<()>, pub cleanup_error: Mutex<Option<String>> }
 
@@ -163,6 +164,11 @@ impl Storage {
         let images = session["images"].as_array().ok_or("Missing image list.")?;
         if images.len() > MAX_IMAGES { return Err("A session can contain up to 10 images.".into()); }
         for field in ["title", "description"] { if session[field].as_str().unwrap_or("").len() > MAX_TEXT { return Err("Draft text is too long.".into()); } }
+        // The History thumbnail is a small PNG data URL made by the editor from the flattened first screenshot.
+        if let Some(preview) = session.get("preview").filter(|p| !p.is_null()) {
+            let preview = preview.as_str().ok_or("Invalid draft preview.")?;
+            if preview.len() > MAX_PREVIEW || !(preview.is_empty() || preview.starts_with("data:image/png;base64,")) { return Err("Invalid draft preview.".into()); }
+        }
         if session["issue"].is_null() && self.stored_issue(&session_id)?.is_some() { return Err("This session was already sent to Linear and cannot be changed.".into()); }
         if self.submission(&session_id)?.is_some_and(|(_, state, _)| state == "creating" || state == "sent") {
             if let Some(snapshot) = self.snapshot(&session_id)? {
@@ -344,7 +350,7 @@ impl Storage {
 fn submission_content(session: &Value) -> Value {
     let mut content = session.clone();
     if let Some(object) = content.as_object_mut() {
-        for key in ["updatedAt", "issue", "annotationHistories", "submissionLocked", "deletionPending"] { object.remove(key); }
+        for key in ["updatedAt", "issue", "annotationHistories", "submissionLocked", "deletionPending", "preview"] { object.remove(key); }
     }
     if let Some(images) = content["images"].as_array_mut() { for image in images { image["dataUrl"] = json!(""); } }
     content
@@ -477,6 +483,21 @@ mod tests {
         sent["title"] = json!("changed"); assert!(store.save(&sent).is_err());
         store.delete(sid).unwrap(); assert!(store.snapshot(sid).unwrap().is_none());
         assert!(store.submission(sid).unwrap().is_some());
+    }
+    #[test] fn history_previews_are_bounded_png_data_urls_and_not_report_content() {
+        let dir = std::env::temp_dir().join(format!("snipflag-preview-{}", Uuid::new_v4()));
+        let store = Storage::open_at(dir.clone()).unwrap();
+        let sid = Uuid::new_v4().to_string();
+        let mut s = json!({"schemaVersion":1,"id":sid,"title":"t","description":"","images":[image(4, 4)],"issue":null});
+        s["preview"] = json!("data:image/png;base64,AAAA");
+        store.save(&s).unwrap();
+        assert_eq!(store.list().unwrap()[0]["preview"], "data:image/png;base64,AAAA");
+        let mut changed = s.clone(); changed["preview"] = json!("");
+        assert_eq!(submission_content(&s), submission_content(&changed));
+        s["preview"] = json!("https://example.com/x.png"); assert!(store.save(&s).is_err());
+        s["preview"] = json!(format!("data:image/png;base64,{}", "A".repeat(MAX_PREVIEW))); assert!(store.save(&s).is_err());
+        s["preview"] = json!(7); assert!(store.save(&s).is_err());
+        let _ = std::fs::remove_dir_all(dir);
     }
     #[test] fn settings_are_validated() {
         assert!(normalize_settings(&json!({"clientId":"abc 123"})).is_err());

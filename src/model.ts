@@ -32,6 +32,8 @@ export interface Session {
   /** Optional for v1 drafts. Bounded per-image undo/redo snapshots survive restart. */
   annotationHistories?: Record<string, AnnotationHistory>;
   deletionPending?: boolean;
+  /** Small flattened thumbnail of the first screenshot, written at save time for History. Never the original pixels. */
+  preview?: string;
   /** Native hydration marks an unresolved attempt before the editor permits mutations. */
   submissionLocked?: boolean;
 }

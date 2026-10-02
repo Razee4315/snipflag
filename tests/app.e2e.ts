@@ -85,7 +85,7 @@ test('reordering changes filmstrip order and captions follow their image', async
   await expect(tile(page, 1)).toHaveAccessibleName(/white/);
 });
 
-test('drafts are restored after reload', async ({ page }) => {
+test('drafts are restored after reload', async ({ page }, testInfo) => {
   await addImages(page, [white, blue]);
   await page.getByLabel('Title').fill('Checkout button overlaps footer');
   await page.getByLabel('Description').fill('Steps to reproduce');
@@ -94,7 +94,20 @@ test('drafts are restored after reload', async ({ page }) => {
   await expect(page.getByLabel('Title')).toHaveValue('Checkout button overlaps footer');
   await expect(page.getByTestId('tile')).toHaveCount(2);
   await page.getByRole('button', { name: 'History' }).click();
-  await expect(page.getByRole('dialog', { name: 'History' }).getByText('Checkout button overlaps footer')).toBeVisible();
+  const history = page.getByRole('dialog', { name: 'History' });
+  await expect(history.getByText('Checkout button overlaps footer')).toBeVisible();
+  // The entry shows the saved thumbnail of its first screenshot, and search narrows the list.
+  await expect(history.locator('.history-thumb img')).toHaveAttribute('src', /^data:image\/png;base64,/);
+  await history.getByLabel('Search history').fill('checkout reproduce');
+  await expect(history.getByText('Checkout button overlaps footer')).toBeVisible();
+  await history.getByLabel('Search history').fill('invoice');
+  await expect(history.getByText('Nothing matches.', { exact: false })).toBeVisible();
+  await history.getByLabel('Search history').fill('');
+  await history.getByRole('radio', { name: /Sent/ }).click();
+  await expect(history.getByText('Checkout button overlaps footer')).toHaveCount(0);
+  await history.getByRole('radio', { name: /Drafts/ }).click();
+  await expect(history.getByText('Checkout button overlaps footer')).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('history.png'), animations: 'disabled' });
 });
 
 test('browser preview never pretends to reach Linear', async ({ page }) => {

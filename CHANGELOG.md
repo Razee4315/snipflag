@@ -9,9 +9,10 @@ All notable changes to Snipflag are documented here. The format follows [Keep a 
 - Share bar under the screenshot: Copy image, Copy for AI and Save image. Copy for AI saves every marked-up screenshot to Pictures/Snipflag and copies their paths with the title, description and step notes, ready to paste into an assistant such as Claude Code. Ctrl+C copies the image; Ctrl+Shift+C copies for AI.
 - Crop tool (C) with an Undo in the confirmation toast, and a plain Line tool (L).
 - Canvas: Ctrl+wheel zooms toward the pointer; hold Space and drag, or drag with the middle button, to pan; arrow keys move the selected mark (Shift: 10 px); Ctrl+D duplicates it.
-- Filmstrip: drag a screenshot to reorder it, tiles glide to their new place, thumbnails are larger, and removing a screenshot offers Put back.
+- Filmstrip: drag a screenshot sideways to reorder it (it follows the pointer and the others glide into place), thumbnails are larger, and removing a screenshot offers Put back.
 - Issue panel: labels are colored chips with a search-to-add field; a missing title or team is reported at that field; long team, project and assignee lists show their search joined to the list.
 - Title bar: a visible Saved indicator, a maximize button (or double-click the bar), and the toolbar and share bar also drag the window.
+- History shows a thumbnail of each session's first screenshot (the flattened one, so pixelated areas stay hidden), with search and All / Drafts / Sent filters.
 - Notes on numbered steps, written in a list that floats over the canvas; they can be added to the description.
 - The Linear issue panel can be hidden for quick mark-up and sharing; the choice is remembered.
 - Four more themes, each with its own texture: Paper, Blossom, Midnight and Graphite. A picked theme previews at once.

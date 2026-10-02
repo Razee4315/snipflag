@@ -6,6 +6,12 @@ Automated coverage: unit tests for line bounds, duplicate placement, crop roundi
 
 Native gates: Ctrl+wheel keeps the point under the pointer at several zoom levels; Space-drag and middle-drag pan with a real mouse and a touchpad; Space no longer presses a focused toolbar button; every edge of a zoomed-in image is reachable; cropping a 4K capture; crop then Create issue uploads the cropped image and `@image` mentions still resolve.
 
+## History
+
+Automated coverage: unit tests for search and filters; Rust test that the stored preview must be a bounded PNG data URL and is not report content (a locked report still saves); browser test for the thumbnail, search, and filters.
+
+Native gates: drafts saved by older versions show a placeholder until they are opened and saved again; thumbnails of pixelated screenshots show the pixelation; 200 sessions scroll smoothly.
+
 ## Issue panel and title bar
 
 Automated coverage: unit tests for label matching and the label picker's static states (chips, loading hint, empty team); the Saved indicator text in the browser suite. The label picker's keyboard and mouse behavior, the field-level title/team errors and the maximize button cannot run in the browser preview (no Linear data, validation stops at the preview message, no native window).
@@ -16,7 +22,7 @@ Native gates (connected workspace): add and remove labels by mouse and keyboard 
 
 Automated coverage: store test for putting a removed image back (new identity, alias and history kept); browser test for Put back, drag-to-reorder and persistence of the new order.
 
-Native gates: drag reorder in WebView2 (the window has Tauri drag-and-drop disabled so HTML drag events reach the page), the drop marker, dragging while locked or with one image, tile glide with animations on and off, Put back after the draft autosaved (the screenshot returns with its marks), and dropping image files onto the window still imports them.
+Native gates: drag reorder in WebView2 (pointer-based, no browser drag-and-drop), a short press still selects, the drop marker, dragging while locked or with one image, tile glide with animations on and off, Put back after the draft autosaved (the screenshot returns with its marks), and dropping image files onto the window still imports them.
 
 ## Sharing outside Linear
 

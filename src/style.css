@@ -478,8 +478,10 @@ option { background: var(--surface); color: var(--text); }
 .tile-select:hover { border-color: color-mix(in srgb, var(--primary) 45%, var(--border)); }
 .tile.active .tile-select { border-color: var(--primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent); }
 .tile-select img { display: block; width: 100%; height: 72px; object-fit: contain; }
-.tile-select[draggable="true"] { cursor: grab; }
-.tile.dragging { opacity: 0.4; }
+/* The dragged tile rides above the others and follows the pointer. */
+.tile.dragging { z-index: 3; animation: none; }
+.tile.dragging .tile-select { cursor: grabbing; box-shadow: var(--shadow-lg); border-color: var(--primary); }
+.tile.dragging .tile-actions { visibility: hidden; }
 /* Where a dragged screenshot will land. */
 .tile.drop-before::before, .tile.drop-after::after { content: ""; position: absolute; top: 2px; bottom: 30px; width: 3px; border-radius: 3px; background: var(--primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent); }
 .tile.drop-before::before { left: -7px; }
@@ -603,8 +605,20 @@ option { background: var(--surface); color: var(--text); }
 .creator-link strong { font-size: 12.5px; }
 .creator-link small { font-size: 11.5px; color: var(--muted); }
 .creator-link > svg:last-child { color: var(--muted); }
+.history-tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.history-search { flex: 1; min-width: 180px; height: 36px; padding: 0 12px; border: 1px solid transparent; border-radius: var(--radius); background: var(--surface-2); font-size: 12.5px; transition: border-color 160ms var(--ease), background 160ms var(--ease), box-shadow 180ms var(--ease); }
+.history-search:hover { border-color: var(--border); }
+.history-search:focus { outline: none; border-color: color-mix(in srgb, var(--primary) 55%, transparent); background: var(--surface); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent); }
+.segmented { display: flex; padding: 3px; border-radius: 11px; background: var(--surface-2); border: 1px solid var(--border); }
+.segmented button { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-size: 12px; font-weight: 550; cursor: pointer; transition: background 140ms, color 140ms; }
+.segmented button:hover { color: var(--text); }
+.segmented button.active { background: var(--surface); color: var(--primary); box-shadow: var(--shadow-sm), 0 0 0 1px var(--border); }
+.segmented button span { font-size: 11px; font-variant-numeric: tabular-nums; opacity: 0.75; }
+.history-thumb { display: grid; place-items: center; flex-shrink: 0; width: 72px; height: 48px; border-radius: 8px; overflow: hidden; background: var(--surround); border: 1px solid var(--border); color: var(--muted); }
+.history-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.history-main { flex: 1; }
 .history { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-.history li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2); transition: border-color 140ms, transform 160ms var(--ease); animation: rise 320ms var(--ease) both; }
+.history li { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2); transition: border-color 140ms, transform 160ms var(--ease); animation: rise 320ms var(--ease) both; }
 .history li:hover { border-color: color-mix(in srgb, var(--primary) 35%, var(--border)); }
 .history li.current { border-color: color-mix(in srgb, var(--primary) 45%, transparent); }
 .history-main { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
