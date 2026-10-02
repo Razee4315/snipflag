@@ -74,7 +74,7 @@ test('reordering changes filmstrip order and captions follow their image', async
   await page.getByRole('button', { name: 'Put back' }).click();
   await expect(page.getByTestId('tile')).toHaveCount(2);
   await expect(tile(page, 1)).toHaveAccessibleName(/blue/);
-  await page.evaluate(() => Promise.all(document.getAnimations().map(a => a.finished)));
+  await page.evaluate(() => Promise.allSettled(document.getAnimations().map(a => a.finished)).then(() => undefined));
   // Dragging a screenshot onto the left half of another places it before that one.
   const target = (await tile(page, 1).boundingBox())!;
   await tile(page, 2).dragTo(tile(page, 1), { targetPosition: { x: target.width * 0.2, y: target.height / 2 } });
@@ -549,7 +549,7 @@ test('the issue panel tucks away and step notes travel with the report', async (
   await share.getByRole('button', { name: 'Linear issue' }).click();
   await expect(page.getByLabel('Title', { exact: true })).toBeVisible();
   // The panel slides in; raw mouse input waits for the slide to finish.
-  await page.evaluate(() => Promise.all(document.getAnimations().map(a => a.finished)));
+  await page.evaluate(() => Promise.allSettled(document.getAnimations().map(a => a.finished)).then(() => undefined));
 
   await page.keyboard.press('n');
   const box = (await page.getByTestId('canvas').boundingBox())!;
