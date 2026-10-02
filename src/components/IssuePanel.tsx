@@ -18,7 +18,7 @@ interface Props {
   progress: string; submitError: string; pendingState: string | null;
   templates: Template[]; teamMemory: Record<string, string>; teamDefaults: Record<string, TeamDefaults>;
   onConnect: () => void; onCancelConnect: () => void; onRetryConnection: () => void; onOpenSettings: () => void;
-  onSubmit: (report?: PreparedReport) => void; onNewSession: () => void; onTeamChosen: (teamId: string) => void; notify: (text: string) => void;
+  onSubmit: (report?: PreparedReport) => void; onNewSession: () => void; onTeamChosen: (teamId: string) => void; notify: (text: string, kind?: 'error' | 'info') => void;
 }
 /** A select with a filter for long Linear lists. The chosen item always stays listed. */
 function Picker({ label, value, disabled, items, none, missing, error, onChange }: { label: string; value: string; disabled: boolean; items: { id: string; label: string }[]; none: string; missing: string; error?: string; onChange: (id: string) => void }) {
@@ -107,8 +107,8 @@ export default function IssuePanel(p: Props) {
             {session.title && <p className="sent-title">{session.title}</p>}
             <p className="muted small">{session.images.length} {session.images.length === 1 ? 'screenshot' : 'screenshots'} attached in order.</p>
             <div className="stack">
-              <button type="button" className="button primary" onClick={() => openIssue(issue.url).catch(e => p.notify(errorText(e)))}><Icon name="external" size={16} /> Open issue</button>
-              <button type="button" className="button" onClick={() => copyText(issue.url).then(() => p.notify('Link copied.')).catch(e => p.notify(errorText(e)))}><Icon name="link" size={16} /> Copy link</button>
+              <button type="button" className="button primary" onClick={() => openIssue(issue.url).catch(e => p.notify(errorText(e), 'error'))}><Icon name="external" size={16} /> Open issue</button>
+              <button type="button" className="button" onClick={() => copyText(issue.url).then(() => p.notify('Link copied.')).catch(e => p.notify(errorText(e), 'error'))}><Icon name="link" size={16} /> Copy link</button>
             </div>
           </div>
         </div>
