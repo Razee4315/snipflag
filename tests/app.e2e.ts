@@ -793,6 +793,7 @@ test('text can sit on a contrasting plate that is burned into the export', async
   // The choice is remembered for the next text and after a restart.
   await expect(page.getByRole('status', { name: 'Saved on this computer' })).toBeVisible();
   await page.reload();
+  await expect(tile(page, 1)).toHaveAccessibleName(/1 mark$/);
   await page.keyboard.press('t');
   await expect(page.getByRole('button', { name: 'Background behind text' })).toHaveAttribute('aria-pressed', 'true');
 });
