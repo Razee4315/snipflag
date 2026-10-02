@@ -23,7 +23,10 @@ interface State {
   addImages: (images: CaptureImage[]) => void; select: (id: string) => void;
   updateImage: (id: string, patch: Partial<CaptureImage>) => void;
   edit: (annotations: Annotation[]) => void; undo: () => void; redo: () => void;
-  removeImage: (id: string) => void; moveImage: (from: number, to: number) => void;
+  removeImage: (id: string) => void;
+  /** Swaps an image for a changed copy with a new identity (crop and its undo). Mentions follow; undo history is `history` or empty. */
+  replaceImage: (id: string, next: CaptureImage, history?: History) => void;
+  moveImage: (from: number, to: number) => void;
   setTool: (tool: Tool) => void; setStyle: (style: Partial<Pick<State, 'color' | 'stroke' | 'fontSize' | 'highlightColor' | 'highlightSize'>>) => void;
   setBusy: (busy: boolean) => void; setSelection: (id: string | null) => void;
   /** Sets a step's note without an undo entry: notes are text about the image, not marks on it. */
@@ -84,6 +87,15 @@ export const useStore = create<State>((set, get) => ({
     const images = s.session.images.filter(i => i.id !== id); const histories = { ...s.histories }; delete histories[id];
     const activeId = s.activeId === id ? (images[Math.min(index, images.length - 1)]?.id ?? '') : s.activeId;
     set({ session: { ...s.session, images, annotationHistories: histories, updatedAt: Date.now() }, activeId, histories });
+  },
+  replaceImage: (id, next, history = { past: [], future: [] }) => {
+    const s = get(); if (locked(s) || !s.session.images.some(i => i.id === id)) return;
+    const histories = { ...s.histories, [next.id]: boundedHistory(history) }; delete histories[id];
+    const imageReferences = Object.fromEntries(Object.entries(s.session.imageReferences ?? {}).map(([alias, target]) => [alias, target === id ? next.id : target]));
+    set({
+      session: { ...s.session, images: s.session.images.map(i => i.id === id ? next : i), imageReferences, annotationHistories: histories, updatedAt: Date.now() },
+      histories, activeId: s.activeId === id ? next.id : s.activeId, selection: null,
+    });
   },
   moveImage: (from, to) => { const s = get(); s.patch({ images: reorder(s.session.images, from, to) }); },
   setTool: (tool) => set({ tool }),

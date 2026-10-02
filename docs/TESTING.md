@@ -1,5 +1,11 @@
 # Test and release gates
 
+## Canvas tools
+
+Automated coverage: unit tests for line bounds, duplicate placement, crop rounding and which marks survive a crop, and image replacement in the store; browser test for line export pixels, Shift+Arrow nudge, Ctrl+D, crop dimensions and mark positions, crop Undo, and persistence.
+
+Native gates: Ctrl+wheel keeps the point under the pointer at several zoom levels; Space-drag and middle-drag pan with a real mouse and a touchpad; Space no longer presses a focused toolbar button; every edge of a zoomed-in image is reachable; cropping a 4K capture; crop then Create issue uploads the cropped image and `@image` mentions still resolve.
+
 ## Sharing outside Linear
 
 Automated coverage: unit tests for the share text and step-note ordering; Rust test for shared file names; browser test for the share bar, hiding and restoring the issue panel across reload, step notes without layout shift or undo entries, adding notes to the description, and note persistence.

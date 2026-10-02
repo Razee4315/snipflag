@@ -1,4 +1,4 @@
-import { isFreehand, type Annotation } from './model';
+import { isFreehand, isSegment, type Annotation } from './model';
 
 export interface Box { x: number; y: number; width: number; height: number }
 export interface Point { x: number; y: number }
@@ -19,7 +19,7 @@ const HEAD = (stroke: number) => Math.max(12, stroke * 4);
 
 /** Bounding box in image pixels, padded to include strokes and arrow heads. */
 export function bounds(a: Annotation): Box {
-  if (isFreehand(a.kind) || a.kind === 'arrow') {
+  if (isFreehand(a.kind) || isSegment(a.kind)) {
     const xs = a.points.filter((_, i) => i % 2 === 0); const ys = a.points.filter((_, i) => i % 2 === 1);
     const pad = a.kind === 'arrow' ? Math.max(HEAD(a.stroke), a.stroke) : a.stroke;
     const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
@@ -36,7 +36,7 @@ export function translate(a: Annotation, dx: number, dy: number): Annotation { r
 export function transform(a: Annotation, box: Box, sx: number, sy: number): Annotation {
   const old = bounds(a);
   const x = box.x + (a.x - old.x) * sx; const y = box.y + (a.y - old.y) * sy;
-  if (isFreehand(a.kind) || a.kind === 'arrow') return { ...a, x, y, points: a.points.map((v, i) => i % 2 === 0 ? v * sx : v * sy) };
+  if (isFreehand(a.kind) || isSegment(a.kind)) return { ...a, x, y, points: a.points.map((v, i) => i % 2 === 0 ? v * sx : v * sy) };
   if (a.kind === 'step') {
     // Badges stay round: scale by the larger factor.
     const side = Math.max(12, Math.min(400, a.width * Math.max(sx, sy)));
@@ -48,11 +48,19 @@ export function transform(a: Annotation, box: Box, sx: number, sy: number): Anno
   }
   return { ...a, x, y, width: Math.max(1, a.width * sx), height: Math.max(1, a.height * sy) };
 }
+/** Whether two boxes share any area. */
+export function intersects(a: Box, b: Box) { return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height; }
+/** A copy placed a little down and to the right of the original, kept on the image where possible. */
+export function duplicate(a: Annotation, size: { width: number; height: number }): Annotation {
+  const box = bounds(a);
+  const dx = box.x + box.width + 16 <= size.width ? 16 : -16; const dy = box.y + box.height + 16 <= size.height ? 16 : -16;
+  return { ...translate(a, dx, dy), id: crypto.randomUUID(), points: [...a.points] };
+}
 /** Whether a finished drag produced something worth keeping. */
 export function isMeaningful(a: Annotation): boolean {
   if (a.kind === 'text') return a.text.trim().length > 0;
   if (a.kind === 'step') return true;
   if (isFreehand(a.kind)) return a.points.some((x, i) => i % 2 === 0 && Math.hypot(x - a.points[0], a.points[i + 1] - a.points[1]) >= 1);
-  if (a.kind === 'arrow') return Math.hypot(a.points[2] - a.points[0], a.points[3] - a.points[1]) >= 6;
+  if (isSegment(a.kind)) return Math.hypot(a.points[2] - a.points[0], a.points[3] - a.points[1]) >= 6;
   return a.width >= 3 && a.height >= 3;
 }

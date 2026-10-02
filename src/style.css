@@ -408,10 +408,13 @@ option { background: var(--surface); color: var(--text); }
 
 /* Canvas */
 .canvas-scroll {
-  position: relative; flex: 1; min-height: 0; overflow: auto; display: grid; place-items: center; padding: 24px;
+  position: relative; flex: 1; min-height: 0; overflow: auto; display: flex; padding: 24px;
   background-image: radial-gradient(color-mix(in srgb, var(--muted) 22%, transparent) 0.8px, transparent 0.8px); background-size: 16px 16px;
 }
-.canvas-frame { position: relative; background: #fff; touch-action: none; border-radius: 3px; box-shadow: 0 18px 40px -18px rgba(8, 30, 24, 0.45), 0 0 0 1px rgba(8, 30, 24, 0.08); animation: canvas-in 360ms var(--ease); }
+/* Centered with auto margins so every edge stays reachable by scrolling when zoomed in. */
+.canvas-scroll.ready { cursor: grab; }
+.canvas-scroll.panning { cursor: grabbing; }
+.canvas-frame { margin: auto; flex-shrink: 0; position: relative; background: #fff; touch-action: none; border-radius: 3px; box-shadow: 0 18px 40px -18px rgba(8, 30, 24, 0.45), 0 0 0 1px rgba(8, 30, 24, 0.08); animation: canvas-in 360ms var(--ease); }
 .brush-cursor { position: absolute; left: 0; top: 0; z-index: 3; pointer-events: none; border-radius: 50%; opacity: 0; will-change: transform;
   border: 1.5px solid #fff; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(0, 0, 0, 0.25); transition: width 120ms, height 120ms, opacity 120ms; }
 .brush-cursor::after { content: ""; position: absolute; left: 50%; top: 50%; width: 3px; height: 3px; margin: -1.5px; border-radius: 50%; background: var(--brush); box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.8); }
@@ -498,6 +501,8 @@ option { background: var(--surface); color: var(--text); }
   animation: toast-in 380ms var(--spring) both;
 }
 .toast > svg { opacity: 0.85; }
+.toast-action { border: 0; border-radius: 8px; padding: 4px 10px; background: color-mix(in srgb, currentColor 16%, transparent); color: inherit; font-weight: 650; cursor: pointer; transition: background 140ms; }
+.toast-action:hover { background: color-mix(in srgb, currentColor 26%, transparent); }
 .toast.error { background: var(--danger); color: #fff; }
 .toast .icon-button { width: 26px; height: 26px; color: inherit; opacity: 0.75; }
 .toast .icon-button:hover { opacity: 1; background: rgba(255, 255, 255, 0.14); color: inherit; }

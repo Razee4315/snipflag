@@ -1,3 +1,4 @@
+import { bounds, intersects, translate, type Box } from './geometry';
 import { LIMITS, type Annotation, type CaptureImage } from './model';
 
 export const FONT_FAMILY = '"Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif';
@@ -131,7 +132,7 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, source: CanvasImag
     ctx.translate(a.x, a.y); ctx.globalAlpha = HIGHLIGHT_ALPHA; ctx.globalCompositeOperation = 'multiply';
     strokeSmooth(ctx, a.points);
   }
-  if ((a.kind === 'pen' || a.kind === 'arrow') && a.points.length >= 4) {
+  if ((a.kind === 'pen' || a.kind === 'arrow' || a.kind === 'line') && a.points.length >= 4) {
     ctx.translate(a.x, a.y);
     const p = a.points; const n = p.length;
     let endX = p[n - 2], endY = p[n - 1];
@@ -144,9 +145,29 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, source: CanvasImag
       ctx.closePath(); ctx.fill();
       endX -= Math.cos(angle) * head * 0.8; endY -= Math.sin(angle) * head * 0.8;
       ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(endX, endY); ctx.stroke();
-    } else strokeSmooth(ctx, p);
+    } else if (a.kind === 'line') { ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(endX, endY); ctx.stroke(); }
+    else strokeSmooth(ctx, p);
   }
   ctx.restore();
+}
+/** The crop rectangle in whole pixels inside the image. */
+export function cropBox(image: Pick<CaptureImage, 'width' | 'height'>, rect: Box): Box {
+  const x = Math.max(0, Math.min(image.width - 1, Math.floor(rect.x))); const y = Math.max(0, Math.min(image.height - 1, Math.floor(rect.y)));
+  return { x, y, width: Math.max(1, Math.min(image.width, Math.ceil(rect.x + rect.width)) - x), height: Math.max(1, Math.min(image.height, Math.ceil(rect.y + rect.height)) - y) };
+}
+/** Marks moved into the cropped image's coordinates; marks entirely outside the crop are dropped. */
+export function cropAnnotations(annotations: Annotation[], box: Box) {
+  return annotations.filter(a => intersects(bounds(a), box)).map(a => translate(a, -box.x, -box.y));
+}
+/**
+ * Crops the original pixels and returns a new image with a new identity (saved images are immutable per ID).
+ * Marks stay editable in the new coordinates.
+ */
+export async function cropImage(image: CaptureImage, rect: Box): Promise<CaptureImage> {
+  const box = cropBox(image, rect);
+  const source = await loadImage(image.dataUrl);
+  const c = canvas(box.width, box.height); c.getContext('2d')!.drawImage(source, -box.x, -box.y);
+  return { ...image, id: crypto.randomUUID(), width: box.width, height: box.height, dataUrl: c.toDataURL('image/png'), annotations: cropAnnotations(image.annotations, box) };
 }
 /** Authoritative export: original dimensions, flattened pixels, pixelation burned in. */
 export async function flattenedCanvas(image: CaptureImage): Promise<HTMLCanvasElement> {

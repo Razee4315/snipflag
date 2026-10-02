@@ -14,7 +14,8 @@ import {
   appStatus, cancelLogin, clearHistory, connectLinear, deleteSession, desktop, disconnectLinear, editorWindow, errorText, exportPng, linearConnection, listSessions, loadSession,
   copyText, loadSettings, on, PREVIEW_MESSAGE, readClipboardImage, saveSession, saveSettings, startCapture, submissionStatus, submitIssue, reconcileIssue, finishQuit, checkUpdate, installUpdate, shareImages, type AppStatus, type AvailableUpdate, type RawImage,
 } from './native';
-import { fileBaseName, flatten, importImage } from './render';
+import type { Box } from './geometry';
+import { cropImage, fileBaseName, flatten, importImage } from './render';
 import { activeImage, isLocked, useStore } from './store';
 import { missingImageReferences } from './mentions';
 import { smooth } from './motion';
@@ -24,7 +25,9 @@ import { saveBeforeQuit } from './lifecycle';
 import { rememberDetails, templatesOf } from './templates';
 
 const PANEL_KEY = 'snipflag-panel';
-type Notice = { kind: 'error' | 'info'; text: string; id: number } | null;
+/** A toast; `action` offers one follow-up such as Undo while it is on screen. */
+interface NoticeAction { label: string; run: () => void }
+type Notice = { kind: 'error' | 'info'; text: string; id: number; action?: NoticeAction } | null;
 const isTyping = (t: EventTarget | null) => t instanceof HTMLElement && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName));
 
 export default function App() {
@@ -57,8 +60,8 @@ export default function App() {
   const saveTimer = useRef<number | undefined>(undefined);
   const saveAttempts = useRef(new Set<string>());
 
-  const notify = useCallback((text: string, kind: 'error' | 'info' = 'info') => setNotice({ kind, text, id: Date.now() }), []);
-  useEffect(() => { if (!notice) return; const t = window.setTimeout(() => setNotice(null), notice.kind === 'error' ? 9000 : 3500); return () => window.clearTimeout(t); }, [notice]);
+  const notify = useCallback((text: string, kind: 'error' | 'info' = 'info', action?: NoticeAction) => setNotice({ kind, text, id: Date.now(), action }), []);
+  useEffect(() => { if (!notice) return; const t = window.setTimeout(() => setNotice(null), notice.kind === 'error' ? 9000 : notice.action ? 8000 : 3500); return () => window.clearTimeout(t); }, [notice]);
 
   // Durable drafts: every change is saved shortly after it happens, and immediately before capture or network work.
   const saveNow = useCallback(() => {
@@ -319,6 +322,17 @@ export default function App() {
     } catch (e) { notify(errorText(e), 'error'); }
   }, [notify]);
 
+  /** Crops the active screenshot. The toast can put the uncropped image and its undo history back. */
+  const cropActive = useCallback(async (rect: Box) => {
+    const s = useStore.getState(); const before = activeImage(s); if (!before || isLocked(s)) return;
+    const history = s.histories[before.id];
+    try {
+      const next = await cropImage(before, rect);
+      useStore.getState().replaceImage(before.id, next); useStore.getState().setTool('select'); setZoom('fit');
+      // The restored copy gets a new identity too: the original file may already have been cleaned up.
+      notify(`Cropped to ${next.width} × ${next.height}.`, 'info', { label: 'Undo', run: () => { useStore.getState().replaceImage(next.id, { ...before, id: crypto.randomUUID() }, history); setZoom('fit'); } });
+    } catch (e) { notify(errorText(e), 'error'); }
+  }, [notify]);
   /** Saves every flattened screenshot to Pictures/Snipflag and copies their paths with the report text and step notes. */
   const shareForAi = useCallback(async () => {
     const { session: s } = useStore.getState(); if (!s.images.length) return;
@@ -394,7 +408,7 @@ export default function App() {
           <>
             <Toolbar />
             <div className="canvas-wrap">
-              <Editor image={image} zoom={zoom} onZoom={setZoom} onScale={setScale} />
+              <Editor image={image} zoom={zoom} onZoom={setZoom} onScale={setScale} onCrop={rect => void cropActive(rect)} />
               <StepNotes image={image} />
             </div>
             <div className="image-bar">
@@ -436,6 +450,7 @@ export default function App() {
         {notice && <div key={notice.id} className={`toast ${notice.kind}`}>
           <Icon name={notice.kind === 'error' ? 'alert' : 'check'} size={16} />
           <span>{notice.text}</span>
+          {notice.action && <button type="button" className="toast-action" onClick={() => { notice.action?.run(); setNotice(null); }}>{notice.action.label}</button>}
           <button type="button" className="icon-button" aria-label="Dismiss" onClick={() => setNotice(null)}><Icon name="close" size={14} /></button>
         </div>}
       </div>

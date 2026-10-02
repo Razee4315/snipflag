@@ -8,6 +8,7 @@ import { Icon, type IconName } from './icons';
 export const TOOLS: { tool: Tool; label: string; key: string; icon: IconName }[] = [
   { tool: 'select', label: 'Select', key: 'V', icon: 'select' },
   { tool: 'arrow', label: 'Arrow', key: 'A', icon: 'arrow' },
+  { tool: 'line', label: 'Line', key: 'L', icon: 'line' },
   { tool: 'rectangle', label: 'Rectangle', key: 'R', icon: 'rectangle' },
   { tool: 'ellipse', label: 'Ellipse', key: 'E', icon: 'ellipse' },
   { tool: 'pen', label: 'Pen', key: 'P', icon: 'pen' },
@@ -15,6 +16,7 @@ export const TOOLS: { tool: Tool; label: string; key: string; icon: IconName }[]
   { tool: 'text', label: 'Text', key: 'T', icon: 'text' },
   { tool: 'step', label: 'Numbered step', key: 'N', icon: 'step' },
   { tool: 'pixelate', label: 'Pixelate', key: 'B', icon: 'pixelate' },
+  { tool: 'crop', label: 'Crop', key: 'C', icon: 'crop' },
 ];
 const COLORS = [
   { value: '#EF4444', name: 'Red' }, { value: '#F59E0B', name: 'Amber' }, { value: '#22C55E', name: 'Green' },
@@ -59,7 +61,8 @@ export default function Toolbar() {
   const widths = marker ? HIGHLIGHT_SIZES : STROKES;
   const activeWidth = styled && styled.kind !== 'text' && (styled.kind === 'highlight') === marker ? styled.stroke : marker ? highlightSize : stroke;
   const showText = tool === 'text' || styled?.kind === 'text';
-  const showWidth = !showText && tool !== 'pixelate';
+  const plain = tool === 'pixelate' || tool === 'crop';
+  const showWidth = !showText && !plain;
   const pick = (hex: string) => {
     setCustom(c => ({ ...c, [set]: saveCustomColor(set, hex, palette.map(p => p.value)) }));
     style({ color: hex }); setPicker(false);
@@ -75,7 +78,7 @@ export default function Toolbar() {
         ))}
       </div>
       <div className="tool-options">
-        {tool !== 'pixelate' && (
+        {!plain && (
           <div className="tool-group" role="radiogroup" aria-label={marker ? 'Highlighter color' : 'Color'}>
             {[...palette, ...extras.map(value => ({ value, name: `Custom ${value}` }))].map(c => (
               <button key={c.value} type="button" role="radio" aria-checked={activeColor === c.value} aria-label={c.name} title={c.name.replace('Custom ', '')}

@@ -1,13 +1,15 @@
 import Konva from 'konva';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from 'react';
-import { Image as KonvaImage, Layer, Shape, Stage, Transformer } from 'react-konva';
-import { bounds, isMeaningful, snapAngle, transform, translate, type Point } from '../geometry';
-import { clampRect, isFreehand, isOutline, nextStep, normalizeRect, stepSize, type Annotation, type CaptureImage } from '../model';
+import { Image as KonvaImage, Layer, Rect, Shape, Stage, Transformer } from 'react-konva';
+import { bounds, duplicate, isMeaningful, snapAngle, transform, translate, type Box, type Point } from '../geometry';
+import { clampRect, isFreehand, isOutline, isSegment, nextStep, normalizeRect, stepSize, type Annotation, type CaptureImage } from '../model';
 import { drawAnnotation, FONT_FAMILY, LINE_HEIGHT, paintOrder, paintPixelation, pixelate } from '../render';
 import { isLocked, useStore } from '../store';
 
 export type Zoom = number | 'fit';
-interface Props { image: CaptureImage; zoom: Zoom; onZoom: (zoom: Zoom) => void; onScale: (scale: number) => void }
+interface Props { image: CaptureImage; zoom: Zoom; onZoom: (zoom: Zoom) => void; onScale: (scale: number) => void; onCrop: (rect: Box) => void }
+/** Smallest crop, in image pixels, that is treated as intended. */
+const MIN_CROP = 8;
 interface TextEdit { id: string | null; x: number; y: number; value: string; fontSize: number; color: string }
 
 function useImageElement(src: string) {
@@ -41,7 +43,7 @@ function isTyping(target: EventTarget | null) {
   return target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
 }
 
-export default function Editor({ image, zoom, onZoom, onScale }: Props) {
+export default function Editor({ image, zoom, onZoom, onScale, onCrop }: Props) {
   const tool = useStore(s => s.tool); const color = useStore(s => s.color); const stroke = useStore(s => s.stroke); const fontSize = useStore(s => s.fontSize);
   const highlightColor = useStore(s => s.highlightColor); const highlightSize = useStore(s => s.highlightSize);
   const brush = useRef<HTMLDivElement>(null);
@@ -68,11 +70,42 @@ export default function Editor({ image, zoom, onZoom, onScale }: Props) {
   const start = useRef<{ x: number; y: number } | null>(null);
   const textStart = useRef<{ x: number; y: number } | null>(null);
   const pixelCache = useRef(new Map<string, HTMLCanvasElement>());
+  const [crop, setCropState] = useState<Box | null>(null);
+  const cropRef = useRef<Box | null>(null);
+  const setCrop = (value: Box | null) => { cropRef.current = value; setCropState(value); };
+  // Panning: hold Space and drag, or drag with the middle button.
+  const space = useRef(false);
+  const pan = useRef<{ x: number; y: number; left: number; top: number } | null>(null);
+  const [grab, setGrab] = useState<'idle' | 'ready' | 'panning'>('idle');
+  /** The image point that must stay under the pointer when the scale changes. */
+  const anchor = useRef<{ x: number; y: number; clientX: number; clientY: number } | null>(null);
 
   const fit = Math.min((size.width - 48) / image.width, (size.height - 48) / image.height, 1);
   const scale = zoom === 'fit' ? Math.max(0.02, fit) : zoom;
   useEffect(() => onScale(scale), [scale, onScale]);
-  useEffect(() => { setDraft(null); setTextEdit(null); pixelCache.current.clear(); }, [image.id]);
+  useEffect(() => { setDraft(null); setTextEdit(null); setCrop(null); pixelCache.current.clear(); }, [image.id]);
+  useEffect(() => { if (tool !== 'crop') setCrop(null); }, [tool]);
+  // Zoom toward the pointer: after the stage resizes, scroll so the same image point is still under it.
+  useLayoutEffect(() => {
+    const a = anchor.current; anchor.current = null;
+    const el = wrap.current; const frame = el?.querySelector<HTMLElement>('[data-testid="canvas"]');
+    if (!a || !el || !frame) return;
+    const rect = frame.getBoundingClientRect();
+    el.scrollLeft += rect.left + a.x * scale - a.clientX; el.scrollTop += rect.top + a.y * scale - a.clientY;
+  }, [scale]);
+  useEffect(() => {
+    const idle = (e: KeyboardEvent) => !isTyping(e.target) && !document.querySelector('dialog[open]');
+    const down = (e: KeyboardEvent) => {
+      if (e.code !== 'Space' || !idle(e)) return;
+      // Space is the pan key here; it must not scroll the page or press the focused button.
+      e.preventDefault();
+      if (!space.current) { space.current = true; setGrab(g => g === 'panning' ? g : 'ready'); }
+    };
+    const up = (e: KeyboardEvent) => { if (e.code === 'Space') { space.current = false; setGrab(g => g === 'panning' ? g : 'idle'); } };
+    const release = () => { space.current = false; pan.current = null; setGrab('idle'); };
+    window.addEventListener('keydown', down); window.addEventListener('keyup', up); window.addEventListener('blur', release);
+    return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); window.removeEventListener('blur', release); };
+  }, []);
 
   const ordered = useMemo(() => paintOrder(image.annotations), [image.annotations]);
   const selected = image.annotations.find(a => a.id === selection);
@@ -88,12 +121,22 @@ export default function Editor({ image, zoom, onZoom, onScale }: Props) {
       if (isTyping(e.target) || textEdit) return;
       if (e.key === 'Shift') updateDrawing.current(true);
       if ((e.key === 'Delete' || e.key === 'Backspace') && selection && !locked) { e.preventDefault(); removeAnnotation(selection); }
-      if (e.key === 'Escape') { setDraft(null); start.current = null; setSelection(null); }
+      if (e.key === 'Escape') { setDraft(null); setCrop(null); start.current = null; setSelection(null); }
+      if (!selected || locked || tool !== 'select') return;
+      const step = e.shiftKey ? 10 : 1;
+      const nudge = ({ ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] } as Record<string, [number, number]>)[e.key];
+      if (nudge && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); edit(image.annotations.map(a => a.id === selected.id ? translate(a, nudge[0], nudge[1]) : a)); }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
+        e.preventDefault();
+        // A duplicated step is the next step, with its own note.
+        const copy = { ...duplicate(selected, image), ...(selected.kind === 'step' ? { text: String(nextStep(image.annotations)), note: '' } : {}) };
+        edit([...image.annotations, copy]); setSelection(copy.id);
+      }
     };
     const onKeyUp = (e: KeyboardEvent) => { if (e.key === 'Shift') updateDrawing.current(false); };
     window.addEventListener('keydown', onKey); window.addEventListener('keyup', onKeyUp);
     return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('keyup', onKeyUp); };
-  }, [selection, locked, textEdit, removeAnnotation, setSelection]);
+  }, [selection, selected, tool, image, locked, textEdit, edit, removeAnnotation, setSelection]);
 
   const pointer = () => {
     const p = layer.current?.getStage()?.getPointerPosition(); if (!p) return null;
@@ -136,15 +179,18 @@ export default function Editor({ image, zoom, onZoom, onScale }: Props) {
       return;
     }
     start.current = p;
+    if (tool === 'crop') { setCrop({ x: p.x, y: p.y, width: 0, height: 0 }); return; }
     penSegment.current = null;
     setDraft({
-      ...base(), kind: tool, x: p.x, y: p.y, points: isFreehand(tool) ? [0, 0] : tool === 'arrow' ? [0, 0, 0, 0] : [],
+      ...base(), kind: tool, x: p.x, y: p.y, points: isFreehand(tool) ? [0, 0] : isSegment(tool) ? [0, 0, 0, 0] : [],
       ...(tool === 'highlight' ? { color: highlightColor, stroke: highlightSize } : {}),
     });
   };
   updateDrawing.current = (shift: boolean, samples?: Point[]) => {
-    const s = start.current; const draft = draftRef.current; if (!s || !draft) return;
+    const s = start.current; if (!s) return;
     const p = pointer(); if (!p) return;
+    if (cropRef.current) { setCrop(clampRect(normalizeRect(s.x, s.y, p.x, p.y), image.width, image.height)); return; }
+    const draft = draftRef.current; if (!draft) return;
     if (isFreehand(draft.kind)) {
       const n = draft.points.length; const lx = draft.points[n - 2], ly = draft.points[n - 1];
       if (shift) {
@@ -162,7 +208,7 @@ export default function Editor({ image, zoom, onZoom, onScale }: Props) {
         x = q.x - s.x; y = q.y - s.y; points.push(x, y);
       }
       if (points.length !== draft.points.length) setDraft({ ...draft, points });
-    } else if (draft.kind === 'arrow') {
+    } else if (isSegment(draft.kind)) {
       const end = shift ? snapAngle(s, p, image) : p;
       setDraft({ ...draft, points: [0, 0, end.x - s.x, end.y - s.y] });
     } else {
@@ -178,15 +224,18 @@ export default function Editor({ image, zoom, onZoom, onScale }: Props) {
   const onUp = () => {
     const t = textStart.current; textStart.current = null;
     if (t && tool === 'text') { setTextEdit({ id: null, x: t.x, y: t.y - fontSize * LINE_HEIGHT / 2, value: '', fontSize, color }); return; }
+    const area = cropRef.current;
+    if (area) { setCrop(null); start.current = null; if (area.width >= MIN_CROP && area.height >= MIN_CROP) onCrop(area); return; }
     const d = draftRef.current; start.current = null; penSegment.current = null; setDraft(null);
     if (!d || !isMeaningful(d)) return;
     edit([...image.annotations, d]);
     if (d.kind === 'redact' || d.kind === 'pixelate' || isOutline(d.kind)) setSelection(null);
   };
-  commitPending.current = () => { commitText(); if (draftRef.current) onUp(); };
+  commitPending.current = () => { commitText(); setCrop(null); if (draftRef.current) onUp(); };
   const onWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
     if (!e.evt.ctrlKey && !e.evt.metaKey) return;
     e.evt.preventDefault();
+    const p = pointer(); if (p) anchor.current = { x: p.x, y: p.y, clientX: e.evt.clientX, clientY: e.evt.clientY };
     onZoom(Math.max(0.1, Math.min(8, scale * (e.evt.deltaY < 0 ? 1.15 : 1 / 1.15))));
   };
 
@@ -225,7 +274,7 @@ export default function Editor({ image, zoom, onZoom, onScale }: Props) {
   const stageWidth = Math.max(1, Math.round(image.width * scale)); const stageHeight = Math.max(1, Math.round(image.height * scale));
   const brushTool = !locked && isFreehand(tool);
   const brushSize = Math.max(6, (tool === 'highlight' ? highlightSize : stroke) * scale);
-  const cursor = locked ? 'default' : tool === 'select' ? 'default' : tool === 'text' ? 'text' : brushTool ? 'none' : 'crosshair';
+  const cursor = grab !== 'idle' ? 'inherit' : locked ? 'default' : tool === 'select' ? 'default' : tool === 'text' ? 'text' : brushTool ? 'none' : 'crosshair';
   /** Pointer samples in image pixels, including the coalesced ones the browser batched since the last event. */
   const samples = (e: PointerEvent): Point[] => {
     const rect = layer.current?.getStage()?.container().getBoundingClientRect(); if (!rect) return [];
@@ -245,15 +294,31 @@ export default function Editor({ image, zoom, onZoom, onScale }: Props) {
   } : undefined;
 
   return (
-    <div className="canvas-scroll" ref={wrap}>
+    <div className={grab === 'idle' ? 'canvas-scroll' : `canvas-scroll ${grab}`} ref={wrap}
+      onPointerDownCapture={e => {
+        if (e.button !== 1 && !(e.button === 0 && space.current)) return;
+        // The pan gesture never reaches the drawing surface.
+        e.preventDefault(); e.stopPropagation();
+        pan.current = { x: e.clientX, y: e.clientY, left: e.currentTarget.scrollLeft, top: e.currentTarget.scrollTop };
+        e.currentTarget.setPointerCapture?.(e.pointerId); setGrab('panning');
+      }}
+      onPointerMove={e => { const p = pan.current; if (p) { e.currentTarget.scrollLeft = p.left - (e.clientX - p.x); e.currentTarget.scrollTop = p.top - (e.clientY - p.y); } }}
+      onPointerUp={() => { if (pan.current) { pan.current = null; setGrab(space.current ? 'ready' : 'idle'); } }}
+      onPointerCancel={() => { pan.current = null; setGrab(space.current ? 'ready' : 'idle'); }}>
       <div key={image.id} className="canvas-frame" style={{ width: stageWidth, height: stageHeight, cursor }} data-testid="canvas"
         onPointerMove={brushTool ? moveBrush : undefined} onPointerLeave={() => { if (brush.current) brush.current.style.opacity = '0'; }}>
         <Stage width={stageWidth} height={stageHeight} scaleX={scale} scaleY={scale}
-          onPointerDown={onDown} onPointerMove={e => updateDrawing.current(e.evt.shiftKey, samples(e.evt))} onPointerUp={onUp} onPointerLeave={() => { textStart.current = null; if (draftRef.current) onUp(); }} onWheel={onWheel}>
+          onPointerDown={onDown} onPointerMove={e => updateDrawing.current(e.evt.shiftKey, samples(e.evt))} onPointerUp={onUp} onPointerLeave={() => { textStart.current = null; if (draftRef.current || cropRef.current) onUp(); }} onWheel={onWheel}>
           <Layer ref={layer}>
             {source && <KonvaImage image={source} width={image.width} height={image.height} listening={false} />}
             {ordered.map(a => renderShape(a, true))}
             {draft && renderShape(draft, false)}
+            {crop && [
+              // Everything outside the crop is dimmed.
+              { x: 0, y: 0, width: image.width, height: crop.y }, { x: 0, y: crop.y + crop.height, width: image.width, height: image.height - crop.y - crop.height },
+              { x: 0, y: crop.y, width: crop.x, height: crop.height }, { x: crop.x + crop.width, y: crop.y, width: image.width - crop.x - crop.width, height: crop.height },
+            ].map((shade, i) => <Rect key={i} {...shade} fill="rgba(0, 0, 0, 0.5)" listening={false} />)}
+            {crop && <Rect {...crop} stroke="#FFFFFF" strokeWidth={1.5 / scale} dash={[6 / scale, 4 / scale]} listening={false} />}
             <Transformer ref={transformer} rotateEnabled={false} flipEnabled={false} ignoreStroke keepRatio={selected?.kind === 'text' || selected?.kind === 'step'}
               enabledAnchors={selected?.kind === 'text' || selected?.kind === 'step' ? ['top-left', 'top-right', 'bottom-left', 'bottom-right'] : undefined}
               anchorSize={9} anchorCornerRadius={3} borderStroke="#14B8A6" anchorStroke="#0F766E" anchorFill="#FFFFFF"

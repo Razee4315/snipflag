@@ -1,8 +1,10 @@
-export type Tool = 'select' | 'arrow' | 'rectangle' | 'ellipse' | 'pen' | 'highlight' | 'text' | 'step' | 'pixelate';
+export type Tool = 'select' | 'arrow' | 'line' | 'rectangle' | 'ellipse' | 'pen' | 'highlight' | 'text' | 'step' | 'pixelate' | 'crop';
 /** 'redact' is no longer a tool but older drafts may still contain solid redactions; they keep rendering. */
-export type Shape = Exclude<Tool, 'select'> | 'redact';
+export type Shape = Exclude<Tool, 'select' | 'crop'> | 'redact';
 /** Freehand kinds share points, Shift snapping and smoothing. */
 export const isFreehand = (kind: Tool | Shape) => kind === 'pen' || kind === 'highlight';
+/** Straight two-point kinds: an arrow, or a plain line without a head. */
+export const isSegment = (kind: Tool | Shape) => kind === 'arrow' || kind === 'line';
 /** Outlined box kinds drawn by dragging; Shift makes them square or round. */
 export const isOutline = (kind: Tool | Shape) => kind === 'rectangle' || kind === 'ellipse';
 /** Numbered step badges scale with the stroke width. */

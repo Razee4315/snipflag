@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { bounds, isMeaningful, snapAngle, transform, translate } from './geometry';
+import { bounds, duplicate, intersects, isMeaningful, snapAngle, transform, translate } from './geometry';
+import { cropAnnotations, cropBox } from './render';
 import type { Annotation } from './model';
 
 const a = (patch: Partial<Annotation>): Annotation => ({ id: 'a', kind: 'rectangle', x: 10, y: 10, width: 20, height: 10, points: [], color: '#f00', stroke: 4, text: '', fontSize: 22, ...patch });
@@ -37,5 +38,26 @@ describe('geometry', () => {
     expect(isMeaningful(a({ kind: 'pen', points: [0, 0, 0, 0] }))).toBe(false);
     expect(isMeaningful(a({ kind: 'text', text: '  ' }))).toBe(false);
     expect(isMeaningful(a({}))).toBe(true);
+  });
+  it('treats a line as a two-point segment padded by its stroke only', () => {
+    const line = a({ kind: 'line', points: [0, 0, 30, 0] });
+    expect(bounds(line)).toEqual({ x: 6, y: 6, width: 38, height: 8 });
+    expect(isMeaningful(line)).toBe(true);
+    expect(isMeaningful(a({ kind: 'line', points: [0, 0, 2, 2] }))).toBe(false);
+    expect(transform(line, { x: 6, y: 6, width: 76, height: 8 }, 2, 1).points).toEqual([0, 0, 60, 0]);
+  });
+  it('duplicates beside the original with a new identity, turning back at the image edge', () => {
+    const copy = duplicate(a({}), { width: 400, height: 300 });
+    expect(copy).toMatchObject({ x: 26, y: 26, width: 20, height: 10 });
+    expect(copy.id).not.toBe('a');
+    expect(duplicate(a({ x: 375, y: 285 }), { width: 400, height: 300 })).toMatchObject({ x: 359, y: 269 });
+  });
+  it('crops to whole pixels inside the image and keeps only the marks that still show', () => {
+    expect(cropBox({ width: 400, height: 300 }, { x: 10.6, y: 20.2, width: 100.1, height: 50 })).toEqual({ x: 10, y: 20, width: 101, height: 51 });
+    expect(cropBox({ width: 400, height: 300 }, { x: -20, y: 280, width: 900, height: 900 })).toEqual({ x: 0, y: 280, width: 400, height: 20 });
+    const box = { x: 100, y: 100, width: 100, height: 100 };
+    expect(intersects(bounds(a({})), box)).toBe(false);
+    const kept = cropAnnotations([a({}), a({ id: 'b', x: 150, y: 120 }), a({ id: 'c', kind: 'pen', x: 190, y: 190, points: [0, 0, 40, 40] })], box);
+    expect(kept.map(k => [k.id, k.x, k.y])).toEqual([['b', 50, 20], ['c', 90, 90]]);
   });
 });

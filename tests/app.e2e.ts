@@ -293,7 +293,7 @@ test('privacy exports cover fractional edges, transparent areas and legacy redac
 
 test('tools are reachable by keyboard and named', async ({ page }) => {
   await addImages(page, [white]);
-  for (const [key, name] of [['v', 'Select'], ['a', 'Arrow'], ['r', 'Rectangle'], ['e', 'Ellipse'], ['p', 'Pen'], ['h', 'Highlighter'], ['t', 'Text'], ['n', 'Numbered step'], ['b', 'Pixelate']]) {
+  for (const [key, name] of [['v', 'Select'], ['a', 'Arrow'], ['l', 'Line'], ['c', 'Crop'], ['r', 'Rectangle'], ['e', 'Ellipse'], ['p', 'Pen'], ['h', 'Highlighter'], ['t', 'Text'], ['n', 'Numbered step'], ['b', 'Pixelate']]) {
     await page.keyboard.press(key);
     await expect(page.getByRole('button', { name: new RegExp(`^${name}`) })).toHaveAttribute('aria-pressed', 'true');
   }
@@ -522,6 +522,8 @@ test('the issue panel tucks away and step notes travel with the report', async (
   await expect(panel).toBeHidden();
   await share.getByRole('button', { name: 'Linear issue' }).click();
   await expect(page.getByLabel('Title', { exact: true })).toBeVisible();
+  // The panel slides in; raw mouse input waits for the slide to finish.
+  await page.evaluate(() => Promise.all(document.getAnimations().map(a => a.finished)));
 
   await page.keyboard.press('n');
   const box = (await page.getByTestId('canvas').boundingBox())!;
@@ -544,6 +546,44 @@ test('the issue panel tucks away and step notes travel with the report', async (
   await expect(page.getByLabel('Note for step 1')).toHaveValue('Add a second notebook');
   await page.getByRole('button', { name: 'Undo', exact: true }).click();
   await expect(tile(page, 1)).toHaveAccessibleName(/1 mark$/);
+});
+
+test('crop, line, nudge and duplicate change the image as expected', async ({ page }) => {
+  await addImages(page, [white]);
+  await page.keyboard.press('l');
+  await drag(page, [0.25, 0.5], [0.75, 0.5]);
+  await expect(tile(page, 1)).toHaveAccessibleName(/1 mark$/);
+  // A line is a plain stroke: red along its length, and no arrow head past its end.
+  const line = (await exportPixels(page, [[200, 150], [320, 150]])).pixels;
+  expect(line[0]).toEqual([239, 68, 68, 255]);
+  expect(line[1]).toEqual([255, 255, 255, 255]);
+  // Select it, move it down 10 px with Shift+Arrow, then duplicate it.
+  await page.keyboard.press('v');
+  const box = (await page.getByTestId('canvas').boundingBox())!;
+  await page.mouse.click(box.x + box.width * 0.5, box.y + box.height * 0.5);
+  await page.keyboard.press('Shift+ArrowDown');
+  const moved = (await exportPixels(page, [[200, 150], [200, 160]])).pixels;
+  expect(moved[0]).toEqual([255, 255, 255, 255]);
+  expect(moved[1]).toEqual([239, 68, 68, 255]);
+  await page.keyboard.press('Control+d');
+  await expect(tile(page, 1)).toHaveAccessibleName(/2 marks$/);
+  expect((await exportPixels(page, [[216, 176]])).pixels[0]).toEqual([239, 68, 68, 255]);
+  // Crop to the middle: the export shrinks, marks keep their place in the picture, and Undo restores the original.
+  await page.keyboard.press('c');
+  await drag(page, [0.25, 0.25], [0.75, 0.75]);
+  await expect(page.getByText('Cropped to 200 × 150.')).toBeVisible();
+  const cropped = await exportPixels(page, [[100, 85], [100, 75]]);
+  expect([cropped.width, cropped.height]).toEqual([200, 150]);
+  expect(cropped.pixels[0]).toEqual([239, 68, 68, 255]);
+  expect(cropped.pixels[1]).toEqual([255, 255, 255, 255]);
+  await expect(page.getByRole('status', { name: 'Saved on this computer' })).toBeVisible();
+  await page.getByRole('button', { name: 'Undo', exact: true }).last().click();
+  const restored = await exportPixels(page, [[200, 160]]);
+  expect([restored.width, restored.height]).toEqual([400, 300]);
+  expect(restored.pixels[0]).toEqual([239, 68, 68, 255]);
+  await expect(page.getByRole('status', { name: 'Saved on this computer' })).toBeVisible();
+  await page.reload();
+  await expect(tile(page, 1)).toHaveAccessibleName(/2 marks$/);
 });
 
 test('sound and animation preferences persist and apply', async ({ page }, testInfo) => {

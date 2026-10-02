@@ -4,6 +4,8 @@ const paths = {
   // Tool icons share one 24px grid, rounded joins and optical weight; small filled accents mark what each tool leaves behind.
   select: 'M6.2 3.8v14.4l3.9-3.7 2.6 5.8 2.5-1.1-2.6-5.7h5.5z',
   arrow: 'M5.5 18.5L17.5 6.5M10 6h8v8',
+  line: 'M5.5 18.5L18.5 5.5',
+  crop: 'M7.5 3.5v13h13M3.5 7.5h13v13',
   rectangle: 'M4.5 7a2.5 2.5 0 012.5-2.5h10A2.5 2.5 0 0119.5 7v10a2.5 2.5 0 01-2.5 2.5H7A2.5 2.5 0 014.5 17z',
   ellipse: 'M12 5c4.4 0 8 3.1 8 7s-3.6 7-8 7-8-3.1-8-7 3.6-7 8-7z',
   pen: 'M4.5 19.5l1-4.2L15.6 5.2a2 2 0 012.8 0l.4.4a2 2 0 010 2.8L8.7 18.5zM13.8 7l3.2 3.2',

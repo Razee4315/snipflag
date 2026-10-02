@@ -7,7 +7,7 @@ Tauri 2 / Rust desktop core; React + TypeScript + Vite UI; Konva/react-konva ann
 ## Modules
 
 - `src/model.ts`: session/asset/annotation types, limits, and pure helpers (reorder, validation, rect clamping, overlay→frame pixel mapping, shortcut parsing).
-- `src/geometry.ts`: annotation bounds, move, and resize in image coordinates.
+- `src/geometry.ts`: annotation bounds, move, resize, duplicate and intersection in image coordinates. Crop (`cropImage` in `render.ts`) cuts the original pixels and returns an image with a **new ID** (saved images are immutable per ID); `replaceImage` in the store remaps `@image` aliases and resets that image's undo history, and the Undo toast restores the uncropped pixels under another new ID with the old history.
 - `src/store.ts`: Zustand editing state, independent per-image undo histories, selection, busy/sent locks, persisted-image tracking.
 - `src/render.ts`: import/conversion to PNG, pixelation, `drawAnnotation`, and the authoritative flattened PNG export with redaction painted last. The editor draws every annotation with the same `drawAnnotation`, so the canvas matches the export.
 - `src/report.ts`: the outgoing issue description (resolved `@image` prose plus one ordered section per image) with upload addresses left open. It mirrors Rust `compose_description`; both run `src/report.fixtures.json`.

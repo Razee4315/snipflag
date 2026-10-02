@@ -87,4 +87,29 @@ describe('session store', () => {
     state().setSubmissionLocked(false); state().patch({ title: 'Now editable' });
     expect(state().session.title).toBe('Now editable');
   });
+  it('replaces an image with a changed copy: mentions follow, order stays, undo history starts over or is restored', () => {
+    const [a, b] = [image(), image()];
+    state().addImages([a, b]); state().select(a.id); state().edit([mark()]);
+    const history = state().histories[a.id];
+    const cropped = { ...image(), width: 5, height: 5 };
+    state().replaceImage(a.id, cropped);
+    expect(state().session.images.map(i => i.id)).toEqual([cropped.id, b.id]);
+    expect(state().activeId).toBe(cropped.id);
+    expect(state().session.imageReferences).toEqual({ image1: cropped.id, image2: b.id });
+    expect(state().histories[cropped.id]).toEqual({ past: [], future: [] });
+    expect(state().histories[a.id]).toBeUndefined();
+    const restored = { ...a, id: crypto.randomUUID(), annotations: state().session.images[0].annotations };
+    state().replaceImage(cropped.id, restored, history);
+    expect(state().session.imageReferences?.image1).toBe(restored.id);
+    expect(state().histories[restored.id]).toEqual(history);
+    state().replaceImage('missing', image());
+    expect(state().session.images).toHaveLength(2);
+  });
+  it('writes step notes without adding undo entries', () => {
+    const a = image(); state().addImages([a]);
+    const step = { ...mark(), kind: 'step' as const, text: '1' };
+    state().edit([step]); state().noteAnnotation(step.id, 'Open the cart');
+    expect(state().session.images[0].annotations[0].note).toBe('Open the cart');
+    expect(state().histories[a.id].past).toHaveLength(1);
+  });
 });
