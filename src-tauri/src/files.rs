@@ -3,7 +3,7 @@ use std::{borrow::Cow, sync::Mutex};
 use tauri::{AppHandle, Manager, WebviewWindow};
 use tauri_plugin_dialog::DialogExt;
 use xcap::image::RgbaImage;
-use crate::storage::{decode_image, decode_png, encode_png, main_only, png_url, MAX_IMAGE_BYTES, MAX_PIXELS};
+use crate::storage::{decode_image, decode_png, encode_png, main_only, now, png_url, MAX_IMAGES, MAX_IMAGE_BYTES, MAX_PIXELS};
 
 /// Kept alive for the whole process: on Linux the clipboard owner must outlive the copy.
 pub struct ClipboardState(pub Mutex<Option<arboard::Clipboard>>);
@@ -43,6 +43,28 @@ pub async fn export_png(window: WebviewWindow, app: AppHandle, data_url: String,
     std::fs::write(&path, &bytes).map_err(|_| "Could not save the file. Check the folder permissions and free space.")?;
     Ok(true)
 }
+#[derive(serde::Deserialize)]
+pub struct SharedImage { #[serde(rename = "dataUrl")] data_url: String }
+/// File name for a shared copy: sortable, and free of spaces so it pastes cleanly into a terminal.
+pub fn shared_name(millis: u64, index: usize) -> String { format!("snipflag-{millis}-{}.png", index + 1) }
+/// Saves flattened screenshots to Pictures/Snipflag so another app can open them by path. Only when the user asks;
+/// the folder and file names are chosen here, never by the page.
+#[tauri::command]
+pub async fn share_images(window: WebviewWindow, app: AppHandle, images: Vec<SharedImage>) -> Result<Vec<String>, String> {
+    main_only(&window)?;
+    if images.is_empty() || images.len() > MAX_IMAGES { return Err("Share between 1 and 10 screenshots.".into()); }
+    let folder = app.path().picture_dir().map_err(|_| "Cannot find your Pictures folder.")?.join("Snipflag");
+    std::fs::create_dir_all(&folder).map_err(|_| "Could not create the Snipflag folder in Pictures.")?;
+    let stamp = now();
+    let mut paths = Vec::new();
+    for (index, image) in images.iter().enumerate() {
+        let (bytes, _, _) = decode_png(&image.data_url)?;
+        let path = folder.join(shared_name(stamp, index));
+        std::fs::write(&path, &bytes).map_err(|_| "Could not save the screenshot. Check free disk space.")?;
+        paths.push(path.to_string_lossy().into_owned());
+    }
+    Ok(paths)
+}
 #[tauri::command]
 pub fn read_clipboard_image(window: WebviewWindow, app: AppHandle) -> Result<Value, String> {
     main_only(&window)?;
@@ -56,7 +78,7 @@ pub fn read_clipboard_image(window: WebviewWindow, app: AppHandle) -> Result<Val
 #[tauri::command]
 pub fn copy_text(window: WebviewWindow, app: AppHandle, text: String) -> Result<(), String> {
     main_only(&window)?;
-    if text.len() > 4096 { return Err("Text is too long to copy.".into()); }
+    if text.len() > 120_000 { return Err("Text is too long to copy.".into()); }
     with_clipboard(&app, |c| c.set_text(text).map_err(|_| "Could not copy the link.".into()))
 }
 
@@ -68,5 +90,9 @@ mod tests {
         assert_eq!(safe_name(""), "screenshot.png");
         assert_eq!(safe_name("Login bug.PNG"), "Login bug.PNG");
         assert_eq!(safe_name("C:\\x\\y"), "Cxy.png");
+    }
+    #[test] fn shared_files_are_numbered_from_one_without_spaces() {
+        assert_eq!(shared_name(1700000000000, 0), "snipflag-1700000000000-1.png");
+        assert_eq!(shared_name(5, 9), "snipflag-5-10.png");
     }
 }

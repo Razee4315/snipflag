@@ -6,20 +6,24 @@ import HistoryDialog from './components/HistoryDialog';
 import { Icon, Mark } from './components/icons';
 import IssuePanel, { type ConnectionState } from './components/IssuePanel';
 import SettingsDialog from './components/SettingsDialog';
+import StepNotes from './components/StepNotes';
 import type { PreparedReport } from './components/ReportPreview';
 import Toolbar, { TOOLS } from './components/Toolbar';
 import { defaults, imageLabel, shortcutLabel, validateSession, type CaptureImage, type Connection, type Settings } from './model';
 import {
   appStatus, cancelLogin, clearHistory, connectLinear, deleteSession, desktop, disconnectLinear, editorWindow, errorText, exportPng, linearConnection, listSessions, loadSession,
-  loadSettings, on, PREVIEW_MESSAGE, readClipboardImage, saveSession, saveSettings, startCapture, submissionStatus, submitIssue, reconcileIssue, finishQuit, checkUpdate, installUpdate, type AppStatus, type AvailableUpdate, type RawImage,
+  copyText, loadSettings, on, PREVIEW_MESSAGE, readClipboardImage, saveSession, saveSettings, startCapture, submissionStatus, submitIssue, reconcileIssue, finishQuit, checkUpdate, installUpdate, shareImages, type AppStatus, type AvailableUpdate, type RawImage,
 } from './native';
 import { fileBaseName, flatten, importImage } from './render';
 import { activeImage, isLocked, useStore } from './store';
 import { missingImageReferences } from './mentions';
+import { smooth } from './motion';
+import { sharePrompt } from './share';
 import { play, primeSound, setSoundEnabled } from './sound';
 import { saveBeforeQuit } from './lifecycle';
 import { rememberDetails, templatesOf } from './templates';
 
+const PANEL_KEY = 'snipflag-panel';
 type Notice = { kind: 'error' | 'info'; text: string; id: number } | null;
 const isTyping = (t: EventTarget | null) => t instanceof HTMLElement && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName));
 
@@ -42,6 +46,12 @@ export default function App() {
   const [ready, setReady] = useState(false);
   const [flash, setFlash] = useState(0);
   const [update, setUpdate] = useState<AvailableUpdate | null>(null);
+  // The issue panel can be tucked away for quick mark-up-and-share work; the choice is remembered on this device.
+  const [panelOpen, setPanelOpen] = useState(() => { try { return localStorage.getItem(PANEL_KEY) !== 'closed'; } catch { return true; } });
+  const showPanel = useCallback((open: boolean) => {
+    smooth(() => setPanelOpen(open));
+    try { localStorage.setItem(PANEL_KEY, open ? 'open' : 'closed'); } catch { /* The panel still works for this run. */ }
+  }, []);
   const fileInput = useRef<HTMLInputElement>(null);
   const saveChain = useRef<Promise<void>>(Promise.resolve());
   const saveTimer = useRef<number | undefined>(undefined);
@@ -309,6 +319,18 @@ export default function App() {
     } catch (e) { notify(errorText(e), 'error'); }
   }, [notify]);
 
+  /** Saves every flattened screenshot to Pictures/Snipflag and copies their paths with the report text and step notes. */
+  const shareForAi = useCallback(async () => {
+    const { session: s } = useStore.getState(); if (!s.images.length) return;
+    try {
+      const images: { dataUrl: string }[] = [];
+      for (const img of s.images) images.push({ dataUrl: await flatten(img) });
+      const paths = await shareImages(images);
+      await copyText(sharePrompt(s, paths));
+      notify(`${paths.length === 1 ? 'Screenshot' : `${paths.length} screenshots`} saved to Pictures/Snipflag. Paths and notes are on the clipboard.`);
+    } catch (e) { notify(errorText(e), 'error'); }
+  }, [notify]);
+
   // Keyboard: tool keys, undo/redo, submit, paste.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -319,6 +341,10 @@ export default function App() {
       const { undo, redo, setTool } = useStore.getState();
       if (mod && key === 'z') { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }
       if (mod && key === 'y') { e.preventDefault(); redo(); return; }
+      // Copy the marked-up image (Shift: paths and notes for an assistant) unless text is selected.
+      if (mod && key === 'c' && !window.getSelection()?.toString() && activeImage(useStore.getState())) {
+        e.preventDefault(); void (e.shiftKey ? shareForAi() : exportActive(true)); return;
+      }
       if (mod || e.altKey) return;
       const tool = TOOLS.find(t => t.key.toLowerCase() === key);
       if (tool && !isLocked(useStore.getState())) { e.preventDefault(); setTool(tool.tool); }
@@ -331,7 +357,7 @@ export default function App() {
     };
     window.addEventListener('keydown', onKey); window.addEventListener('paste', onPaste);
     return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('paste', onPaste); };
-  }, [dialog, submit, importFiles, pasteImage]);
+  }, [dialog, submit, importFiles, pasteImage, exportActive, shareForAi]);
 
   const count = session.images.length; const index = image ? session.images.indexOf(image) : -1;
   const dragWindow = (e: MouseEvent) => {
@@ -342,7 +368,7 @@ export default function App() {
   };
   const saveText = saveState === 'saving' ? 'Saving…' : saveState === 'saved' ? 'Saved on this computer' : saveState === 'error' ? `Not saved: ${saveError}` : 'Nothing to save yet';
   return (
-    <div className="app" onDragOver={e => { if ([...e.dataTransfer.types].includes('Files')) e.preventDefault(); }}
+    <div className={panelOpen ? 'app' : 'app solo'} onDragOver={e => { if ([...e.dataTransfer.types].includes('Files')) e.preventDefault(); }}
       onDrop={e => { const files = [...e.dataTransfer.files].filter(f => f.type.startsWith('image/')); if (files.length) { e.preventDefault(); void importFiles(files); } }}>
       <header className="titlebar" onMouseDown={dragWindow}>
         <span className="brand-chip" aria-hidden="true"><Mark size={15} /></span>
@@ -354,6 +380,7 @@ export default function App() {
         {update && <button type="button" className="update-chip" disabled={busy} title={update.notes || undefined} onClick={() => void applyUpdate()}>
           <Icon name="refresh" size={14} /> Update to {update.version}</button>}
         <div className="top-actions">
+          <button type="button" className={panelOpen ? 'icon-button active' : 'icon-button'} aria-pressed={panelOpen} aria-label={panelOpen ? 'Hide issue panel' : 'Show issue panel'} title={panelOpen ? 'Hide issue panel' : 'Show issue panel'} onClick={() => showPanel(!panelOpen)}><Icon name="panel" /></button>
           <button type="button" className="icon-button" aria-label="History" title="History" disabled={busy} onClick={() => setDialog('history')}><Icon name="history" /></button>
           <button type="button" className="icon-button" aria-label="Settings" title="Settings" disabled={busy} onClick={() => setDialog('settings')}><Icon name="settings" /></button>
         </div>
@@ -366,7 +393,10 @@ export default function App() {
         {image ? (
           <>
             <Toolbar />
-            <Editor image={image} zoom={zoom} onZoom={setZoom} onScale={setScale} />
+            <div className="canvas-wrap">
+              <Editor image={image} zoom={zoom} onZoom={setZoom} onScale={setScale} />
+              <StepNotes image={image} />
+            </div>
             <div className="image-bar">
               <label className="caption-field">
                 <span className="visually-hidden">Caption for screenshot {index + 1}</span>
@@ -380,8 +410,13 @@ export default function App() {
                 <button type="button" className="tool" aria-label="Zoom in" title="Zoom in" onClick={() => setZoom(Math.min(8, scale * 1.25))}><Icon name="zoomIn" /></button>
                 <button type="button" className={zoom === 'fit' ? 'tool active' : 'tool'} aria-label="Fit to window" title="Fit to window" onClick={() => setZoom('fit')}><Icon name="fit" /></button>
               </div>
-              <button type="button" className="button subtle" onClick={() => void exportActive(true)}><Icon name="copy" size={16} /> Copy image</button>
-              <button type="button" className="button subtle" onClick={() => void exportActive(false)}><Icon name="save" size={16} /> Save image</button>
+            </div>
+            <div className="share" role="group" aria-label="Share this screenshot">
+              <button type="button" className="button primary" onClick={() => void exportActive(true)}><Icon name="copy" size={16} /> Copy image</button>
+              <button type="button" className="button" disabled={!desktop} onClick={() => void shareForAi()}><Icon name="spark" size={16} /> Copy for AI</button>
+              <button type="button" className="button" onClick={() => void exportActive(false)}><Icon name="save" size={16} /> Save image</button>
+              <span className="share-hint small muted">{desktop ? 'Copy for AI saves the screenshots and copies their paths with your notes.' : 'Copy for AI works in the desktop app.'}</span>
+              {!panelOpen && <button type="button" className="button share-linear" onClick={() => showPanel(true)}><Icon name="panel" size={16} /> Linear issue</button>}
             </div>
             {flash > 0 && <div key={flash} className="capture-flash" aria-hidden="true" />}
           </>
@@ -390,7 +425,7 @@ export default function App() {
         )}
         {count > 0 && <Filmstrip canCapture={desktop} onCapture={() => void capture()} onAdd={() => fileInput.current?.click()} />}
       </main>
-      <IssuePanel connection={connection} connectionState={connectionState} connectionError={connectionError} hasClientId={!!settings.clientId || !!status?.builtinLinearClient}
+      <IssuePanel hidden={!panelOpen} connection={connection} connectionState={connectionState} connectionError={connectionError} hasClientId={!!settings.clientId || !!status?.builtinLinearClient}
         progress={progress} submitError={submitError} pendingState={pendingState}
         templates={templatesOf(settings)} teamMemory={settings.teamMemory} teamDefaults={settings.teamDefaults}
         onConnect={() => void connect()} onCancelConnect={() => void cancelLogin().catch(() => undefined)} onRetryConnection={() => void refreshConnection()}

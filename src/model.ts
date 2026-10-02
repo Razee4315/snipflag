@@ -15,6 +15,8 @@ export function nextStep(annotations: Annotation[]) {
 export interface Annotation {
   id: string; kind: Shape; x: number; y: number;
   width: number; height: number; points: number[]; color: string; stroke: number; text: string; fontSize: number;
+  /** What a numbered step means. Shared as text; never drawn on the image. */
+  note?: string;
 }
 export interface CaptureImage { id: string; name: string; width: number; height: number; dataUrl: string; annotations: Annotation[] }
 export interface IssueResult { id: string; identifier: string; url: string }

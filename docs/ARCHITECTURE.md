@@ -12,6 +12,7 @@ Tauri 2 / Rust desktop core; React + TypeScript + Vite UI; Konva/react-konva ann
 - `src/render.ts`: import/conversion to PNG, pixelation, `drawAnnotation`, and the authoritative flattened PNG export with redaction painted last. The editor draws every annotation with the same `drawAnnotation`, so the canvas matches the export.
 - `src/report.ts`: the outgoing issue description (resolved `@image` prose plus one ordered section per image) with upload addresses left open. It mirrors Rust `compose_description`; both run `src/report.fixtures.json`.
 - `src/components/ReportPreview.tsx`: local preview of destination, fields, title, description and flattened images in upload order. Creating from it reuses the reviewed pixels only when the session object is unchanged.
+- `src/share.ts`: text for sharing outside Linear (`sharePrompt`: title, description, each saved screenshot path with its step notes) and step notes for the description. `src/motion.ts`: `smooth()` wraps layout changes in a view transition. `src/components/StepNotes.tsx`: per-step notes (`Annotation.note`, saved without undo entries) floating over the canvas.
 - `src/templates.ts`: built-in description templates, template tidying, and per-team remembered details (`rememberDetails`, `detailsToFill`). Rust `normalize_settings` validates `templates` (null = built-in) and `teamDefaults`.
 - `src/native.ts`: narrow IPC facade; browser preview uses IndexedDB and refuses Linear/capture actions with an explicit message.
 - `src/App.tsx` and `src/components/*`: workspace, toolbar, Konva editor, filmstrip, issue panel, settings/history dialogs, and the per-monitor capture overlay (`index.html?capture=N`).
@@ -19,7 +20,7 @@ Tauri 2 / Rust desktop core; React + TypeScript + Vite UI; Konva/react-konva ann
 - `src-tauri/src/capture.rs`: XCap frames for all monitors (off the UI thread), reusable hidden overlay windows per monitor, the in-memory `snipframe` frame protocol, crop in Rust, cancel/close handling, capture timing.
 - `src-tauri/src/linear.rs`: GraphQL metadata with pagination, uploads, ordered Markdown, idempotent issue creation with reconciliation.
 - `src-tauri/src/auth.rs`: PKCE loopback flow with state check, timeout and cancel; keyring credential storage and refresh.
-- `src-tauri/src/files.rs`: clipboard image read/write (arboard) and native save picker export.
+- `src-tauri/src/files.rs`: clipboard image read/write (arboard), native save picker export, and `share_images` (flattened PNGs to `Pictures/Snipflag`, names chosen in Rust).
 - `src-tauri/src/update.rs`: signed updates through `tauri-plugin-updater` with the build-time public key and a fixed Latest-release manifest; `check_update` keeps the found update in Rust and `install_update` downloads, verifies, installs and restarts after the renderer's save handshake.
 - `src-tauri/src/lib.rs`: plugin wiring (single instance first), tray, global shortcut, close-to-tray, command registration.
 

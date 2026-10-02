@@ -506,6 +506,48 @@ test('themes preview at once, revert when not saved, and capture options persist
   }
 });
 
+test('the issue panel tucks away and step notes travel with the report', async ({ page }, testInfo) => {
+  await addImages(page, [white]);
+  const panel = page.getByRole('complementary', { name: 'Linear issue' });
+  const share = page.getByRole('group', { name: 'Share this screenshot' });
+  for (const name of ['Copy image', 'Copy for AI', 'Save image']) await expect(share.getByRole('button', { name })).toBeVisible();
+  // Saving paths for an assistant needs the desktop app; the preview says so instead of pretending.
+  await expect(share.getByRole('button', { name: 'Copy for AI' })).toBeDisabled();
+  await page.getByRole('button', { name: 'Hide issue panel' }).click();
+  await expect(panel).toBeHidden();
+  await expect(page.getByTestId('canvas')).toBeInViewport();
+  await page.screenshot({ path: testInfo.outputPath('workspace-solo.png'), animations: 'disabled' });
+  await page.reload();
+  await expect(page.getByTestId('tile')).toHaveCount(1);
+  await expect(panel).toBeHidden();
+  await share.getByRole('button', { name: 'Linear issue' }).click();
+  await expect(page.getByLabel('Title', { exact: true })).toBeVisible();
+
+  await page.keyboard.press('n');
+  const box = (await page.getByTestId('canvas').boundingBox())!;
+  await page.mouse.click(box.x + box.width * 0.3, box.y + box.height * 0.3);
+  await page.mouse.click(box.x + box.width * 0.6, box.y + box.height * 0.5);
+  // Placing steps never moves the picture: the notes float over its corner.
+  expect((await page.getByTestId('canvas').boundingBox())!).toEqual(box);
+  await page.getByRole('button', { name: /Step notes/ }).click();
+  await page.getByLabel('Note for step 2').fill('The total stays at $12');
+  await page.getByLabel('Note for step 1').fill('Add a second notebook');
+  await expect(page.getByRole('button', { name: /Step notes\s*2\/2/ })).toBeVisible();
+  await page.screenshot({ path: testInfo.outputPath('step-notes.png'), animations: 'disabled' });
+  // Notes are text about the image, not marks: typing them adds no undo steps.
+  await page.getByRole('button', { name: 'Add step notes' }).click();
+  await expect(page.getByLabel('Description', { exact: true })).toHaveValue('1. Add a second notebook
+2. The total stays at $12
+');
+  await expect(page.getByRole('button', { name: 'Add step notes' })).toHaveCount(0);
+  await expect(page.getByRole('status', { name: 'Saved on this computer' })).toBeVisible();
+  await page.reload();
+  await page.getByRole('button', { name: /Step notes/ }).click();
+  await expect(page.getByLabel('Note for step 1')).toHaveValue('Add a second notebook');
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect(tile(page, 1)).toHaveAccessibleName(/1 mark$/);
+});
+
 test('sound and animation preferences persist and apply', async ({ page }, testInfo) => {
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Settings' });

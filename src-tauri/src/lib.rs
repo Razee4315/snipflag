@@ -283,7 +283,7 @@ pub fn run() {
             auth::connect_linear, auth::cancel_login, auth::disconnect_linear,
             linear::linear_connection, linear::linear_team_options, linear::submit_issue, linear::reconcile_issue, linear::open_issue, linear::open_linear_setup, linear::open_about_link,
             capture::start_capture, capture::capture_state, capture::capture_ready, capture::capture_timing, capture::capture_select, capture::capture_cancel,
-            files::export_png, files::read_clipboard_image, files::copy_text,
+            files::export_png, files::share_images, files::read_clipboard_image, files::copy_text,
             update::check_update, update::install_update,
         ])
         .build(tauri::generate_context!())

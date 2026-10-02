@@ -25,7 +25,10 @@ interface State {
   edit: (annotations: Annotation[]) => void; undo: () => void; redo: () => void;
   removeImage: (id: string) => void; moveImage: (from: number, to: number) => void;
   setTool: (tool: Tool) => void; setStyle: (style: Partial<Pick<State, 'color' | 'stroke' | 'fontSize' | 'highlightColor' | 'highlightSize'>>) => void;
-  setBusy: (busy: boolean) => void; setSelection: (id: string | null) => void; updateAnnotation: (id: string, patch: Partial<Annotation>) => void; removeAnnotation: (id: string) => void; setIssue: (issue: IssueResult) => void;
+  setBusy: (busy: boolean) => void; setSelection: (id: string | null) => void;
+  /** Sets a step's note without an undo entry: notes are text about the image, not marks on it. */
+  noteAnnotation: (id: string, note: string) => void;
+  updateAnnotation: (id: string, patch: Partial<Annotation>) => void; removeAnnotation: (id: string) => void; setIssue: (issue: IssueResult) => void;
   setSaveState: (state: SaveState, error?: string) => void; markPersisted: (sessionId: string, ids: string[]) => void;
 }
 const locked = (s: State) => s.busy || s.submissionLocked || !!s.session.issue;
@@ -88,6 +91,10 @@ export const useStore = create<State>((set, get) => ({
   setBusy: (busy) => set({ busy, selection: busy ? null : get().selection }),
   setSubmissionLocked: (submissionLocked) => set({ submissionLocked, selection: null }),
   setSelection: (selection) => set({ selection }),
+  noteAnnotation: (id, note) => {
+    const s = get(); if (locked(s)) return;
+    set({ session: { ...s.session, updatedAt: Date.now(), images: s.session.images.map(i => i.id !== s.activeId ? i : { ...i, annotations: i.annotations.map(a => a.id === id ? { ...a, note } : a) }) } });
+  },
   updateAnnotation: (id, patch) => {
     const image = activeImage(get()); if (!image) return;
     get().edit(image.annotations.map(a => a.id === id ? { ...a, ...patch } : a));

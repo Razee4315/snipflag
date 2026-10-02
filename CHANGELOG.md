@@ -6,6 +6,9 @@ All notable changes to Snipflag are documented here. The format follows [Keep a 
 
 ### Added
 
+- Share bar under the screenshot: Copy image, Copy for AI and Save image. Copy for AI saves every marked-up screenshot to Pictures/Snipflag and copies their paths with the title, description and step notes, ready to paste into an assistant such as Claude Code. Ctrl+C copies the image; Ctrl+Shift+C copies for AI.
+- Notes on numbered steps, written in a list that floats over the canvas; they can be added to the description.
+- The Linear issue panel can be hidden for quick mark-up and sharing; the choice is remembered.
 - Four more themes, each with its own texture: Paper, Blossom, Midnight and Graphite. A picked theme previews at once.
 - Capture options in Settings, all off by default: adjust the selection before capturing (handles, move, arrow keys, then Enter, a double-click or Capture), a magnifier at the pointer, copy every capture to the clipboard, and a 3, 5 or 10 second delay.
 

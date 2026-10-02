@@ -40,6 +40,9 @@ const paths = {
   alert: 'M12 8v5M12 16.5v.01M10.3 3.9L2.4 18a2 2 0 001.7 3h15.8a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z',
   drop: 'M12 3v12M7 10l5 5 5-5M4 17v3h16v-3',
   file: 'M6 3h9l4 4v14H6zM14 3v5h5',
+  note: 'M5 4h14v11l-5 5H5zM14 20v-5h5M8.5 9h7M8.5 12.5h4',
+  panel: 'M4 5h16v14H4zM14.5 5v14',
+  spark: 'M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9L12 17.5l-1.9-5.1L5 10.5l5.1-1.9zM18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z',
 } as const;
 export type IconName = keyof typeof paths;
 /** Filled details layered on top of the outline. */

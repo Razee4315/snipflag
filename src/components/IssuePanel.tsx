@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
 import { LIMITS, PRIORITIES, type Connection, type Named, type TeamDefaults, type TeamOptions, type Template } from '../model';
 import { detailsToFill } from '../templates';
 import { copyText, desktop, errorText, openIssue, teamOptions } from '../native';
+import { stepNotesText } from '../share';
 import { isLocked, useStore } from '../store';
 import { Icon } from './icons';
 import DescriptionEditor from './DescriptionEditor';
@@ -9,6 +10,8 @@ import ReportPreview, { type PreparedReport } from './ReportPreview';
 
 export type ConnectionState = 'idle' | 'loading' | 'connecting' | 'error';
 interface Props {
+  /** Tucked away for quick sharing; the form keeps its state. */
+  hidden?: boolean;
   connection: Connection | null; connectionState: ConnectionState; connectionError: string; hasClientId: boolean;
   progress: string; submitError: string; pendingState: string | null;
   templates: Template[]; teamMemory: Record<string, string>; teamDefaults: Record<string, TeamDefaults>;
@@ -90,7 +93,7 @@ export default function IssuePanel(p: Props) {
   if (session.issue) {
     const issue = session.issue;
     return (
-      <aside className="panel" aria-label="Linear issue">
+      <aside className="panel" aria-label="Linear issue" hidden={p.hidden}>
         <div className="panel-scroll">
           <div className="sent" role="status">
             <div className="sent-mark" aria-hidden="true">
@@ -118,8 +121,9 @@ export default function IssuePanel(p: Props) {
   const setTeam = (id: string) => { patch({ teamId: id, projectId: '', assigneeId: '', labelIds: [] }); if (id) p.onTeamChosen(id); };
   const labels = options?.labels.filter(l => l.name.toLowerCase().includes(labelFilter.toLowerCase())) ?? [];
   const refreshing = p.connectionState === 'loading';
+  const notes = stepNotesText(session.images);
   return (
-    <aside className="panel" aria-label="Linear issue">
+    <aside className="panel" aria-label="Linear issue" hidden={p.hidden}>
       <div className="panel-scroll">
         <section className="connection" aria-live="polite">
           {!desktop ? (
@@ -157,6 +161,9 @@ export default function IssuePanel(p: Props) {
             <div className="templates" role="group" aria-label="Start from a template">
               {p.templates.map(t => <button key={t.id} type="button" className="template-button" disabled={locked} onClick={() => patch({ description: t.body })}><Icon name="plus" size={14} /> {t.name}</button>)}
             </div>
+          )}
+          {notes && !session.description.includes(notes) && (
+            <button type="button" className="template-button" disabled={locked} onClick={() => patch({ description: session.description.trim() ? `${session.description.trimEnd()}\n\n${notes}\n` : `${notes}\n` })}><Icon name="note" size={14} /> Add step notes</button>
           )}
           <Picker label="Team" value={teamId} disabled={locked || !connected} items={named(p.connection?.teams)} none={connected ? 'Choose a team' : 'Connect Linear to choose'} missing={connected ? 'Unavailable team' : 'Saved team'} onChange={setTeam} />
           {connected && p.connection?.teams.length === 0 && <p className="error small">This Linear account has no teams you can post to.</p>}

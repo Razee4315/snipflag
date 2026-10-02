@@ -1,5 +1,11 @@
 # Test and release gates
 
+## Sharing outside Linear
+
+Automated coverage: unit tests for the share text and step-note ordering; Rust test for shared file names; browser test for the share bar, hiding and restoring the issue panel across reload, step notes without layout shift or undo entries, adding notes to the description, and note persistence.
+
+Native gates: Copy for AI writes one PNG per screenshot to Pictures/Snipflag with annotations and pixelation burned in, and the clipboard text pastes into a terminal with working paths (spaces in the user name, non-ASCII user names, OneDrive-redirected Pictures); Ctrl+C and Ctrl+Shift+C in the editor but not while typing; the panel slide animation in WebView2 and with animations off; full disk and read-only Pictures folder errors.
+
 ## Capture speed (warm overlays, raw frames)
 
 Automated coverage: Rust tests for the BMP frame layout (bottom-up BGR, padded rows), overlay slot parsing, and crop clamping; strict typecheck of the overlay. CI cannot run a capture.

@@ -88,6 +88,8 @@ export async function copyText(text: string) {
   if (desktop) return native<void>('copy_text', { text });
   await navigator.clipboard.writeText(text);
 }
+/** Saves flattened images to Pictures/Snipflag and returns their full paths, in order. */
+export const shareImages = (images: { dataUrl: string }[]) => native<string[]>('share_images', { images });
 export interface AvailableUpdate { version: string; notes: string }
 export const checkUpdate = () => native<AvailableUpdate | null>('check_update');
 /** Downloads, verifies and installs the checked update, then restarts. Save the draft first. */
