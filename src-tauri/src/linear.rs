@@ -67,13 +67,16 @@ pub async fn linear_connection(window: WebviewWindow, app: AppHandle) -> Result<
 pub async fn linear_team_options(window: WebviewWindow, app: AppHandle, team_id: String) -> Result<Value, String> {
     main_only(&window)?; let team_id = id(&team_id)?;
     let token = access_token(&app).await?;
-    let mut result = json!({});
-    for (field, fields) in [("projects", "id name"), ("members", "id name displayName"), ("labels", "id name color")] {
-        // Field names are compiled constants; user values are always GraphQL variables.
-        let query = format!("query($id:String!,$after:String) {{ team(id:$id) {{ {field}(first:100,after:$after) {{ nodes {{ {fields} }} pageInfo {{ hasNextPage endCursor }} }} }} }}");
-        result[field] = json!(paginate(&token, &query, json!({"id": team_id}), &["team", field]).await?);
-    }
-    Ok(result)
+    // The three lists load together. Field names are compiled constants; user values are always GraphQL variables.
+    let list = |field: &'static str, fields: &'static str| {
+        let (token, team_id) = (token.clone(), team_id.clone());
+        async move {
+            let query = format!("query($id:String!,$after:String) {{ team(id:$id) {{ {field}(first:100,after:$after) {{ nodes {{ {fields} }} pageInfo {{ hasNextPage endCursor }} }} }} }}");
+            paginate(&token, &query, json!({"id": team_id}), &["team", field]).await
+        }
+    };
+    let (projects, members, labels) = tokio::try_join!(list("projects", "id name"), list("members", "id name displayName"), list("labels", "id name color"))?;
+    Ok(json!({"projects": projects, "members": members, "labels": labels}))
 }
 
 pub fn markdown_caption(text: &str) -> String {
@@ -237,11 +240,25 @@ pub async fn submit_issue(window: WebviewWindow, app: AppHandle, session: Value,
         Plan::Fresh => {}
     }
     storage.set_submission(&session_id, &workspace, "uploading", None)?;
-    let count = decoded.len(); let mut uploaded = Vec::new();
-    for (i, bytes) in decoded.into_iter().enumerate() {
-        progress(&app, &format!("Uploading screenshot {} of {}…", i + 1, count));
-        let url = upload(&token, bytes, i).await?;
-        uploaded.push((images[i]["id"].as_str().unwrap_or_default().to_string(), url));
+    let count = decoded.len(); let mut uploaded = Vec::with_capacity(count);
+    let mut waiting = decoded.into_iter().enumerate();
+    // Up to three uploads run together; `uploaded` keeps the filmstrip order.
+    loop {
+        let batch: Vec<(usize, Vec<u8>)> = waiting.by_ref().take(3).collect();
+        if batch.is_empty() { break; }
+        let (first, last) = (batch[0].0 + 1, batch[batch.len() - 1].0 + 1);
+        progress(&app, &if first == last { format!("Uploading screenshot {first} of {count}…") } else { format!("Uploading screenshots {first} to {last} of {count}…") });
+        let tasks: Vec<_> = batch.into_iter().map(|(i, bytes)| { let token = token.clone(); (i, tauri::async_runtime::spawn(async move { upload(&token, bytes, i).await })) }).collect();
+        // Every upload of the batch finishes before a failure is reported, so none keeps running behind an error.
+        let mut failure: Option<String> = None;
+        for (i, task) in tasks {
+            match task.await {
+                Ok(Ok(url)) => uploaded.push((images[i]["id"].as_str().unwrap_or_default().to_string(), url)),
+                Ok(Err(error)) => { failure.get_or_insert(error); }
+                Err(_) => { failure.get_or_insert("A screenshot upload stopped unexpectedly. Your draft is saved.".into()); }
+            }
+        }
+        if let Some(error) = failure { return Err(error); }
     }
     let description = compose_description(&session, &images, &image_references, &uploaded)?;
     let mut input = json!({"id": session_id, "teamId": team_id, "title": title, "description": description, "priority": priority});
