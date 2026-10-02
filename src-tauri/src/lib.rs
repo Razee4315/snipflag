@@ -106,7 +106,7 @@ fn app_status(window: WebviewWindow, app: AppHandle) -> Result<Value, String> {
     main_only(&window)?;
     let shortcut_error = app.state::<ShortcutStatus>().0.lock().ok().and_then(|s| s.clone());
     let cleanup_error = app.state::<Storage>().cleanup_error.lock().ok().and_then(|s| s.clone());
-    Ok(json!({"version": app.package_info().version.to_string(), "platform": std::env::consts::OS, "shortcutError": shortcut_error, "cleanupError": cleanup_error, "builtinLinearClient": !auth::builtin_client_id().is_empty(), "updates": !update::pubkey().is_empty()}))
+    Ok(json!({"version": app.package_info().version.to_string(), "platform": std::env::consts::OS, "shortcutError": shortcut_error, "cleanupError": cleanup_error, "builtinLinearClient": !auth::builtin_client_id().is_empty(), "updates": !update::pubkey().is_empty(), "tray": TRAY.load(Ordering::SeqCst)}))
 }
 
 /// Comfortable full workspace in logical pixels: large, never fullscreen, always inside the work area.
@@ -159,8 +159,15 @@ pub fn fit_workspace(window: &WebviewWindow, force: bool) -> tauri::Result<()> {
 /// The editor stays hidden until its first paint so it never flashes an empty frame.
 static REVEALED: AtomicBool = AtomicBool::new(false);
 static STARTED_MINIMIZED: AtomicBool = AtomicBool::new(false);
+/// Whether the tray icon exists. Without it a hidden editor could not be opened again.
+static TRAY: AtomicBool = AtomicBool::new(false);
 fn reveal(app: &AppHandle) {
-    if !REVEALED.swap(true, Ordering::SeqCst) && !STARTED_MINIMIZED.load(Ordering::SeqCst) { show_main(app); }
+    let stay_hidden = STARTED_MINIMIZED.load(Ordering::SeqCst) && TRAY.load(Ordering::SeqCst);
+    if !REVEALED.swap(true, Ordering::SeqCst) && !stay_hidden { show_main(app); }
+}
+/// Puts the editor away: into the tray, or minimized when this desktop has no tray to bring it back from.
+fn tuck_away(window: &WebviewWindow) -> tauri::Result<()> {
+    if TRAY.load(Ordering::SeqCst) { window.hide() } else { window.minimize() }
 }
 
 /// Only the main editor may move or hide itself. Capture overlays have no access.
@@ -168,7 +175,7 @@ fn reveal(app: &AppHandle) {
 fn editor_window(window: WebviewWindow, app: AppHandle, action: String, image_width: Option<u32>, image_height: Option<u32>) -> Result<(), String> {
     main_only(&window)?;
     let result = match action.as_str() {
-        "hide" => window.hide(),
+        "hide" => tuck_away(&window),
         "minimize" => window.minimize(),
         // Toggles between maximized and the previous size.
         "maximize" => if window.is_maximized().unwrap_or(false) { window.unmaximize() } else { window.maximize() },
@@ -259,7 +266,7 @@ pub fn run() {
             app.manage(storage);
             let status = register_shortcut(app.handle(), settings["shortcut"].as_str().unwrap_or_default()).err();
             set_shortcut_status(app.handle(), status);
-            if let Err(error) = build_tray(app.handle()) { eprintln!("tray unavailable: {error}"); }
+            TRAY.store(build_tray(app.handle()).is_ok(), Ordering::SeqCst);
             let minimized = std::env::args().any(|a| a == "--minimized");
             STARTED_MINIMIZED.store(minimized, Ordering::SeqCst);
             if let Some(main) = app.get_webview_window("main") { let _ = fit_workspace(&main, true); }
@@ -282,7 +289,7 @@ pub fn run() {
                 if window.label() == "main" {
                     // Closing the editor keeps Snipflag in the tray; Quit is in the tray menu.
                     api.prevent_close();
-                    let _ = window.hide();
+                    if let Some(main) = window.app_handle().get_webview_window("main") { let _ = tuck_away(&main); }
                 } else if window.label().starts_with("capture-") {
                     api.prevent_close();
                     capture::cancel(window.app_handle());

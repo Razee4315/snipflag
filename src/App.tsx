@@ -428,7 +428,9 @@ export default function App() {
         {desktop && <div className="window-actions">
           <button type="button" className="window-button" aria-label="Minimize" title="Minimize" onClick={() => void editorWindow('minimize').catch(e => notify(errorText(e), 'error'))}><Icon name="minus" size={16} /></button>
           <button type="button" className="window-button" aria-label="Maximize or restore" title="Maximize or restore" onClick={() => void editorWindow('maximize').catch(e => notify(errorText(e), 'error'))}><Icon name="maximize" size={14} /></button>
-          <button type="button" className="window-button close" aria-label="Save and hide to tray" title="Hide to tray. Your draft is saved; Quit is in the tray menu." disabled={busy} onClick={() => void tuckAway()}><Icon name="close" size={16} /></button>
+          <button type="button" className="window-button close" disabled={busy} onClick={() => void tuckAway()}
+            aria-label={status?.tray === false ? 'Save and minimize' : 'Save and hide to tray'}
+            title={status?.tray === false ? 'Minimize. Your draft is saved; this desktop has no tray to hide in.' : 'Hide to tray. Your draft is saved; Quit is in the tray menu.'}><Icon name="close" size={16} /></button>
         </div>}
       </header>
       <main className="stage-area" aria-label="Screenshot editor">

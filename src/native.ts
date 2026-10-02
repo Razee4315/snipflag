@@ -60,7 +60,7 @@ export const saveSettings = async (settings: Settings): Promise<Settings> => {
   if (desktop) return { ...defaults, ...await native<Settings>('save_settings', { settings }) };
   localStorage.setItem('snipflag-settings', JSON.stringify(settings)); return settings;
 };
-export interface AppStatus { version: string; platform: string; shortcutError: string | null; cleanupError?: string | null; builtinLinearClient?: boolean; updates?: boolean }
+export interface AppStatus { version: string; platform: string; shortcutError: string | null; cleanupError?: string | null; builtinLinearClient?: boolean; updates?: boolean; tray?: boolean }
 export const appStatus = (): Promise<AppStatus> => desktop ? native('app_status') : Promise.resolve({ version: 'preview', platform: 'browser', shortcutError: null });
 
 export const linearConnection = () => native<Connection | null>('linear_connection');
