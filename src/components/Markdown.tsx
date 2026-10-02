@@ -2,8 +2,8 @@ import { Fragment, type ReactNode } from 'react';
 import { markdownBlocks, markdownSpans } from '../markdown';
 
 /** Inline text with formatting. Links are shown, not followed: this is a preview of what will be sent. */
-function Inline({ text, mention }: { text: string; mention: (index: number) => ReactNode }): ReactNode {
-  return markdownSpans(text).map((span, i) => {
+function Inline({ text, mention }: { text: string; mention: (index: number) => ReactNode }) {
+  return <>{markdownSpans(text).map((span, i) => {
     if (span.type === 'mention') return <Fragment key={i}>{mention(span.index)}</Fragment>;
     if (span.type === 'code') return <code key={i}>{span.text}</code>;
     if (span.type === 'bold') return <strong key={i}><Inline text={span.text} mention={mention} /></strong>;
@@ -11,7 +11,7 @@ function Inline({ text, mention }: { text: string; mention: (index: number) => R
     if (span.type === 'strike') return <s key={i}><Inline text={span.text} mention={mention} /></s>;
     if (span.type === 'link') return <span key={i} className="md-link"><Inline text={span.text} mention={mention} /></span>;
     return <Fragment key={i}>{span.text}</Fragment>;
-  });
+  })}</>;
 }
 
 /**
