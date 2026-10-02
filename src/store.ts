@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { normalizeHex } from './color';
 import { ensureImageReferences } from './mentions';
 import { estimateBytes, LIMITS, newSession, reorder, type Annotation, type AnnotationHistory, type CaptureImage, type Session, type Tool } from './model';
 
@@ -71,8 +72,26 @@ interface State {
 }
 const locked = (s: State) => s.busy || s.submissionLocked || !!s.session.issue;
 
+type ToolStyle = Pick<State, 'color' | 'stroke' | 'fontSize' | 'highlightColor' | 'highlightSize'>;
+const STYLE_KEY = 'snipflag-tool-style';
+const DEFAULT_STYLE: ToolStyle = { color: '#EF4444', stroke: 8, fontSize: 22, highlightColor: '#FDE047', highlightSize: 24 };
+/** The colors and sizes used last on this device. A convenience: anything missing or unreadable is the default. */
+function loadStyle(): ToolStyle {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STYLE_KEY) || '{}') as Record<string, unknown>;
+    const size = (value: unknown, fallback: number) => typeof value === 'number' && value >= 1 && value <= 400 ? value : fallback;
+    return {
+      color: normalizeHex(String(saved.color ?? '')) ?? DEFAULT_STYLE.color, stroke: size(saved.stroke, DEFAULT_STYLE.stroke), fontSize: size(saved.fontSize, DEFAULT_STYLE.fontSize),
+      highlightColor: normalizeHex(String(saved.highlightColor ?? '')) ?? DEFAULT_STYLE.highlightColor, highlightSize: size(saved.highlightSize, DEFAULT_STYLE.highlightSize),
+    };
+  } catch { return DEFAULT_STYLE; }
+}
+function saveStyle({ color, stroke, fontSize, highlightColor, highlightSize }: ToolStyle) {
+  try { localStorage.setItem(STYLE_KEY, JSON.stringify({ color, stroke, fontSize, highlightColor, highlightSize })); } catch { /* The style still applies for this run. */ }
+}
+
 export const useStore = create<State>((set, get) => ({
-  session: newSession(), activeId: '', tool: 'arrow', color: '#EF4444', stroke: 8, fontSize: 22, highlightColor: '#FDE047', highlightSize: 24,
+  session: newSession(), activeId: '', tool: 'arrow', ...loadStyle(),
   histories: {}, busy: false, selection: null, saveState: 'idle', saveError: '', persisted: [], durable: false, submissionLocked: false,
   edits: 0, structure: [],
   hydrate: (session) => {
@@ -173,7 +192,7 @@ export const useStore = create<State>((set, get) => ({
     set({ session: { ...s.session, images, updatedAt: Date.now() }, structure: [...s.structure, change].slice(-MAX_STRUCTURE) });
   },
   setTool: (tool) => set({ tool }),
-  setStyle: (style) => set(style),
+  setStyle: (style) => { set(style); saveStyle(get()); },
   setBusy: (busy) => set({ busy, selection: busy ? null : get().selection }),
   setSubmissionLocked: (submissionLocked) => set({ submissionLocked, selection: null }),
   setSelection: (selection) => set({ selection }),
