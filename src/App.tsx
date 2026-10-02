@@ -28,6 +28,9 @@ import { rememberDetails, templatesOf } from './templates';
 import { addToast, type Toast, type ToastAction } from './toasts';
 
 const PANEL_KEY = 'snipflag-panel';
+/** The session that was open last on this device; only that one is restored at launch. */
+const LAST_SESSION_KEY = 'snipflag-last-session';
+const NOT_FOUND = 'Draft was not found.';
 
 export default function App() {
   const session = useStore(s => s.session); const image = useStore(activeImage); const busy = useStore(s => s.busy);
@@ -114,18 +117,33 @@ export default function App() {
 
   useEffect(() => {
     primeSound();
+    /** The draft to continue: the session open last time if it is still unsent. A sent or deleted one starts fresh. */
+    const lastDraft = async () => {
+      let last: string | null = null;
+      try { last = localStorage.getItem(LAST_SESSION_KEY); } catch { /* Start with a new session. */ }
+      if (last) {
+        const opened = await loadSession(last).catch(e => { if (errorText(e) === NOT_FOUND) return null; throw e; });
+        return opened && !opened.issue ? opened : null;
+      }
+      // Before this was remembered (first launch after an update): the newest unsent draft, as earlier versions did.
+      const draft = (await listSessions()).find(s => !s.issue && !s.deletionPending);
+      return draft ? loadSession(draft.id) : null;
+    };
     (async () => {
       try {
         // Independent startup reads run together.
-        const [loaded, appState, sessions] = await Promise.all([loadSettings(), appStatus(), listSessions()]);
+        const [loaded, appState, draft] = await Promise.all([loadSettings(), appStatus(), lastDraft()]);
         setSettings(loaded); setStatus(appState);
-        const draft = sessions.find(s => !s.issue && !s.deletionPending);
-        if (draft) useStore.getState().hydrate(await loadSession(draft.id));
+        if (draft) useStore.getState().hydrate(draft);
       } catch (e) { notify(`Could not restore your last draft: ${errorText(e)}`, 'error'); }
       setReady(true);
       void refreshConnection();
     })();
   }, [notify, refreshConnection]);
+  useEffect(() => {
+    if (!ready) return;
+    try { localStorage.setItem(LAST_SESSION_KEY, session.id); } catch { /* The next launch starts with a new session. */ }
+  }, [ready, session.id]);
   // Show the native window only after the restored workspace has painted.
   useEffect(() => {
     if (!ready) return;
