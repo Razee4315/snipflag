@@ -128,6 +128,16 @@ pub fn normalize_settings(input: &Value) -> Result<Value, String> {
     }
     Ok(out)
 }
+/// Stored preferences that no longer pass validation as a whole: every one that is still valid on its own is kept,
+/// and only the others return to their defaults.
+pub fn salvage_settings(stored: &Value) -> Value {
+    let mut out = default_settings();
+    for (key, value) in stored.as_object().into_iter().flatten() {
+        let mut one = Map::new(); one.insert(key.clone(), value.clone());
+        if let Some(valid) = normalize_settings(&Value::Object(one)).ok().and_then(|v| v.get(key).cloned()) { out[key.as_str()] = valid; }
+    }
+    out
+}
 
 impl Storage {
     pub fn record_cleanup<T>(&self, result: Result<T, String>) -> Result<T, String> {
@@ -312,7 +322,10 @@ impl Storage {
         let data: Option<String> = db.query_row("SELECT data FROM settings WHERE key='preferences'", [], |r| r.get(0)).optional().map_err(|_| "Cannot read preferences.")?;
         match data {
             None => Ok(default_settings()),
-            Some(data) => normalize_settings(&serde_json::from_str::<Value>(&data).unwrap_or(Value::Null)).or_else(|_| Ok(default_settings())),
+            Some(data) => {
+                let stored = serde_json::from_str::<Value>(&data).unwrap_or(Value::Null);
+                Ok(normalize_settings(&stored).unwrap_or_else(|_| salvage_settings(&stored)))
+            }
         }
     }
     pub fn write_settings(&self, value: &Value) -> Result<(), String> {
@@ -498,6 +511,17 @@ mod tests {
         s["preview"] = json!(format!("data:image/png;base64,{}", "A".repeat(MAX_PREVIEW))); assert!(store.save(&s).is_err());
         s["preview"] = json!(7); assert!(store.save(&s).is_err());
         let _ = std::fs::remove_dir_all(dir);
+    }
+    #[test] fn one_invalid_stored_setting_does_not_reset_the_others() {
+        let stored = json!({"theme":"neon","shortcut":"Alt+KeyS","retentionDays":90,"templates":[{"id":"bug","name":"Bug","body":"x"}],"unknown":1});
+        assert!(normalize_settings(&stored).is_err());
+        let kept = salvage_settings(&stored);
+        assert_eq!(kept["theme"], "system");
+        assert_eq!(kept["shortcut"], "Alt+KeyS");
+        assert_eq!(kept["retentionDays"], 90);
+        assert_eq!(kept["templates"][0]["name"], "Bug");
+        assert!(kept.get("unknown").is_none());
+        assert_eq!(salvage_settings(&Value::Null), default_settings());
     }
     #[test] fn settings_are_validated() {
         assert!(normalize_settings(&json!({"clientId":"abc 123"})).is_err());
