@@ -50,6 +50,14 @@ export default function IssuePanel(p: Props) {
   const [attempt, setAttempt] = useState(0); const [filledFor, setFilledFor] = useState('');
   const teamId = session.teamId; const connected = !!p.connection;
   const teamDefaults = useRef(p.teamDefaults); teamDefaults.current = p.teamDefaults;
+  // Issue details open by themselves when a draft has some, and only the user closes them.
+  const hasDetails = !!(session.projectId || session.assigneeId || session.labelIds.length || session.priority);
+  const [detailsOpen, setDetailsOpen] = useState(hasDetails);
+  const detailsFor = useRef(session.id);
+  useEffect(() => {
+    if (detailsFor.current !== session.id) { detailsFor.current = session.id; setDetailsOpen(hasDetails); }
+    else if (hasDetails) setDetailsOpen(true);
+  }, [session.id, hasDetails]);
 
   // Drafts without a team start with the one last chosen in this workspace, once per draft.
   const autoTeam = useRef(new Set<string>());
@@ -182,7 +190,7 @@ export default function IssuePanel(p: Props) {
           )}
           <Picker label="Team" value={teamId} disabled={locked || !connected} items={named(p.connection?.teams)} none={connected ? 'Choose a team' : 'Connect Linear to choose'} missing={connected ? 'Unavailable team' : 'Saved team'} error={teamError} onChange={setTeam} />
           {connected && p.connection?.teams.length === 0 && <p className="error small">This Linear account has no teams you can post to.</p>}
-          <details className="more" open={!!(session.projectId || session.assigneeId || session.labelIds.length || session.priority)}>
+          <details className="more" open={detailsOpen} onToggle={e => setDetailsOpen(e.currentTarget.open)}>
             <summary><Icon name="right" size={14} /> Issue details</summary>
             <div className="more-body">
               {optionsError && <div className="row between"><p className="error small" role="alert">{optionsError}</p><button type="button" className="button small-button" onClick={() => setAttempt(n => n + 1)}>Retry</button></div>}
