@@ -2,7 +2,16 @@
 
 Entries before the capture-speed work (2026-09-26 to 2026-09-28) are in [STATUS-archive.md](STATUS-archive.md). Read it only when that history is needed.
 
-## Audit implemented on a branch (owner request) — 2026-10-02, awaiting review
+## v1.4.0 released as Latest, Windows only — 2026-10-02
+
+The owner asked for a release of the audit work, approved merging the branch, chose **Windows only** ("just for windows") and Latest. This is the first release without macOS/Linux builds.
+- `main` fast-forwarded to the audit branch (`4eaa712`); `655bc61` adds a `platforms` input to the publish workflow (Windows only: two installers and only the Windows updater keys required); release source `8c7ae74` (1.4.0 in package, lock files, Tauri, Cargo; `docs/releases/v1.4.0.md`; CHANGELOG).
+- [Checks 37016251148](https://github.com/Razee4315/snipflag/actions/runs/37016251148) and [Development installers 37016277064](https://github.com/Razee4315/snipflag/actions/runs/37016277064) **passed on Windows** at `8c7ae74`. [Publish 37017295596](https://github.com/Razee4315/snipflag/actions/runs/37017295596) created [v1.4.0](https://github.com/Razee4315/snipflag/releases/tag/v1.4.0): `.exe`, `.msi`, `SHA256SUMS.txt`, `latest.json`; then retitled "Snipflag v1.4.0" and marked Latest.
+- Verified: `releases/latest` is v1.4.0 (not draft, not prerelease, 4 assets); `latest.json` serves 1.4.0 with signed `windows-x86_64`, `-nsis` and `-msi` entries; the three download URLs return 200.
+- **macOS and Linux stay on 1.3.0.** Their in-app update check now reads a manifest without their platform, so a manual check reports that it could not check (background checks stay silent). Website and README link Windows to v1.4.0 and macOS/Linux to v1.3.0.
+- **Not verified:** nothing in 1.4.0 has run in the installed app; the in-place update from 1.3.0 (and 1.2.0) to 1.4.0 has not been exercised. All native gates in TESTING.md "Audit changes" remain open. Installers are unsigned.
+
+## Audit implemented on a branch (owner request) — 2026-10-02, merged and released as 1.4.0
 
 The owner approved the audit ([AUDIT-2026-10-02.md](AUDIT-2026-10-02.md), made from `de97087`) and asked for it on branch **`audit/core-flow-improvements`**: one commit per finding with its ID, never on main, no force-push, no PR or merge without approval. `main` is unchanged at `de97087`. Version stays 1.3.0; no release, tag or asset change.
 
