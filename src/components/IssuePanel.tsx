@@ -1,11 +1,12 @@
 import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
-import { LIMITS, PRIORITIES, type Connection, type Named, type TeamDefaults, type TeamOptions, type Template } from '../model';
+import { FIELD_ERRORS, LIMITS, PRIORITIES, type Connection, type Named, type TeamDefaults, type TeamOptions, type Template } from '../model';
 import { detailsToFill } from '../templates';
 import { copyText, desktop, errorText, openIssue, teamOptions } from '../native';
 import { stepNotesText } from '../share';
 import { isLocked, useStore } from '../store';
 import { Icon } from './icons';
 import DescriptionEditor from './DescriptionEditor';
+import LabelPicker from './LabelPicker';
 import ReportPreview, { type PreparedReport } from './ReportPreview';
 
 export type ConnectionState = 'idle' | 'loading' | 'connecting' | 'error';
@@ -19,7 +20,7 @@ interface Props {
   onSubmit: (report?: PreparedReport) => void; onNewSession: () => void; onTeamChosen: (teamId: string) => void; notify: (text: string) => void;
 }
 /** A select with a filter for long Linear lists. The chosen item always stays listed. */
-function Picker({ label, value, disabled, items, none, missing, onChange }: { label: string; value: string; disabled: boolean; items: { id: string; label: string }[]; none: string; missing: string; onChange: (id: string) => void }) {
+function Picker({ label, value, disabled, items, none, missing, error, onChange }: { label: string; value: string; disabled: boolean; items: { id: string; label: string }[]; none: string; missing: string; error?: string; onChange: (id: string) => void }) {
   const id = useId(); const [query, setQuery] = useState('');
   const q = query.trim().toLowerCase();
   const shown = items.filter(x => x.id === value || x.label.toLowerCase().includes(q));
@@ -27,11 +28,12 @@ function Picker({ label, value, disabled, items, none, missing, onChange }: { la
     <div className="field picker">
       <label htmlFor={id} className="picker-label">{label}</label>
       {items.length > 8 && <input className="filter" autoComplete="off" placeholder={`Search ${items.length}`} aria-label={`Search ${label.toLowerCase()}`} value={query} disabled={disabled} onChange={e => setQuery(e.target.value)} />}
-      <select id={id} value={value} disabled={disabled} onChange={e => onChange(e.target.value)}>
+      <select id={id} value={value} disabled={disabled} aria-invalid={error ? true : undefined} onChange={e => onChange(e.target.value)}>
         <option value="">{none}</option>
         {shown.map(x => <option key={x.id} value={x.id}>{x.label}</option>)}
         {value && !items.some(x => x.id === value) && <option value={value}>{missing}</option>}
       </select>
+      {error && <p className="error small" role="alert">{error}</p>}
     </div>
   );
 }
@@ -43,7 +45,6 @@ export default function IssuePanel(p: Props) {
   const { patch } = useStore.getState();
   const [options, setOptions] = useState<TeamOptions | null>(null);
   const [optionsError, setOptionsError] = useState('');
-  const [labelFilter, setLabelFilter] = useState('');
   const [previewing, setPreviewing] = useState(false);
   const [attempt, setAttempt] = useState(0); const [filledFor, setFilledFor] = useState('');
   const teamId = session.teamId; const connected = !!p.connection;
@@ -119,7 +120,10 @@ export default function IssuePanel(p: Props) {
 
   const count = session.images.length;
   const setTeam = (id: string) => { patch({ teamId: id, projectId: '', assigneeId: '', labelIds: [] }); if (id) p.onTeamChosen(id); };
-  const labels = options?.labels.filter(l => l.name.toLowerCase().includes(labelFilter.toLowerCase())) ?? [];
+  // Errors that name one field appear beside it; everything else stays above the buttons.
+  const titleError = p.submitError === FIELD_ERRORS.title && !session.title.trim() ? p.submitError : '';
+  const teamError = p.submitError === FIELD_ERRORS.team && !teamId ? p.submitError : '';
+  const footError = p.submitError === FIELD_ERRORS.title || p.submitError === FIELD_ERRORS.team ? '' : p.submitError;
   const refreshing = p.connectionState === 'loading';
   const notes = stepNotesText(session.images);
   return (
@@ -154,7 +158,8 @@ export default function IssuePanel(p: Props) {
         <form id="issue-form" className="issue-form" onSubmit={e => { e.preventDefault(); p.onSubmit(); }}>
           <label className="field">
             <span>Title</span>
-            <input value={session.title} maxLength={LIMITS.title} disabled={locked} autoComplete="off" placeholder="What needs fixing?" onChange={e => patch({ title: e.target.value })} />
+            <input value={session.title} maxLength={LIMITS.title} disabled={locked} autoComplete="off" placeholder="What needs fixing?" aria-invalid={titleError ? true : undefined} onChange={e => patch({ title: e.target.value })} />
+            {titleError && <small className="error" role="alert">{titleError}</small>}
           </label>
           <DescriptionEditor key={session.id} value={session.description} images={session.images} references={session.imageReferences ?? {}} disabled={locked} onChange={description => patch({ description })} />
           {!session.description && p.templates.length > 0 && (
@@ -165,7 +170,7 @@ export default function IssuePanel(p: Props) {
           {notes && !session.description.includes(notes) && (
             <button type="button" className="template-button" disabled={locked} onClick={() => patch({ description: session.description.trim() ? `${session.description.trimEnd()}\n\n${notes}\n` : `${notes}\n` })}><Icon name="note" size={14} /> Add step notes</button>
           )}
-          <Picker label="Team" value={teamId} disabled={locked || !connected} items={named(p.connection?.teams)} none={connected ? 'Choose a team' : 'Connect Linear to choose'} missing={connected ? 'Unavailable team' : 'Saved team'} onChange={setTeam} />
+          <Picker label="Team" value={teamId} disabled={locked || !connected} items={named(p.connection?.teams)} none={connected ? 'Choose a team' : 'Connect Linear to choose'} missing={connected ? 'Unavailable team' : 'Saved team'} error={teamError} onChange={setTeam} />
           {connected && p.connection?.teams.length === 0 && <p className="error small">This Linear account has no teams you can post to.</p>}
           <details className="more" open={!!(session.projectId || session.assigneeId || session.labelIds.length || session.priority)}>
             <summary><Icon name="right" size={14} /> Issue details</summary>
@@ -180,21 +185,8 @@ export default function IssuePanel(p: Props) {
               </label>
               <Picker label="Project" value={session.projectId} disabled={locked || !options} items={named(options?.projects)} none="No project" missing={options ? 'Unavailable project' : 'Loading…'} onChange={projectId => patch({ projectId })} />
               <Picker label="Assignee" value={session.assigneeId} disabled={locked || !options} items={named(options?.members)} none="Unassigned" missing={options ? 'Unavailable member' : 'Loading…'} onChange={assigneeId => patch({ assigneeId })} />
-              <fieldset className="field labels" disabled={locked || !options}>
-                <legend>Labels{session.labelIds.length ? ` (${session.labelIds.length})` : ''}</legend>
-                {(options?.labels.length ?? 0) > 8 && <input className="filter" autoComplete="off" placeholder="Filter labels" aria-label="Filter labels" value={labelFilter} onChange={e => setLabelFilter(e.target.value)} />}
-                <div className="label-list">
-                  {labels.map(l => (
-                    <label key={l.id} className="check label-row">
-                      <input type="checkbox" checked={session.labelIds.includes(l.id)}
-                        onChange={e => patch({ labelIds: e.target.checked ? [...session.labelIds, l.id] : session.labelIds.filter(x => x !== l.id) })} />
-                      <span className="label-dot" style={{ background: l.color || 'var(--muted)' }} aria-hidden="true" />{l.name}
-                    </label>
-                  ))}
-                  {options && !options.labels.length && <span className="muted small">No labels in this team.</span>}
-                  {!options && <span className="muted small">{teamId ? 'Loading…' : 'Choose a team first.'}</span>}
-                </div>
-              </fieldset>
+              <LabelPicker labels={options?.labels ?? null} selected={session.labelIds} disabled={locked || !options} hint={teamId ? 'Loading…' : 'Choose a team first.'}
+                onChange={labelIds => patch({ labelIds })} />
             </div>
           </details>
         </form>
@@ -202,7 +194,7 @@ export default function IssuePanel(p: Props) {
 
       <footer className="panel-foot">
         {submissionLocked && !busy && <p className="small warn">A previous attempt may already have created this issue. This report is locked to the attempted revision. Check its outcome before editing; checking does not upload or create another issue.</p>}
-        {p.submitError && <p className="error small" role="alert">{p.submitError}</p>}
+        {footError && <p className="error small" role="alert">{footError}</p>}
         {busy && p.progress && <div role="status" aria-live="polite" className="small progress"><span className="spinner" aria-hidden="true" /> {p.progress}</div>}
         <div className="foot-actions">
           <button type="button" className="button" onClick={p.onNewSession} disabled={busy}><Icon name="plus" size={16} /> New session</button>

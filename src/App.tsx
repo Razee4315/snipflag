@@ -9,7 +9,7 @@ import SettingsDialog from './components/SettingsDialog';
 import StepNotes from './components/StepNotes';
 import type { PreparedReport } from './components/ReportPreview';
 import Toolbar, { TOOLS } from './components/Toolbar';
-import { defaults, imageLabel, shortcutLabel, validateSession, type CaptureImage, type Connection, type Settings } from './model';
+import { defaults, FIELD_ERRORS, imageLabel, shortcutLabel, validateSession, type CaptureImage, type Connection, type Settings } from './model';
 import {
   appStatus, cancelLogin, clearHistory, connectLinear, deleteSession, desktop, disconnectLinear, editorWindow, errorText, exportPng, linearConnection, listSessions, loadSession,
   copyText, loadSettings, on, PREVIEW_MESSAGE, readClipboardImage, saveSession, saveSettings, startCapture, submissionStatus, submitIssue, reconcileIssue, finishQuit, checkUpdate, installUpdate, shareImages, type AppStatus, type AvailableUpdate, type RawImage,
@@ -131,6 +131,8 @@ export default function App() {
     setSoundEnabled(settings.sounds);
   }, [settings.theme, settings.motion, settings.sounds]);
   useEffect(() => { if (status?.shortcutError) notify(status.shortcutError, 'error'); }, [status, notify]);
+  // A field error goes away once that field is filled in.
+  useEffect(() => { setSubmitError(e => (e === FIELD_ERRORS.title && session.title.trim()) || (e === FIELD_ERRORS.team && session.teamId) ? '' : e); }, [session.title, session.teamId]);
   useEffect(() => {
     setPendingState(null); setSubmitError(''); setProgress('');
     let live = true;
@@ -395,10 +397,13 @@ export default function App() {
       <header className="titlebar" onMouseDown={dragWindow}>
         <span className="brand-chip" aria-hidden="true"><Mark size={15} /></span>
         <span className="grip" aria-hidden="true" />
-        <span className="visually-hidden" role="status" aria-label={saveText}>{saveText}</span>
+        <span className={`save-chip ${saveState}`} role="status" aria-label={saveText} title={saveText}>
+          {saveState === 'saving' && <><span className="spinner" aria-hidden="true" /><span>Saving…</span></>}
+          {saveState === 'saved' && <><Icon name="check" size={13} /><span>Saved</span></>}
+        </span>
         {saveState === 'error' && <span className="save-error" role="alert" title={saveText}><Icon name="alert" size={14} /> {saveText}</span>}
         {status?.cleanupError && <span className="save-error" role="alert" title={status.cleanupError}><Icon name="alert" size={14} /> Local cleanup incomplete. Retry in History or Settings.</span>}
-        <div className="drag-space" aria-hidden="true" />
+        <div className="drag-space" aria-hidden="true" onDoubleClick={() => void editorWindow('maximize').catch(() => undefined)} />
         {update && <button type="button" className="update-chip" disabled={busy} title={update.notes || undefined} onClick={() => void applyUpdate()}>
           <Icon name="refresh" size={14} /> Update to {update.version}</button>}
         <div className="top-actions">
@@ -408,13 +413,14 @@ export default function App() {
         </div>
         {desktop && <div className="window-actions">
           <button type="button" className="window-button" aria-label="Minimize" title="Minimize" onClick={() => void editorWindow('minimize').catch(e => notify(errorText(e), 'error'))}><Icon name="minus" size={16} /></button>
-          <button type="button" className="window-button close" aria-label="Save and hide to tray" title="Save and hide to tray" disabled={busy} onClick={() => void tuckAway()}><Icon name="close" size={16} /></button>
+          <button type="button" className="window-button" aria-label="Maximize or restore" title="Maximize or restore" onClick={() => void editorWindow('maximize').catch(e => notify(errorText(e), 'error'))}><Icon name="maximize" size={14} /></button>
+          <button type="button" className="window-button close" aria-label="Save and hide to tray" title="Hide to tray. Your draft is saved; Quit is in the tray menu." disabled={busy} onClick={() => void tuckAway()}><Icon name="close" size={16} /></button>
         </div>}
       </header>
       <main className="stage-area" aria-label="Screenshot editor">
         {image ? (
           <>
-            <Toolbar />
+            <Toolbar onDragWindow={dragWindow} />
             <div className="canvas-wrap">
               <Editor image={image} zoom={zoom} onZoom={setZoom} onScale={setScale} onCrop={rect => void cropActive(rect)} />
               <StepNotes image={image} />
@@ -433,7 +439,7 @@ export default function App() {
                 <button type="button" className={zoom === 'fit' ? 'tool active' : 'tool'} aria-label="Fit to window" title="Fit to window" onClick={() => setZoom('fit')}><Icon name="fit" /></button>
               </div>
             </div>
-            <div className="share" role="group" aria-label="Share this screenshot">
+            <div className="share" role="group" aria-label="Share this screenshot" onMouseDown={dragWindow}>
               <button type="button" className="button primary" onClick={() => void exportActive(true)}><Icon name="copy" size={16} /> Copy image</button>
               <button type="button" className="button" disabled={!desktop} onClick={() => void shareForAi()}><Icon name="spark" size={16} /> Copy for AI</button>
               <button type="button" className="button" onClick={() => void exportActive(false)}><Icon name="save" size={16} /> Save image</button>

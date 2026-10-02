@@ -10,6 +10,8 @@ All notable changes to Snipflag are documented here. The format follows [Keep a 
 - Crop tool (C) with an Undo in the confirmation toast, and a plain Line tool (L).
 - Canvas: Ctrl+wheel zooms toward the pointer; hold Space and drag, or drag with the middle button, to pan; arrow keys move the selected mark (Shift: 10 px); Ctrl+D duplicates it.
 - Filmstrip: drag a screenshot to reorder it, tiles glide to their new place, thumbnails are larger, and removing a screenshot offers Put back.
+- Issue panel: labels are colored chips with a search-to-add field; a missing title or team is reported at that field; long team, project and assignee lists show their search joined to the list.
+- Title bar: a visible Saved indicator, a maximize button (or double-click the bar), and the toolbar and share bar also drag the window.
 - Notes on numbered steps, written in a list that floats over the canvas; they can be added to the description.
 - The Linear issue panel can be hidden for quick mark-up and sharing; the choice is remembered.
 - Four more themes, each with its own texture: Paper, Blossom, Midnight and Graphite. A picked theme previews at once.

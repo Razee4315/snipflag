@@ -6,6 +6,12 @@ Automated coverage: unit tests for line bounds, duplicate placement, crop roundi
 
 Native gates: Ctrl+wheel keeps the point under the pointer at several zoom levels; Space-drag and middle-drag pan with a real mouse and a touchpad; Space no longer presses a focused toolbar button; every edge of a zoomed-in image is reachable; cropping a 4K capture; crop then Create issue uploads the cropped image and `@image` mentions still resolve.
 
+## Issue panel and title bar
+
+Automated coverage: unit tests for label matching and the label picker's static states (chips, loading hint, empty team); the Saved indicator text in the browser suite. The label picker's keyboard and mouse behavior, the field-level title/team errors and the maximize button cannot run in the browser preview (no Linear data, validation stops at the preview message, no native window).
+
+Native gates (connected workspace): add and remove labels by mouse and keyboard (arrows, Enter, Backspace, Escape closes the list without closing a dialog), Enter in the label field never creates the issue, long label lists scroll; Create issue with no title and with no team marks that field and the mark clears when it is filled; maximize and restore from the button and by double-clicking the bar; dragging the window by the toolbar and the share bar does not start when pressing a button.
+
 ## Filmstrip
 
 Automated coverage: store test for putting a removed image back (new identity, alias and history kept); browser test for Put back, drag-to-reorder and persistence of the new order.

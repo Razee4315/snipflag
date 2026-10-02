@@ -79,13 +79,15 @@ export function reorder<T>(items: T[], from: number, to: number): T[] {
   if (from === to || from < 0 || to < 0 || from >= items.length || to >= items.length) return items;
   const copy = [...items]; const [moved] = copy.splice(from, 1); copy.splice(to, 0, moved); return copy;
 }
+/** Validation messages that belong to one field; the issue panel shows them beside it. */
+export const FIELD_ERRORS = { title: 'Add an issue title.', team: 'Choose a Linear team.' } as const;
 export function validateSession(s: Session): string | null {
   if (s.issue) return 'This session has already been sent. Start a new session.';
   if (!s.images.length) return 'Add at least one screenshot.';
   if (s.images.length > LIMITS.images) return 'A session can contain up to 10 images.';
-  if (!s.title.trim()) return 'Add an issue title.';
+  if (!s.title.trim()) return FIELD_ERRORS.title;
   if (s.title.trim().length > LIMITS.title) return 'Keep the title under 250 characters.';
-  if (!s.teamId) return 'Choose a Linear team.';
+  if (!s.teamId) return FIELD_ERRORS.team;
   return null;
 }
 export function normalizeRect(x: number, y: number, endX: number, endY: number) {

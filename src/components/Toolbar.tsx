@@ -1,4 +1,4 @@
-import { useCallback, useState, type CSSProperties } from 'react';
+import { useCallback, useState, type CSSProperties, type MouseEvent } from 'react';
 import { loadCustomColors, saveCustomColor } from '../color';
 import { stepSize, type Tool } from '../model';
 import { activeImage, canRedo, canUndo, isLocked, useStore } from '../store';
@@ -31,7 +31,8 @@ const STROKES = [2, 4, 8, 12, 16];
 const HIGHLIGHT_SIZES = [12, 18, 24, 32, 48];
 const SIZES = [14, 18, 22, 28, 36, 48, 64];
 
-export default function Toolbar() {
+/** Empty toolbar space moves the window, like a title bar. */
+export default function Toolbar({ onDragWindow }: { onDragWindow?: (e: MouseEvent) => void }) {
   const tool = useStore(s => s.tool); const color = useStore(s => s.color); const stroke = useStore(s => s.stroke); const fontSize = useStore(s => s.fontSize);
   const highlightColor = useStore(s => s.highlightColor); const highlightSize = useStore(s => s.highlightSize);
   const locked = useStore(isLocked); const undoable = useStore(canUndo); const redoable = useStore(canRedo);
@@ -68,7 +69,7 @@ export default function Toolbar() {
     style({ color: hex }); setPicker(false);
   };
   return (
-    <div className="toolbar" role="toolbar" aria-label="Annotation tools">
+    <div className="toolbar" role="toolbar" aria-label="Annotation tools" onMouseDown={onDragWindow}>
       <div className="tool-group">
         {TOOLS.map(t => (
           <button key={t.tool} type="button" className={tool === t.tool ? 'tool active' : 'tool'} aria-pressed={tool === t.tool} disabled={locked}

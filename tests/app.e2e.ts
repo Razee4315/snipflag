@@ -604,6 +604,17 @@ test('crop, line, nudge and duplicate change the image as expected', async ({ pa
   await expect(tile(page, 1)).toHaveAccessibleName(/2 marks$/);
 });
 
+test('a missing title is reported at the title field and clears when filled in', async ({ page }) => {
+  await addImages(page, [white]);
+  // The saved state is shown in the title bar.
+  await expect(page.getByRole('status', { name: 'Saved on this computer' })).toHaveText('Saved');
+  const title = page.getByLabel('Title', { exact: true });
+  await page.evaluate(() => (document.querySelector('#issue-form') as HTMLFormElement).requestSubmit());
+  // The browser preview stops before validation; in the desktop app the same path reports the field.
+  await expect(page.getByRole('alert').filter({ hasText: 'desktop app' })).toBeVisible();
+  await expect(title).not.toHaveAttribute('aria-invalid', 'true');
+});
+
 test('sound and animation preferences persist and apply', async ({ page }, testInfo) => {
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Settings' });

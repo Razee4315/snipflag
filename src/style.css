@@ -203,6 +203,11 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 0.85; 
 .grip { width: 10px; height: 16px; margin-left: 6px; opacity: 0.5; flex-shrink: 0;
   background-image: radial-gradient(var(--muted) 1.1px, transparent 1.3px); background-size: 5px 5px; }
 .titlebar:hover .grip { opacity: 0.85; }
+.save-chip { display: inline-flex; align-items: center; gap: 5px; margin-left: 6px; color: var(--muted); font-size: 11.5px; white-space: nowrap; }
+.save-chip.saved svg { color: var(--success); }
+.save-chip .spinner { width: 11px; height: 11px; }
+/* The update action needs the room. */
+.titlebar:has(.update-chip) .save-chip > span:last-child { display: none; }
 .save-error { display: inline-flex; align-items: center; gap: 5px; min-width: 0; margin-left: 6px; color: var(--danger); font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .drag-space { flex: 1; align-self: stretch; cursor: grab; }
 .drag-space:active { cursor: grabbing; }
@@ -308,14 +313,28 @@ option { background: var(--surface); color: var(--text); }
 .more[open] summary svg { transform: rotate(90deg); }
 .more-body { display: flex; flex-direction: column; gap: 12px; padding-top: 12px; }
 .more[open] .more-body { animation: reveal 260ms var(--ease); }
-.labels .filter, .picker .filter { min-height: 32px; }
-.labels .filter { margin-bottom: 6px; }
+.picker .filter { min-height: 32px; }
+/* Search and list read as one control. */
+.picker .filter:has(+ select) { border-bottom-left-radius: 0; border-bottom-right-radius: 0; margin-bottom: -5px; }
+.picker .filter + select { border-top-left-radius: 0; border-top-right-radius: 0; border-top: 1px solid var(--border); }
+.field [aria-invalid="true"] { border-color: color-mix(in srgb, var(--danger) 60%, transparent) !important; }
+/* Labels: chips for what is chosen, a search field for the rest. */
+.chip-box { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; min-height: 38px; padding: 5px 6px; border: 1px solid transparent; border-radius: var(--radius); background: var(--surface-2); cursor: text; transition: border-color 160ms var(--ease), background 160ms var(--ease), box-shadow 180ms var(--ease); }
+.chip-box:hover { border-color: var(--border); }
+.chip-box:focus-within { border-color: color-mix(in srgb, var(--primary) 55%, transparent); background: var(--surface); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent); }
+.field .chip-box input { flex: 1; width: auto; min-width: 90px; min-height: 26px; padding: 0 4px; border: 0; background: transparent; box-shadow: none; }
+.field .chip-box input:focus { border: 0; background: transparent; box-shadow: none; }
+.chip { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; height: 26px; padding: 0 4px 0 8px; border-radius: 999px; font-size: 12px; font-weight: 550; background: color-mix(in srgb, var(--chip) 16%, var(--surface)); border: 1px solid color-mix(in srgb, var(--chip) 40%, transparent); animation: pop 220ms var(--spring); }
+.chip .label-dot { background: var(--chip); box-shadow: none; }
+.chip button { display: grid; place-items: center; width: 18px; height: 18px; border: 0; border-radius: 50%; background: transparent; color: var(--muted); cursor: pointer; transition: background 120ms, color 120ms; }
+.chip button:hover { background: var(--press); color: var(--text); }
+.chip-menu { list-style: none; margin: 0; padding: 4px; max-height: 176px; overflow-y: auto; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow-md); animation: reveal 160ms var(--ease); }
+.chip-menu li { display: flex; align-items: center; gap: 9px; padding: 7px 9px; border-radius: 8px; font-size: 12.5px; cursor: pointer; }
+.chip-menu li.active { background: var(--hover); }
+.chip-menu li[aria-disabled="true"] { cursor: default; }
 .templates { display: flex; flex-wrap: wrap; gap: 2px 8px; margin-top: -4px; }
 .templates .template-button { margin-top: 0; }
-.label-list { display: flex; flex-direction: column; gap: 2px; max-height: 190px; overflow-y: auto; padding: 4px; border-radius: var(--radius); background: var(--surface-2); }
 .check { display: flex; align-items: center; gap: 9px; font-size: 12.5px; cursor: pointer; }
-.label-row { padding: 6px 8px; border-radius: 7px; transition: background 120ms; }
-.label-row:hover { background: var(--hover); }
 .check input[type="checkbox"]:not([role="switch"]) { width: 16px; height: 16px; margin: 0; accent-color: var(--primary); }
 .label-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 0 2px color-mix(in srgb, var(--surface) 80%, transparent); }
 
@@ -522,6 +541,8 @@ option { background: var(--surface); color: var(--text); }
 .dialog-inner { display: flex; flex-direction: column; max-height: calc(100vh - 50px); }
 .dialog.wide .dialog-inner { height: 100%; max-height: none; }
 .dialog-head { display: flex; align-items: center; justify-content: space-between; padding: 20px 18px 12px 24px; }
+.dialog-head .icon-button { width: 32px; height: 32px; border: 1px solid var(--border); border-radius: 50%; background: var(--surface-2); }
+.dialog-head .icon-button:hover { background: var(--surface); border-color: color-mix(in srgb, var(--muted) 50%, var(--border)); }
 .dialog-head h2 { font-size: 22px; font-weight: 650; letter-spacing: -0.025em; }
 .dialog-body { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 16px; padding: 4px 24px 20px; overflow-y: auto; scrollbar-gutter: stable; }
 .dialog-foot { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--border); background: var(--surface-2); }

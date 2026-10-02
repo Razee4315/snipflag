@@ -162,6 +162,8 @@ fn editor_window(window: WebviewWindow, app: AppHandle, action: String, image_wi
     let result = match action.as_str() {
         "hide" => window.hide(),
         "minimize" => window.minimize(),
+        // Toggles between maximized and the previous size.
+        "maximize" => if window.is_maximized().unwrap_or(false) { window.unmaximize() } else { window.maximize() },
         "drag" => window.start_dragging(),
         "workspace" => match (image_width, image_height) {
             (Some(width), Some(height)) => fit_image(&window, (width, height)),
