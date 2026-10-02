@@ -2,7 +2,7 @@ use base64::{engine::general_purpose::STANDARD, Engine};
 use image::{codecs::png::{CompressionType, FilterType, PngEncoder}, DynamicImage, ExtendedColorType, ImageEncoder, ImageFormat, ImageReader, RgbaImage};
 use rusqlite::{params, Connection, OptionalExtension};
 use serde_json::{json, Map, Value};
-use std::{collections::HashSet, io::Cursor, path::{Path, PathBuf}, sync::Mutex};
+use std::{collections::HashSet, io::Cursor, path::{Path, PathBuf}, sync::{atomic::{AtomicBool, Ordering}, Mutex}};
 use tauri::{AppHandle, Manager, State, WebviewWindow};
 use uuid::Uuid;
 
@@ -14,7 +14,11 @@ const MAX_ANNOTATIONS: usize = 2000;
 const MAX_TEXT: usize = 100_000;
 const MAX_PREVIEW: usize = 300_000;
 
-pub struct Storage { pub root: PathBuf, pub db: Mutex<Connection>, mutations: Mutex<()>, pub cleanup_error: Mutex<Option<String>> }
+pub struct Storage {
+    pub root: PathBuf, pub db: Mutex<Connection>, mutations: Mutex<()>, pub cleanup_error: Mutex<Option<String>>,
+    /// A save failed part-way and may have left image files without a draft row; the next save looks for them.
+    rescan: AtomicBool,
+}
 
 pub fn main_only(window: &WebviewWindow) -> Result<(), String> {
     if window.label() != "main" { return Err("This action is restricted to the editor.".into()); }
@@ -160,16 +164,22 @@ impl Storage {
             CREATE TABLE IF NOT EXISTS deletions(id TEXT PRIMARY KEY);
             CREATE TABLE IF NOT EXISTS submission_snapshots(id TEXT PRIMARY KEY, data TEXT NOT NULL);")
             .map_err(|_| "Cannot initialize draft database.")?;
-        Ok(Self { root, db: Mutex::new(db), mutations: Mutex::new(()), cleanup_error: Mutex::new(None) })
+        Ok(Self { root, db: Mutex::new(db), mutations: Mutex::new(()), cleanup_error: Mutex::new(None), rescan: AtomicBool::new(false) })
     }
     fn image_path(&self, session_id: &str, image_id: &str) -> PathBuf { self.root.join("images").join(format!("{session_id}-{image_id}.png")) }
-    fn stored_issue(&self, session_id: &str) -> Result<Option<Value>, String> {
+    /// The draft as last saved, without pixels.
+    fn stored(&self, session_id: &str) -> Result<Option<Value>, String> {
         let db = self.db.lock().map_err(|_| "Database unavailable.")?;
         let data: Option<String> = db.query_row("SELECT data FROM sessions WHERE id=?1", [session_id], |r| r.get(0)).optional().map_err(|_| "Cannot read draft.")?;
-        Ok(data.and_then(|d| serde_json::from_str::<Value>(&d).ok()).map(|v| v["issue"].clone()).filter(|v| !v.is_null()))
+        Ok(data.and_then(|d| serde_json::from_str::<Value>(&d).ok()))
     }
     /// Persists session metadata. Image pixels are immutable per image ID, so data is only required for new images.
     pub fn save(&self, session: &Value) -> Result<(), String> {
+        let result = self.save_checked(session);
+        if result.is_err() { self.rescan.store(true, Ordering::SeqCst); }
+        result
+    }
+    fn save_checked(&self, session: &Value) -> Result<(), String> {
         let _guard = self.mutations.lock().map_err(|_| "Draft storage unavailable.")?;
         let session_id = id(session["id"].as_str().ok_or("Missing session ID.")?)?;
         if self.deleting(&session_id)? { return Err("This draft is being deleted. Retry deletion in History.".into()); }
@@ -182,7 +192,8 @@ impl Storage {
             let preview = preview.as_str().ok_or("Invalid draft preview.")?;
             if preview.len() > MAX_PREVIEW || !(preview.is_empty() || preview.starts_with("data:image/png;base64,")) { return Err("Invalid draft preview.".into()); }
         }
-        if session["issue"].is_null() && self.stored_issue(&session_id)?.is_some() { return Err("This session was already sent to Linear and cannot be changed.".into()); }
+        let stored = self.stored(&session_id)?;
+        if session["issue"].is_null() && stored.as_ref().is_some_and(|s| !s["issue"].is_null()) { return Err("This session was already sent to Linear and cannot be changed.".into()); }
         if self.submission(&session_id)?.is_some_and(|(_, state, _)| state == "creating" || state == "sent") {
             if let Some(snapshot) = self.snapshot(&session_id)? {
                 if submission_content(&snapshot) != submission_content(session) { return Err("This report is locked to its submitted revision. Check the previous attempt before editing.".into()); }
@@ -224,8 +235,14 @@ impl Storage {
         self.db.lock().map_err(|_| "Database unavailable.")?
             .execute("INSERT INTO sessions(id,updated,data) VALUES(?1,?2,?3) ON CONFLICT(id) DO UPDATE SET updated=excluded.updated,data=excluded.data", params![session_id, now(), text])
             .map_err(|_| "Could not save draft.")?;
-        // Remove only this session's orphaned images after the new metadata is durable.
-        self.record_cleanup(self.remove_images(&session_id, |image_id| !unique.contains(image_id)))?;
+        // Remove only this session's orphaned images after the new metadata is durable. The folder is read only when
+        // there can be something to remove: an image left the draft, this is its first save, an earlier save failed
+        // part-way, or an earlier cleanup is still unfinished.
+        let dropped = stored.as_ref().and_then(|s| s["images"].as_array()).is_some_and(|before| before.iter().any(|img| img["id"].as_str().is_some_and(|i| !unique.contains(i))));
+        let unfinished = self.cleanup_error.lock().map(|e| e.is_some()).unwrap_or(true);
+        if dropped || stored.is_none() || unfinished || self.rescan.swap(false, Ordering::SeqCst) {
+            self.record_cleanup(self.remove_images(&session_id, |image_id| !unique.contains(image_id)))?;
+        }
         Ok(())
     }
     fn deleting(&self, session_id: &str) -> Result<bool, String> {
