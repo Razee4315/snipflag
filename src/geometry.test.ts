@@ -54,9 +54,10 @@ describe('geometry', () => {
   });
   it('snaps a moving box to the image middle and to other marks, nearest line first, and leaves it alone when far', () => {
     const size = { width: 400, height: 300 };
-    // The box's middle (197 + 10) is 7 from the image middle: too far at threshold 6, close enough at 8.
-    expect(snapBox({ x: 187, y: 100, width: 20, height: 10 }, [], size, 6)).toEqual({ dx: 0, dy: 0, x: null, y: null });
-    expect(snapBox({ x: 195, y: 100, width: 20, height: 10 }, [], size, 6)).toEqual({ dx: -5, dy: 0, x: 200, y: null });
+    // Edges at 170, 180 and 190 are all more than 6 from the image middle at 200.
+    expect(snapBox({ x: 170, y: 100, width: 20, height: 10 }, [], size, 6)).toEqual({ dx: 0, dy: 0, x: null, y: null });
+    // The left edge at 195 is 5 from the middle and moves onto it.
+    expect(snapBox({ x: 195, y: 100, width: 20, height: 10 }, [], size, 6)).toEqual({ dx: 5, dy: 0, x: 200, y: null });
     // Left edge lines up with another mark's left edge; top stays free.
     expect(snapBox({ x: 52, y: 40, width: 30, height: 10 }, [{ x: 50, y: 200, width: 80, height: 20 }], size, 6)).toMatchObject({ dx: -2, x: 50, dy: 0, y: null });
     // Bottom edge to the image bottom.
