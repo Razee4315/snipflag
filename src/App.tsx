@@ -103,7 +103,7 @@ export default function App() {
       // The issue panel picks the remembered team for drafts without one.
       const { session: s, patch } = useStore.getState();
       if (c && !s.issue && s.teamId && !c.teams.some(t => t.id === s.teamId)) patch({ teamId: '', projectId: '', assigneeId: '', labelIds: [] });
-    } catch (e) { setConnection(null); setConnectionError(errorText(e)); setConnectionState('error'); }
+    } catch (e) { setConnection(null); setConnectionError(errorText(e)); setConnectionState('unreachable'); }
   }, []);
 
   useEffect(() => {
@@ -477,7 +477,7 @@ export default function App() {
       {dialog === 'settings' && (
         <SettingsDialog settings={settings} status={status} connection={connection} connectionState={connectionState} connectionError={connectionError}
           onSave={async next => { setSettings(await saveSettings(next)); setStatus(await appStatus()); }}
-          onConnect={() => void connect()} onCancelConnect={() => void cancelLogin().catch(() => undefined)} onDisconnect={disconnect}
+          onConnect={() => void connect()} onCancelConnect={() => void cancelLogin().catch(() => undefined)} onRetryConnection={() => void refreshConnection()} onDisconnect={disconnect}
           onClearHistory={() => deleteLocal()} onCheckUpdate={findUpdate} onInstallUpdate={() => { setDialog(null); void applyUpdate(); }} onClose={() => setDialog(null)} />
       )}
       {dialog === 'history' && (

@@ -51,8 +51,10 @@ pub fn client() -> Result<reqwest::Client, String> {
     reqwest::Client::builder().timeout(Duration::from_secs(60)).connect_timeout(Duration::from_secs(15)).redirect(reqwest::redirect::Policy::none())
         .user_agent(concat!("Snipflag/", env!("CARGO_PKG_VERSION"))).build().map_err(|_| "Cannot initialize network client.".into())
 }
+/// Linear did not answer at all. Being offline is not a reason to sign in again.
+const UNREACHABLE: &str = "Could not reach Linear. Check your connection and retry.";
 async fn token_request(fields: &[(&str, &str)]) -> Result<Value, String> {
-    let response = client()?.post("https://api.linear.app/oauth/token").form(fields).send().await.map_err(|_| "Could not reach Linear. Check your connection and retry.")?;
+    let response = client()?.post("https://api.linear.app/oauth/token").form(fields).send().await.map_err(|_| UNREACHABLE)?;
     if !response.status().is_success() { return Err("Linear could not authorize this connection. Check the client ID and registered callback, then reconnect.".into()); }
     response.json().await.map_err(|_| "Invalid authorization response.".into())
 }
@@ -62,7 +64,7 @@ pub async fn access_token() -> Result<String, String> {
     if saved.expires_at > now() + 90_000 { return Ok(saved.access_token); }
     if saved.refresh_token.is_empty() { return Err("Your Linear connection has expired. Reconnect in Settings.".into()); }
     let value = token_request(&[("grant_type", "refresh_token"), ("refresh_token", &saved.refresh_token), ("client_id", &saved.client_id)]).await
-        .map_err(|_| "Your Linear connection could not be renewed. Reconnect in Settings.".to_string())?;
+        .map_err(|e| if e == UNREACHABLE { e } else { "Your Linear connection could not be renewed. Reconnect in Settings.".to_string() })?;
     Ok(store(&value, &saved.client_id, &saved.refresh_token)?.access_token)
 }
 pub fn forget() -> Result<(), String> {

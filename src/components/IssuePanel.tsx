@@ -9,7 +9,8 @@ import DescriptionEditor from './DescriptionEditor';
 import LabelPicker from './LabelPicker';
 import ReportPreview, { type PreparedReport } from './ReportPreview';
 
-export type ConnectionState = 'idle' | 'loading' | 'connecting' | 'error';
+/** `unreachable`: a saved connection exists but Linear (or the credential store) could not be reached. */
+export type ConnectionState = 'idle' | 'loading' | 'connecting' | 'error' | 'unreachable';
 interface Props {
   /** Tucked away for quick sharing; the form keeps its state. */
   hidden?: boolean;
@@ -143,6 +144,15 @@ export default function IssuePanel(p: Props) {
             <div className="workspace-chip">
               <span className="ws-text"><strong>{p.connection.workspace}</strong><small>{p.connection.name}</small></span>
               <button type="button" className={refreshing ? 'icon-button spinning' : 'icon-button'} onClick={p.onRetryConnection} aria-label="Refresh Linear teams" title="Refresh teams"><Icon name="refresh" size={16} /></button>
+            </div>
+          ) : p.connectionState === 'unreachable' ? (
+            <div className="connect-card">
+              <p className="error small" role="alert">{p.connectionError}</p>
+              <p className="small muted">You are still signed in. Your draft is saved; retry when you are back online.</p>
+              <div className="row">
+                <button type="button" className="button" onClick={p.onRetryConnection}><Icon name="refresh" size={16} /> Retry</button>
+                {p.hasClientId && <button type="button" className="link-button" onClick={p.onConnect}>Sign in again</button>}
+              </div>
             </div>
           ) : (
             <div className="connect-card">

@@ -9,7 +9,7 @@ import type { ConnectionState } from './IssuePanel';
 
 interface Props {
   settings: Settings; status: AppStatus | null; connection: Connection | null; connectionState: ConnectionState; connectionError: string;
-  onSave: (settings: Settings) => Promise<void>; onConnect: () => void; onCancelConnect: () => void; onDisconnect: () => Promise<void>;
+  onSave: (settings: Settings) => Promise<void>; onConnect: () => void; onCancelConnect: () => void; onRetryConnection: () => void; onDisconnect: () => Promise<void>;
   onClearHistory: () => Promise<void>; onCheckUpdate: () => Promise<AvailableUpdate | null>; onInstallUpdate: () => void; onClose: () => void;
 }
 const SECTIONS = ['Connection', 'Capture', 'Templates', 'Appearance', 'Privacy', 'Shortcuts', 'About'] as const;
@@ -101,7 +101,9 @@ export default function SettingsDialog(p: Props) {
             {builtin && draft.clientId && <button type="button" className="button" onClick={() => setDraft({ ...draft, clientId: '' })}>Use built-in connection</button>}
             </details>
             <p className="small muted">Snipflag uses PKCE. Tokens stay in your system credential store.</p>
-            {p.connectionError && <p className="error small" role="alert">{p.connectionError}</p>}
+            {p.connectionState === 'unreachable'
+              ? <div className="row between"><p className="error small" role="alert">{p.connectionError} You are still signed in.</p><button type="button" className="button" onClick={p.onRetryConnection}>Retry</button></div>
+              : p.connectionError && <p className="error small" role="alert">{p.connectionError}</p>}
             <button type="button" className="button primary" disabled={(!draft.clientId && !builtin) || !desktop} onClick={() => void connect()}>Connect Linear</button>
             {!desktop && <p className="small muted">Connecting works in the installed desktop app.</p>}
           </>
