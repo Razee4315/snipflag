@@ -7,6 +7,8 @@ export const isFreehand = (kind: Tool | Shape) => kind === 'pen' || kind === 'hi
 export const isSegment = (kind: Tool | Shape) => kind === 'arrow' || kind === 'line';
 /** Outlined box kinds drawn by dragging; Shift makes them square or round. */
 export const isOutline = (kind: Tool | Shape) => kind === 'rectangle' || kind === 'ellipse';
+/** Arrow head length in image pixels, shared by the editor, the export and mark bounds. */
+export const arrowHead = (stroke: number) => Math.max(12, stroke * 4);
 /** Numbered step badges scale with the stroke width. */
 export const stepSize = (stroke: number) => Math.round(26 + stroke * 2.5);
 /** Next step number on an image: one more than the highest badge already placed. */

@@ -1,4 +1,4 @@
-import { isFreehand, isSegment, type Annotation } from './model';
+import { arrowHead, isFreehand, isSegment, type Annotation } from './model';
 
 export interface Box { x: number; y: number; width: number; height: number }
 export interface Point { x: number; y: number }
@@ -15,13 +15,12 @@ export function snapAngle(origin: Point, pointer: Point, size: { width: number; 
   const ratio = Math.max(0, Math.min(1, tx, ty));
   return { x: origin.x + x * ratio, y: origin.y + y * ratio };
 }
-const HEAD = (stroke: number) => Math.max(12, stroke * 4);
 
 /** Bounding box in image pixels, padded to include strokes and arrow heads. */
 export function bounds(a: Annotation): Box {
   if (isFreehand(a.kind) || isSegment(a.kind)) {
     const xs = a.points.filter((_, i) => i % 2 === 0); const ys = a.points.filter((_, i) => i % 2 === 1);
-    const pad = a.kind === 'arrow' ? Math.max(HEAD(a.stroke), a.stroke) : a.stroke;
+    const pad = a.kind === 'arrow' ? Math.max(arrowHead(a.stroke), a.stroke) : a.stroke;
     const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
     return { x: a.x + minX - pad, y: a.y + minY - pad, width: maxX - minX + pad * 2, height: maxY - minY + pad * 2 };
   }

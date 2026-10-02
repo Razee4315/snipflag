@@ -1,10 +1,8 @@
 import { bounds, intersects, translate, type Box } from './geometry';
-import { LIMITS, type Annotation, type CaptureImage } from './model';
+import { arrowHead, LIMITS, type Annotation, type CaptureImage } from './model';
 
 export const FONT_FAMILY = '"Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif';
 export const LINE_HEIGHT = 1.2;
-/** Arrow head length in image pixels, shared by editor and export. */
-export const arrowHead = (stroke: number) => Math.max(12, stroke * 4);
 /** Privacy regions cover all ordinary marks; legacy solid redactions always stay last. */
 export function paintOrder(annotations: Annotation[]) {
   return [
