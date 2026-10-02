@@ -451,14 +451,20 @@ option { background: var(--surface); color: var(--text); }
 /* Filmstrip */
 .filmstrip { background: var(--surface); border-top: 1px solid var(--border); overflow-x: auto; }
 .filmstrip ol { display: flex; gap: 10px; list-style: none; margin: 0; padding: 10px 12px 8px; }
-.tile { position: relative; flex: 0 0 auto; width: 104px; animation: tile-in 360ms var(--spring) both; }
+.tile { position: relative; flex: 0 0 auto; width: 132px; animation: tile-in 360ms var(--spring) both; }
 .tile-select {
   position: relative; display: block; width: 100%; padding: 0; border: 2px solid var(--border); border-radius: 11px; background: var(--surround); cursor: pointer; overflow: hidden;
   transition: border-color 160ms, transform 200ms var(--ease), box-shadow 200ms var(--ease);
 }
 .tile-select:hover { border-color: color-mix(in srgb, var(--primary) 45%, var(--border)); }
 .tile.active .tile-select { border-color: var(--primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent); }
-.tile-select img { display: block; width: 100%; height: 54px; object-fit: contain; }
+.tile-select img { display: block; width: 100%; height: 72px; object-fit: contain; }
+.tile-select[draggable="true"] { cursor: grab; }
+.tile.dragging { opacity: 0.4; }
+/* Where a dragged screenshot will land. */
+.tile.drop-before::before, .tile.drop-after::after { content: ""; position: absolute; top: 2px; bottom: 30px; width: 3px; border-radius: 3px; background: var(--primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent); }
+.tile.drop-before::before { left: -7px; }
+.tile.drop-after::after { right: -7px; }
 .tile-number { position: absolute; top: 4px; left: 4px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 6px; background: var(--primary); color: var(--primary-fg); font-size: 10px; font-weight: 700; display: grid; place-items: center; box-shadow: var(--shadow-sm); }
 .tile-marks { position: absolute; top: 4px; right: 4px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: rgba(0, 0, 0, 0.62); color: #fff; font-size: 10px; display: grid; place-items: center; backdrop-filter: blur(4px); }
 .tile-caption { display: block; padding: 3px 7px; font-size: 11px; background: var(--surface); text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

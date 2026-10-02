@@ -70,6 +70,19 @@ test('reordering changes filmstrip order and captions follow their image', async
   await page.getByRole('button', { name: 'Remove screenshot 1' }).click();
   await expect(page.getByTestId('tile')).toHaveCount(1);
   await expect(tile(page, 1)).toHaveAccessibleName(/white/);
+  // The removed screenshot can be put back where it was.
+  await page.getByRole('button', { name: 'Put back' }).click();
+  await expect(page.getByTestId('tile')).toHaveCount(2);
+  await expect(tile(page, 1)).toHaveAccessibleName(/blue/);
+  await page.evaluate(() => Promise.all(document.getAnimations().map(a => a.finished)));
+  // Dragging a screenshot onto the left half of another places it before that one.
+  const target = (await tile(page, 1).boundingBox())!;
+  await tile(page, 2).dragTo(tile(page, 1), { targetPosition: { x: target.width * 0.2, y: target.height / 2 } });
+  await expect(tile(page, 1)).toHaveAccessibleName(/white/);
+  await expect(tile(page, 2)).toHaveAccessibleName(/blue/);
+  await expect(page.getByRole('status', { name: 'Saved on this computer' })).toBeVisible();
+  await page.reload();
+  await expect(tile(page, 1)).toHaveAccessibleName(/white/);
 });
 
 test('drafts are restored after reload', async ({ page }) => {
@@ -577,7 +590,7 @@ test('crop, line, nudge and duplicate change the image as expected', async ({ pa
   expect(cropped.pixels[0]).toEqual([239, 68, 68, 255]);
   expect(cropped.pixels[1]).toEqual([255, 255, 255, 255]);
   await expect(page.getByRole('status', { name: 'Saved on this computer' })).toBeVisible();
-  await page.getByRole('button', { name: 'Undo', exact: true }).last().click();
+  await page.getByRole('button', { name: 'Undo crop' }).click();
   const restored = await exportPixels(page, [[200, 160]]);
   expect([restored.width, restored.height]).toEqual([400, 300]);
   expect(restored.pixels[0]).toEqual([239, 68, 68, 255]);

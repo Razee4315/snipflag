@@ -6,6 +6,12 @@ Automated coverage: unit tests for line bounds, duplicate placement, crop roundi
 
 Native gates: Ctrl+wheel keeps the point under the pointer at several zoom levels; Space-drag and middle-drag pan with a real mouse and a touchpad; Space no longer presses a focused toolbar button; every edge of a zoomed-in image is reachable; cropping a 4K capture; crop then Create issue uploads the cropped image and `@image` mentions still resolve.
 
+## Filmstrip
+
+Automated coverage: store test for putting a removed image back (new identity, alias and history kept); browser test for Put back, drag-to-reorder and persistence of the new order.
+
+Native gates: drag reorder in WebView2 (the window has Tauri drag-and-drop disabled so HTML drag events reach the page), the drop marker, dragging while locked or with one image, tile glide with animations on and off, Put back after the draft autosaved (the screenshot returns with its marks), and dropping image files onto the window still imports them.
+
 ## Sharing outside Linear
 
 Automated coverage: unit tests for the share text and step-note ordering; Rust test for shared file names; browser test for the share bar, hiding and restoring the issue panel across reload, step notes without layout shift or undo entries, adding notes to the description, and note persistence.

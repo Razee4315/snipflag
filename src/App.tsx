@@ -322,6 +322,14 @@ export default function App() {
     } catch (e) { notify(errorText(e), 'error'); }
   }, [notify]);
 
+  /** Removes a screenshot; the toast can put it back in the same place with its marks and undo history. */
+  const removeImage = useCallback((id: string) => {
+    const s = useStore.getState(); const index = s.session.images.findIndex(i => i.id === id); const removed = s.session.images[index];
+    if (!removed || isLocked(s)) return;
+    const history = s.histories[id];
+    smooth(() => useStore.getState().removeImage(id));
+    notify(`${imageLabel(removed, index)} removed.`, 'info', { label: 'Put back', run: () => smooth(() => useStore.getState().restoreImage(removed, index, history)) });
+  }, [notify]);
   /** Crops the active screenshot. The toast can put the uncropped image and its undo history back. */
   const cropActive = useCallback(async (rect: Box) => {
     const s = useStore.getState(); const before = activeImage(s); if (!before || isLocked(s)) return;
@@ -330,7 +338,7 @@ export default function App() {
       const next = await cropImage(before, rect);
       useStore.getState().replaceImage(before.id, next); useStore.getState().setTool('select'); setZoom('fit');
       // The restored copy gets a new identity too: the original file may already have been cleaned up.
-      notify(`Cropped to ${next.width} × ${next.height}.`, 'info', { label: 'Undo', run: () => { useStore.getState().replaceImage(next.id, { ...before, id: crypto.randomUUID() }, history); setZoom('fit'); } });
+      notify(`Cropped to ${next.width} × ${next.height}.`, 'info', { label: 'Undo crop', run: () => { useStore.getState().replaceImage(next.id, { ...before, id: crypto.randomUUID() }, history); setZoom('fit'); } });
     } catch (e) { notify(errorText(e), 'error'); }
   }, [notify]);
   /** Saves every flattened screenshot to Pictures/Snipflag and copies their paths with the report text and step notes. */
@@ -437,7 +445,7 @@ export default function App() {
         ) : (
           <EmptyState shortcut={shortcutLabel(settings.shortcut)} onCapture={() => void capture()} onAdd={() => fileInput.current?.click()} onPaste={() => void pasteImage()} onDragWindow={dragWindow} />
         )}
-        {count > 0 && <Filmstrip canCapture={desktop} onCapture={() => void capture()} onAdd={() => fileInput.current?.click()} />}
+        {count > 0 && <Filmstrip canCapture={desktop} onCapture={() => void capture()} onAdd={() => fileInput.current?.click()} onRemove={removeImage} />}
       </main>
       <IssuePanel hidden={!panelOpen} connection={connection} connectionState={connectionState} connectionError={connectionError} hasClientId={!!settings.clientId || !!status?.builtinLinearClient}
         progress={progress} submitError={submitError} pendingState={pendingState}

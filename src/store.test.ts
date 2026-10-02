@@ -105,6 +105,20 @@ describe('session store', () => {
     state().replaceImage('missing', image());
     expect(state().session.images).toHaveLength(2);
   });
+  it('puts a removed image back in place with its alias and history under a new identity', () => {
+    const [a, b] = [image(), image()];
+    state().addImages([a, b]); state().select(a.id); state().edit([mark()]);
+    const removed = state().session.images[0]; const history = state().histories[a.id];
+    state().removeImage(a.id);
+    state().restoreImage(removed, 0, history);
+    const restored = state().session.images[0];
+    expect(restored.id).not.toBe(a.id);
+    expect(restored.annotations).toHaveLength(1);
+    expect(state().session.images[1].id).toBe(b.id);
+    expect(state().session.imageReferences).toEqual({ image1: restored.id, image2: b.id });
+    expect(state().histories[restored.id]).toEqual(history);
+    expect(state().activeId).toBe(restored.id);
+  });
   it('writes step notes without adding undo entries', () => {
     const a = image(); state().addImages([a]);
     const step = { ...mark(), kind: 'step' as const, text: '1' };

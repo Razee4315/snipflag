@@ -24,6 +24,8 @@ interface State {
   updateImage: (id: string, patch: Partial<CaptureImage>) => void;
   edit: (annotations: Annotation[]) => void; undo: () => void; redo: () => void;
   removeImage: (id: string) => void;
+  /** Puts a removed image back at `index` under a new identity; its `@image` alias and undo history return with it. */
+  restoreImage: (removed: CaptureImage, index: number, history?: History) => void;
   /** Swaps an image for a changed copy with a new identity (crop and its undo). Mentions follow; undo history is `history` or empty. */
   replaceImage: (id: string, next: CaptureImage, history?: History) => void;
   moveImage: (from: number, to: number) => void;
@@ -87,6 +89,15 @@ export const useStore = create<State>((set, get) => ({
     const images = s.session.images.filter(i => i.id !== id); const histories = { ...s.histories }; delete histories[id];
     const activeId = s.activeId === id ? (images[Math.min(index, images.length - 1)]?.id ?? '') : s.activeId;
     set({ session: { ...s.session, images, annotationHistories: histories, updatedAt: Date.now() }, activeId, histories });
+  },
+  restoreImage: (removed, index, history = { past: [], future: [] }) => {
+    const s = get(); if (locked(s) || s.session.images.length >= LIMITS.images) return;
+    // The removed file may already be cleaned up, so the copy is saved again under a fresh ID.
+    const image = { ...removed, id: crypto.randomUUID() };
+    const images = [...s.session.images]; images.splice(Math.max(0, Math.min(index, images.length)), 0, image);
+    const histories = { ...s.histories, [image.id]: boundedHistory(history) };
+    const imageReferences = Object.fromEntries(Object.entries(s.session.imageReferences ?? {}).map(([alias, target]) => [alias, target === removed.id ? image.id : target]));
+    set({ session: { ...s.session, images, imageReferences: ensureImageReferences(images, imageReferences), annotationHistories: histories, updatedAt: Date.now() }, histories, activeId: image.id, selection: null });
   },
   replaceImage: (id, next, history = { past: [], future: [] }) => {
     const s = get(); if (locked(s) || !s.session.images.some(i => i.id === id)) return;
