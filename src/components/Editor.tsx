@@ -96,7 +96,9 @@ export default function Editor({ image, zoom, onZoom, onScale, onCrop }: Props) 
     el.scrollLeft += rect.left + a.x * scale - a.clientX; el.scrollTop += rect.top + a.y * scale - a.clientY;
   }, [scale]);
   useEffect(() => {
-    const idle = (e: KeyboardEvent) => !isTyping(e.target) && !document.querySelector('dialog[open]');
+    // Space pans only from the canvas and its tool bars. Everywhere else it keeps pressing the focused button.
+    const idle = (e: KeyboardEvent) => !isTyping(e.target) && !document.querySelector('dialog[open]')
+      && (e.target === document.body || (e.target instanceof Element && !!e.target.closest('.toolbar, .canvas-wrap, .image-bar')));
     const down = (e: KeyboardEvent) => {
       if (e.code !== 'Space' || !idle(e)) return;
       // Space is the pan key here; it must not scroll the page or press the focused button.
