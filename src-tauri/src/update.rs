@@ -1,6 +1,6 @@
 use std::time::Duration;
 use serde_json::{json, Value};
-use tauri::{AppHandle, Manager, WebviewWindow};
+use tauri::{AppHandle, Emitter, Manager, WebviewWindow};
 use tauri_plugin_updater::{Update, UpdaterExt};
 use crate::storage::main_only;
 
@@ -39,7 +39,15 @@ pub async fn install_update(window: WebviewWindow, app: AppHandle) -> Result<(),
     let lock = app.state::<crate::auth::NetworkLock>();
     let _guard = lock.0.try_lock().map_err(|_| "Wait for the current Linear operation to finish before updating.")?;
     let update = app.state::<PendingUpdate>().0.lock().await.take().ok_or("Check for updates again before installing.")?;
-    update.download_and_install(|_, _| {}, || {}).await.map_err(|_| "The update could not be downloaded or verified. Snipflag was not changed.")?;
+    // The editor shows how far the download is: one event per whole percent, or per megabyte when the size is unknown.
+    let handle = app.clone(); let mut received = 0u64; let mut shown = u64::MAX;
+    let on_chunk = move |chunk: usize, total: Option<u64>| {
+        received += chunk as u64;
+        let percent = total.filter(|t| *t > 0).map(|t| (received * 100 / t).min(100));
+        let step = percent.unwrap_or(received / 1_048_576);
+        if step != shown { shown = step; let _ = handle.emit_to("main", "update-progress", json!({"percent": percent})); }
+    };
+    update.download_and_install(on_chunk, || {}).await.map_err(|_| "The update could not be downloaded or verified. Snipflag was not changed.")?;
     crate::allow_exit(&app);
     app.restart()
 }

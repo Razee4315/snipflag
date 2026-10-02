@@ -312,13 +312,23 @@ export default function App() {
     const first = window.setTimeout(run, 8000); const every = window.setInterval(run, 6 * 60 * 60 * 1000);
     return () => { window.clearTimeout(first); window.clearInterval(every); };
   }, [ready, status?.updates, settings.autoUpdate, findUpdate]);
+  /** What the update chip says while an install is running; null otherwise. */
+  const [updating, setUpdating] = useState<string | null>(null);
+  useEffect(() => {
+    const listener = on<{ percent: number | null }>('update-progress', p => setUpdating(p.percent === null ? 'Downloading…' : p.percent < 100 ? `Downloading ${p.percent}%` : 'Installing…'));
+    return () => { void listener.then(unlisten => unlisten()); };
+  }, []);
   const applyUpdate = useCallback(async () => {
-    notify('Saving your draft and installing the update…');
+    setUpdating('Saving your draft…');
     try {
       // Same guarantees as Quit: active edits are committed and the draft is saved before the app restarts.
       await saveThenExit(async saved => { if (saved) await installUpdate(); });
-    } catch (e) { setUpdate(null); notify(`Update not installed: ${errorText(e)}`, 'error'); }
-  }, [saveThenExit, notify]);
+    } catch (e) {
+      notify(`Update not installed: ${errorText(e)}`, 'error');
+      // Checking again makes the update installable once more, so the chip stays for another try.
+      void findUpdate().catch(() => setUpdate(null));
+    } finally { setUpdating(null); }
+  }, [saveThenExit, notify, findUpdate]);
 
   /** Runs one share action at a time and shows which one is working. */
   const share = useCallback(async (kind: 'copy' | 'save' | 'ai', run: () => Promise<void>) => {
@@ -419,7 +429,7 @@ export default function App() {
         {status?.cleanupError && <span className="save-error" role="alert" title={status.cleanupError}><Icon name="alert" size={14} /> Local cleanup incomplete. Retry in History or Settings.</span>}
         <div className="drag-space" aria-hidden="true" onDoubleClick={() => void editorWindow('maximize').catch(() => undefined)} />
         {update && <button type="button" className="update-chip" disabled={busy} title={update.notes || undefined} onClick={() => void applyUpdate()}>
-          <Icon name="refresh" size={14} /> Update to {update.version}</button>}
+          {updating ? <span className="spinner" aria-hidden="true" /> : <Icon name="refresh" size={14} />} <span role="status">{updating ?? `Update to ${update.version}`}</span></button>}
         <div className="top-actions">
           <button type="button" className={panelOpen ? 'icon-button active' : 'icon-button'} aria-pressed={panelOpen} aria-label={panelOpen ? 'Hide issue panel' : 'Show issue panel'} title={panelOpen ? 'Hide issue panel' : 'Show issue panel'} onClick={() => showPanel(!panelOpen)}><Icon name="panel" /></button>
           <button type="button" className="icon-button" aria-label="History" title="History" disabled={busy} onClick={() => setDialog('history')}><Icon name="history" /></button>
