@@ -49,6 +49,9 @@ export default function SettingsDialog(p: Props) {
     return () => apply(savedTheme.current);
   }, [draft.theme]);
   const dirty = JSON.stringify(draft) !== JSON.stringify(p.settings);
+  // Closing with unsaved changes asks first. Asking again (a second Escape) goes back to editing.
+  const [leaving, setLeaving] = useState(false);
+  const requestClose = () => { if (dirty) setLeaving(asking => !asking); else p.onClose(); };
   const save = async (next = draft) => {
     setError(''); setSaved('');
     const tidy = { ...next, templates: tidyTemplates(next.templates) }; setDraft(tidy);
@@ -62,9 +65,14 @@ export default function SettingsDialog(p: Props) {
   const connect = async () => { if (dirty && !(await save())) return; p.onConnect(); };
 
   return (
-    <Dialog title="Settings" onClose={p.onClose} wide footer={<>
+    <Dialog title="Settings" onClose={requestClose} wide footer={leaving && dirty ? <>
+      <span className="small" role="alert">You have unsaved changes.</span>
+      <button type="button" className="button" onClick={() => setLeaving(false)}>Keep editing</button>
+      <button type="button" className="button danger-outline" onClick={p.onClose}>Discard changes</button>
+      <button type="button" className="button primary" onClick={() => void save().then(ok => { if (ok) p.onClose(); })}>Save and close</button>
+    </> : <>
       <span className="small muted" role="status">{saved}</span>
-      <button type="button" className="button" onClick={p.onClose}>Close</button>
+      <button type="button" className="button" onClick={requestClose}>Close</button>
       <button type="button" className="button primary" disabled={!dirty} onClick={() => void save()}>Save settings</button>
     </>}>
 
