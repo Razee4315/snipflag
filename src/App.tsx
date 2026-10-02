@@ -182,17 +182,18 @@ export default function App() {
   }, [flush, notify]);
   const captureRef = useRef(capture); captureRef.current = capture;
 
+  /** The handshake before the app exits (Quit, update install): commit active edits, freeze changes, save, then `finish`. */
+  const saveThenExit = useCallback((finish: (saved: boolean) => Promise<void>) => saveBeforeQuit({
+    isBusy: () => useStore.getState().busy,
+    commit: () => { (document.activeElement as HTMLElement | null)?.blur(); window.dispatchEvent(new Event('snipflag-commit-edit')); },
+    lock: value => useStore.getState().setBusy(value), save: flush, finish,
+  }), [flush]);
   useEffect(() => {
     const listener = on<string>('quit-requested', requestId => {
-      void saveBeforeQuit({
-        isBusy: () => useStore.getState().busy,
-        commit: () => { (document.activeElement as HTMLElement | null)?.blur(); window.dispatchEvent(new Event('snipflag-commit-edit')); },
-        lock: value => useStore.getState().setBusy(value), save: flush,
-        finish: saved => finishQuit(requestId, saved),
-      }).catch(e => notify(`Snipflag is still open: ${errorText(e)}`, 'error'));
+      void saveThenExit(saved => finishQuit(requestId, saved)).catch(e => notify(`Snipflag is still open: ${errorText(e)}`, 'error'));
     });
     return () => { void listener.then(unlisten => unlisten()); };
-  }, [flush, notify]);
+  }, [saveThenExit, notify]);
 
   useEffect(() => {
     const subs = [
@@ -315,14 +316,9 @@ export default function App() {
     notify('Saving your draft and installing the update…');
     try {
       // Same guarantees as Quit: active edits are committed and the draft is saved before the app restarts.
-      await saveBeforeQuit({
-        isBusy: () => useStore.getState().busy,
-        commit: () => { (document.activeElement as HTMLElement | null)?.blur(); window.dispatchEvent(new Event('snipflag-commit-edit')); },
-        lock: value => useStore.getState().setBusy(value), save: flush,
-        finish: async saved => { if (saved) await installUpdate(); },
-      });
+      await saveThenExit(async saved => { if (saved) await installUpdate(); });
     } catch (e) { setUpdate(null); notify(`Update not installed: ${errorText(e)}`, 'error'); }
-  }, [flush, notify]);
+  }, [saveThenExit, notify]);
 
   /** Runs one share action at a time and shows which one is working. */
   const share = useCallback(async (kind: 'copy' | 'save' | 'ai', run: () => Promise<void>) => {
