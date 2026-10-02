@@ -370,7 +370,12 @@ export default function App() {
     const onKey = (e: KeyboardEvent) => {
       if (dialog || document.querySelector('dialog[open]')) return;
       const mod = e.ctrlKey || e.metaKey; const key = e.key.toLowerCase();
-      if (mod && key === 'enter') { e.preventDefault(); void submit(); return; }
+      if (mod && key === 'enter') {
+        e.preventDefault();
+        // Never send from a hidden panel: show the report first, and let a second press create it.
+        if (panelOpen) void submit(); else showPanel(true);
+        return;
+      }
       if (isTyping(e.target)) return;
       const { undo, redo, setTool } = useStore.getState();
       if (mod && key === 'z') { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }
@@ -391,7 +396,7 @@ export default function App() {
     };
     window.addEventListener('keydown', onKey); window.addEventListener('paste', onPaste);
     return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('paste', onPaste); };
-  }, [dialog, submit, importFiles, pasteImage, exportActive, shareForAi]);
+  }, [dialog, submit, importFiles, pasteImage, exportActive, shareForAi, panelOpen, showPanel]);
 
   const count = session.images.length; const index = image ? session.images.indexOf(image) : -1;
   const dragWindow = (e: MouseEvent) => {
