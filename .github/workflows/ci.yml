@@ -55,6 +55,8 @@ jobs:
           node-version: 24
           cache: npm
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
       - uses: swatinem/rust-cache@v2
         with:
           workspaces: src-tauri -> target
@@ -63,3 +65,4 @@ jobs:
       - run: npm run tauri -- icon public/icon.svg
       - run: cargo test --locked --manifest-path src-tauri/Cargo.toml
       - run: cargo check --locked --all-targets --manifest-path src-tauri/Cargo.toml
+      - run: cargo clippy --locked --all-targets --manifest-path src-tauri/Cargo.toml -- -D warnings
