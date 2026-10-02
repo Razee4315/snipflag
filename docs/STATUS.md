@@ -1,5 +1,16 @@
 # Current state / handoff
 
+## v1.3.0 released as Latest — 2026-10-02
+
+The owner asked for a new release and, when told the release needs every platform, confirmed all platforms ("as it is actual release so each of them"). This is the one exception so far to the Windows-only build rule.
+- Since the previous entry: living theme backdrops (Paper notebook page, Blossom petals, Midnight night sky, Graphite carbon weave and sheen), Markdown rendered in the report preview (`src/markdown.ts`, `Markdown.tsx`), filmstrip thumbnails keep the previous flattened picture while re-rendering, and the title-bar save indicator was removed at the owner's request (`7526dac`, `162e295`). Theme backdrops were tuned in a static mock page with the real stylesheet (`.claude/theme-preview.html`, untracked), not in the app.
+- Release source `e4575d9` (version 1.3.0 in package, lock files, Tauri, Cargo; `docs/releases/v1.3.0.md`; CHANGELOG).
+- [Checks 36969844224](https://github.com/Razee4315/snipflag/actions/runs/36969844224) **passed on all platforms** (frontend; Rust tests and all-target checks on Windows, macOS, Linux): the first macOS/Linux compile since `c4d9d42`, no fixes needed. [Development installers 36970245137](https://github.com/Razee4315/snipflag/actions/runs/36970245137) **passed all four targets**. [Publish 36970754606](https://github.com/Razee4315/snipflag/actions/runs/36970754606) created [v1.3.0](https://github.com/Razee4315/snipflag/releases/tag/v1.3.0): six `unsigned-` installers, two macOS update archives, `SHA256SUMS.txt`, `latest.json`. It was then retitled "Snipflag v1.3.0" and marked Latest, as with earlier versions.
+- Verified: `releases/latest` returns v1.3.0 (not draft, not prerelease, 10 assets); the updater endpoint serves `latest.json` for 1.3.0 with all ten platform keys.
+- Website and README point to v1.3.0 with real sizes; three feature cards added (useful without Linear, markup kit, capture readiness); compare pages and sitemap regenerated; `check_site.py` passes on 7 pages; the 3 x 3 feature grid and download cards were checked in the built-in browser.
+- **Not verified:** an in-place update from 1.2.0 to 1.3.0 (the first real updater test: the owner's 1.2.0 install should show "Update to 1.3.0"); the final build's themes and Markdown preview in WebView2; every native gate listed below and in TESTING.md; nothing new has been run on macOS or Linux. Installers remain unsigned.
+- Open with the owner: keep or remove the `saveOnCapture` setting (shipped off by default). Not built: one-click window capture, pin to screen, drag-out to other apps, OCR.
+
 ## Editor overhaul: sharing beyond Linear, canvas, filmstrip, panel, history (owner request) — 2026-10-02
 
 The owner asked for a component-by-component improvement and for Snipflag to be useful outside Linear (mark up, then send to a person or to Claude Code). Implemented in order, each with tests; all at `70e3a9c`:

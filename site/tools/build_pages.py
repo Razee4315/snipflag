@@ -13,8 +13,8 @@ SITE = Path(__file__).resolve().parent.parent
 BASE = "https://razee4315.github.io/snipflag/"
 CHECKED = "26 September 2026"
 CHECKED_ISO = "2026-09-26"
-UPDATED_ISO = "2026-09-28"  # last site-wide change; sitemap lastmod
-REL = "https://github.com/Razee4315/snipflag/releases/download/v1.2.0/"
+UPDATED_ISO = "2026-10-02"  # last site-wide change; sitemap lastmod
+REL = "https://github.com/Razee4315/snipflag/releases/download/v1.3.0/"
 
 FONTS = "https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@500&display=swap"
 CSP = ("default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
@@ -185,7 +185,7 @@ COMPETITORS = {
             ("Hide private details", "Pixelate, burned into the exported pixels", "Blur, including automatic blur in Pro"),
             ("Open source", "y:MIT", "n:No"),
             ("Price", "Free", "Free version; Pro and Enterprise are one-time licenses"),
-            ("Maturity", "New: v1.2.0 unsigned preview", "Established; vendor says 1,000,000+ active users"),
+            ("Maturity", "New: v1.3.0 unsigned preview", "Established; vendor says 1,000,000+ active users"),
         ],
         "diff": ["Screenpresso is a general capture suite: images, video, OCR, a full editor, and many sharing options, one of which is Linear. That breadth is its strength if you want one tool for all captures on Windows.",
                  "Snipflag does one job. A session collects up to ten screenshots, each with its own annotations and undo history, and sends them as one ordered Linear issue. Drafts survive restarts, and each session has a stable ID, so a retry after a network error never creates a duplicate issue."],
@@ -285,7 +285,7 @@ HUB_ROWS = [
     ("Account or cloud", "None; straight to Linear", "Not documented", "Jam account, Jam links", "None; straight to tracker", "None"),
     ("Open source", "y:MIT", "n:No", "n:No", "y:MIT", "y:GPL-3.0"),
     ("Price", "Free", "Free, paid Pro", "Free tier; Team $14/creator/mo", "Free", "Free"),
-    ("Maturity", "New: v1.2.0 unsigned preview", "Established", "Established", "Young project", "Mature"),
+    ("Maturity", "New: v1.3.0 unsigned preview", "Established", "Established", "Young project", "Mature"),
 ]
 
 
@@ -328,7 +328,7 @@ def hub():
 <li>You need several annotated screenshots in one Linear issue, in order</li>
 <li>The problem is in any app, not only a web page</li>
 <li>You want free, MIT open source with no account and no cloud copy</li>
-<li>You are fine with a new v1.2.0 preview that is not code-signed yet</li></ul></div>
+<li>You are fine with a new v1.3.0 preview that is not code-signed yet</li></ul></div>
 <div class="pick" data-reveal><p class="label">Choose something else if</p><h2>You need video, logs or other trackers.</h2><ul>
 <li><a class="inline-link" href="jam/">Jam</a> or <a class="inline-link" href="bugshot/">BugShot</a> for web bugs with console and network logs</li>
 <li><a class="inline-link" href="screenpresso/">Screenpresso</a> for a full Windows capture suite with video</li>

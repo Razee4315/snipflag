@@ -24,7 +24,7 @@ See a bug anywhere on your screen, snip it, mark it up, and send it to Linear wi
 
 It runs on Windows (primary), macOS, and Linux, and is built with Tauri 2, Rust, React, and TypeScript.
 
-> **Website:** [razee4315.github.io/snipflag](https://razee4315.github.io/snipflag/) · **v1.2.0:** [Download the release (unsigned installers)](https://github.com/Razee4315/snipflag/releases/tag/v1.2.0). Native runtime acceptance and signing are still pending; see [verification status](docs/STATUS.md).
+> **Website:** [razee4315.github.io/snipflag](https://razee4315.github.io/snipflag/) · **v1.3.0:** [Download the release (unsigned installers)](https://github.com/Razee4315/snipflag/releases/tag/v1.3.0). Native runtime acceptance and signing are still pending; see [verification status](docs/STATUS.md).
 
 ## See it in action
 
@@ -49,9 +49,15 @@ UI rendered on CI with synthetic sample content. Native window controls and the 
 - Lives in the system tray with a global shortcut (default `Ctrl+Shift+2`, `Cmd+Shift+2` on macOS).
 - Freezes every monitor, then you drag a region. Enter captures the whole screen, Escape cancels.
 - Also add images from files (PNG, JPEG, WebP), paste from the clipboard, or drag and drop.
+- Optional in Settings: adjust the selection before capturing, a magnifier, copy or save every capture, and a capture delay.
+
+**Share**
+- Copy the marked-up image, save it, or Copy for AI: the screenshots are saved to `Pictures/Snipflag` and their paths are copied with your title, description and step notes, ready to paste into an assistant such as Claude Code.
+- Hide the Linear panel when you only want to mark up and share.
 
 **Annotate**
-- Arrow, rectangle, ellipse, pen, highlighter, text, numbered steps, and pixelate.
+- Arrow, line, rectangle, ellipse, pen, highlighter, text, numbered steps (each with a note), crop, and pixelate.
+- Zoom toward the pointer, pan with Space or the middle button, nudge with arrow keys, duplicate with Ctrl+D; marks snap to each other.
 - Built-in palettes plus a custom color picker for pens and highlighter inks; your custom colors are remembered.
 - Hold Shift for 15° arrow/pen snapping, square rectangles or round ellipses.
 - Select, move, and resize marks; change color, width, and text size; zoom, fit, and 100%.
@@ -87,7 +93,7 @@ Snipflag is designed and built by **Saqlain Razee** ([GitHub](https://github.com
 
 ## Getting started
 
-Download [v1.2.0 installers](https://github.com/Razee4315/snipflag/releases/tag/v1.2.0) from GitHub Releases. All installers are built on GitHub Actions.
+Download [v1.3.0 installers](https://github.com/Razee4315/snipflag/releases/tag/v1.3.0) from GitHub Releases. All installers are built on GitHub Actions.
 
 Additional development installers are produced by the [Development installers](https://github.com/Razee4315/snipflag/actions/workflows/build.yml) workflow:
 
