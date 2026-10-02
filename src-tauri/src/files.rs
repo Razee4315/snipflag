@@ -90,7 +90,7 @@ pub fn read_clipboard_image(window: WebviewWindow, app: AppHandle) -> Result<Val
 pub fn copy_text(window: WebviewWindow, app: AppHandle, text: String) -> Result<(), String> {
     main_only(&window)?;
     if text.len() > 120_000 { return Err("Text is too long to copy.".into()); }
-    with_clipboard(&app, |c| c.set_text(text).map_err(|_| "Could not copy the link.".into()))
+    with_clipboard(&app, |c| c.set_text(text).map_err(|_| "Could not copy to the clipboard.".into()))
 }
 
 #[cfg(test)]
