@@ -1,5 +1,11 @@
 # Test and release gates
 
+## Themes and report preview
+
+Automated coverage: unit tests for the Markdown reader (blocks and inline spans); browser test that the preview shows headings, lists, emphasis, tasks and mentions without raw markers. Theme backdrops were tuned by eye in a static mock page using the real stylesheet, not in the app.
+
+Native gates: each theme in WebView2 at 100/150/200% (ruled lines stay crisp, petals and stars animate smoothly, no extra CPU when the window is hidden), animations off stops every backdrop, text contrast over every surface; filmstrip thumbnails no longer blink after each mark; the title bar shows no save indicator; a Linear issue created from a Markdown description matches the preview.
+
 ## Canvas tools
 
 Automated coverage: unit tests for line bounds, duplicate placement, crop rounding and which marks survive a crop, and image replacement in the store; browser test for line export pixels, Shift+Arrow nudge, Ctrl+D, crop dimensions and mark positions, crop Undo, and persistence.

@@ -11,6 +11,8 @@
   --glow-a: rgba(15, 107, 98, 0.12); --glow-b: rgba(243, 182, 107, 0.14);
   --grain-opacity: 0.55;
   --sheen: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  /* What lies behind the screenshot: a dot grid by default, something of their own in the named themes. */
+  --canvas-pattern: radial-gradient(color-mix(in srgb, var(--muted) 22%, transparent) 0.8px, transparent 0.8px); --canvas-size: 16px 16px;
   --focus: 0 0 0 2px var(--surface), 0 0 0 4px var(--primary);
   --radius: 10px; --panel-radius: 18px;
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1); --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -60,8 +62,11 @@
   --glow-a: rgba(164, 80, 44, 0.1); --glow-b: rgba(217, 164, 65, 0.18);
   --sheen: inset 0 1px 0 rgba(255, 252, 244, 0.85);
   /* Laid paper: long horizontal fibres. */
-  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.05 .45' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .36 0 0 0 0 .25 0 0 0 0 .12 0 0 0 .1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' seed='1' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .33 0 0 0 0 .24 0 0 0 0 .12 0 0 0 .2 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012 .02' numOctaves='2' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .3 0 0 0 0 .1 0 0 0 .16 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   --grain-opacity: 1; color-scheme: light;
+  /* A ruled notebook page: blue rules and a red margin. */
+  --canvas-pattern: linear-gradient(90deg, transparent 63px, rgba(190, 72, 52, 0.42) 63px, rgba(190, 72, 52, 0.42) 64.5px, transparent 64.5px), linear-gradient(transparent 29px, rgba(62, 92, 140, 0.2) 29px);
+  --canvas-size: 100% 100%, 100% 30px;
 }
 :root[data-theme="blossom"] {
   --bg: #F1E4E9; --surface: #FFF9FB; --surface-2: #F7ECF0; --surround: #EADAE1; --text: #3A2530; --muted: #7D6570; --border: #E3D0D8;
@@ -74,8 +79,9 @@
   --glow-a: rgba(176, 58, 104, 0.12); --glow-b: rgba(242, 166, 90, 0.16);
   --sheen: inset 0 1px 0 rgba(255, 255, 255, 0.8);
   /* Soft pressed cotton. */
-  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.7' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .55 0 0 0 0 .3 0 0 0 0 .4 0 0 0 .1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' seed='1' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .6 0 0 0 0 .28 0 0 0 0 .42 0 0 0 .12 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='360'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.02 .006' numOctaves='2' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .8 0 0 0 0 .4 0 0 0 0 .55 0 0 0 .1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   --grain-opacity: 0.9; color-scheme: light;
+  --canvas-pattern: radial-gradient(rgba(176, 58, 104, 0.16) 0.9px, transparent 0.9px); --canvas-size: 18px 18px;
 }
 :root[data-theme="midnight"] {
   --bg: #0C0F1F; --surface: #171B33; --surface-2: #11152A; --surround: #0E1226; --text: #E8EAFB; --muted: #9AA0C4; --border: #2A3055;
@@ -89,8 +95,10 @@
   color-scheme: dark;
   --glow-a: rgba(124, 136, 255, 0.16); --glow-b: rgba(190, 110, 255, 0.1);
   /* Fine film grain. */
-  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.15' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .72 0 0 0 0 .76 0 0 0 0 1 0 0 0 .11 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' seed='1' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .7 0 0 0 0 .75 0 0 0 0 1 0 0 0 .12 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   --grain-opacity: 0.9;
+  /* The stars are the backdrop. */
+  --canvas-pattern: none; --canvas-size: auto;
 }
 :root[data-theme="graphite"] {
   --bg: #121212; --surface: #1F1F1F; --surface-2: #181818; --surround: #151515; --text: #EDEDED; --muted: #9C9C9C; --border: #303030;
@@ -104,8 +112,11 @@
   color-scheme: dark;
   --glow-a: rgba(255, 180, 84, 0.07); --glow-b: rgba(255, 255, 255, 0.04);
   /* Brushed metal: long horizontal streaks. */
-  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.01 .8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .04 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='360'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.004 .9' numOctaves='2' seed='1' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='2' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   --grain-opacity: 1;
+  /* Carbon weave. */
+  --canvas-pattern: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.035) 0 2px, transparent 2px 7px), repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.3) 0 2px, transparent 2px 7px);
+  --canvas-size: auto;
 }
 
 /* Base */
@@ -203,11 +214,6 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 0.85; 
 .grip { width: 10px; height: 16px; margin-left: 6px; opacity: 0.5; flex-shrink: 0;
   background-image: radial-gradient(var(--muted) 1.1px, transparent 1.3px); background-size: 5px 5px; }
 .titlebar:hover .grip { opacity: 0.85; }
-.save-chip { display: inline-flex; align-items: center; gap: 5px; margin-left: 6px; color: var(--muted); font-size: 11.5px; white-space: nowrap; }
-.save-chip.saved svg { color: var(--success); }
-.save-chip .spinner { width: 11px; height: 11px; }
-/* The update action needs the room. */
-.titlebar:has(.update-chip) .save-chip > span:last-child { display: none; }
 .save-error { display: inline-flex; align-items: center; gap: 5px; min-width: 0; margin-left: 6px; color: var(--danger); font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .drag-space { flex: 1; align-self: stretch; cursor: grab; }
 .drag-space:active { cursor: grabbing; }
@@ -257,6 +263,32 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 0.85; 
 ::view-transition-group(*) { animation-duration: 280ms; animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1); }
 /* Only named surfaces move; the rest of the window does not cross-fade. */
 ::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+
+/* Living backdrops behind the screenshot. They sit under every control, move slowly, and stop with animations off. */
+.stage-area { isolation: isolate; }
+.stage-area::before, .stage-area::after { content: none; position: absolute; z-index: -1; pointer-events: none; }
+/* Paper: daylight drifting across the page. */
+:root[data-theme="paper"] .stage-area::before { content: ""; inset: -30%; background: radial-gradient(closest-side, rgba(255, 244, 214, 0.75), transparent 70%); animation: drift 26s ease-in-out infinite alternate; }
+/* Blossom: petals falling past. Two layers at different speeds give depth. */
+:root[data-theme="blossom"] .stage-area::before, :root[data-theme="blossom"] .stage-area::after { content: ""; inset: -420px 0 0 -420px; background-size: 420px 420px; animation: fall 46s linear infinite; }
+:root[data-theme="blossom"] .stage-area::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420'%3E%3Cg fill='%23D6568C' fill-opacity='.34'%3E%3Cpath transform='translate(50 70) rotate(28) scale(1)' d='M0 0C7-11 21-9 26 0 21 9 7 11 0 0Z'/%3E%3Cpath transform='translate(250 40) rotate(115) scale(0.8)' d='M0 0C7-11 21-9 26 0 21 9 7 11 0 0Z'/%3E%3Cpath transform='translate(340 230) rotate(-20) scale(1.1)' d='M0 0C7-11 21-9 26 0 21 9 7 11 0 0Z'/%3E%3Cpath transform='translate(140 310) rotate(70) scale(0.9)' d='M0 0C7-11 21-9 26 0 21 9 7 11 0 0Z'/%3E%3Cpath transform='translate(200 170) rotate(160) scale(0.7)' d='M0 0C7-11 21-9 26 0 21 9 7 11 0 0Z'/%3E%3C/g%3E%3C/svg%3E"); }
+:root[data-theme="blossom"] .stage-area::after { animation-duration: 74s; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='420'%3E%3Cg fill='%23E98BB0' fill-opacity='.4'%3E%3Cpath transform='translate(190 120) rotate(-45) scale(0.6)' d='M0 0C7-11 21-9 26 0 21 9 7 11 0 0Z'/%3E%3Cpath transform='translate(30 250) rotate(95) scale(0.55)' d='M0 0C7-11 21-9 26 0 21 9 7 11 0 0Z'/%3E%3Cpath transform='translate(370 360) rotate(15) scale(0.65)' d='M0 0C7-11 21-9 26 0 21 9 7 11 0 0Z'/%3E%3Cpath transform='translate(300 60) rotate(200) scale(0.5)' d='M0 0C7-11 21-9 26 0 21 9 7 11 0 0Z'/%3E%3C/g%3E%3C/svg%3E"); }
+/* Midnight: a night sky. Two star fields twinkle out of step over a slow aurora. */
+:root[data-theme="midnight"] .stage-area { background: var(--grain), radial-gradient(120% 90% at 50% 112%, rgba(96, 78, 210, 0.46), transparent 62%), radial-gradient(90% 70% at 8% -12%, rgba(40, 120, 215, 0.3), transparent 60%), var(--surround); }
+:root[data-theme="midnight"] .stage-area::before, :root[data-theme="midnight"] .stage-area::after { content: ""; inset: 0; }
+:root[data-theme="midnight"] .stage-area::before { background-size: 210px 210px; animation: twinkle 5.5s ease-in-out infinite alternate; background-image:
+  radial-gradient(1.8px 1.8px at 30px 40px, #fff, transparent), radial-gradient(1.2px 1.2px at 120px 90px, #cfd6ff, transparent), radial-gradient(2.2px 2.2px at 180px 30px, #fff, transparent),
+  radial-gradient(1.3px 1.3px at 70px 150px, #e6e9ff, transparent), radial-gradient(1.6px 1.6px at 195px 170px, #fff, transparent), radial-gradient(1.1px 1.1px at 140px 195px, #b9c1ff, transparent),
+  radial-gradient(1px 1px at 15px 110px, #fff, transparent), radial-gradient(1.4px 1.4px at 95px 20px, #dfe4ff, transparent); }
+:root[data-theme="midnight"] .stage-area::after { background-size: 290px 290px; background-position: 70px 50px; animation: twinkle 8s ease-in-out -3s infinite alternate-reverse; background-image:
+  radial-gradient(1.5px 1.5px at 60px 110px, #fff, transparent), radial-gradient(2.6px 2.6px at 240px 70px, rgba(223, 228, 255, 0.95), transparent), radial-gradient(1.2px 1.2px at 180px 250px, #fff, transparent),
+  radial-gradient(1.4px 1.4px at 270px 210px, #c9d0ff, transparent), radial-gradient(1.1px 1.1px at 20px 240px, #fff, transparent), radial-gradient(1.7px 1.7px at 130px 30px, #fff, transparent); }
+/* Graphite: light sliding over brushed metal. */
+:root[data-theme="graphite"] .stage-area::before { content: ""; inset: 0 -60%; background: linear-gradient(105deg, transparent 42%, rgba(255, 255, 255, 0.075) 50%, transparent 58%); animation: sheen 11s ease-in-out infinite alternate; }
+@keyframes drift { from { transform: translate(-22%, -12%); } to { transform: translate(22%, 14%); } }
+@keyframes fall { to { transform: translate(420px, 420px); } }
+@keyframes twinkle { from { opacity: 0.35; } to { opacity: 1; } }
+@keyframes sheen { from { transform: translateX(-40%); } to { transform: translateX(40%); } }
 
 /* Connection */
 .workspace-chip { display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 12px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); min-width: 0; }
@@ -428,7 +460,7 @@ option { background: var(--surface); color: var(--text); }
 /* Canvas */
 .canvas-scroll {
   position: relative; flex: 1; min-height: 0; overflow: auto; display: flex; padding: 24px;
-  background-image: radial-gradient(color-mix(in srgb, var(--muted) 22%, transparent) 0.8px, transparent 0.8px); background-size: 16px 16px;
+  background-image: var(--canvas-pattern); background-size: var(--canvas-size);
 }
 /* Centered with auto margins so every edge stays reachable by scrolling when zoomed in. */
 .canvas-scroll.ready { cursor: grab; }
@@ -508,7 +540,7 @@ option { background: var(--surface); color: var(--text); }
 
 /* Empty state */
 .empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 32px 24px; text-align: center; user-select: none;
-  background-image: radial-gradient(color-mix(in srgb, var(--muted) 20%, transparent) 0.8px, transparent 0.8px); background-size: 16px 16px; }
+  background-image: var(--canvas-pattern); background-size: var(--canvas-size); }
 .empty h1 { font-size: 30px; line-height: 1.1; letter-spacing: -0.035em; font-weight: 650; animation: rise 500ms 120ms var(--ease) both; }
 .empty-hint { font-size: 12.5px; color: var(--muted); animation: rise 500ms 180ms var(--ease) both; }
 .empty-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 8px; animation: rise 500ms 240ms var(--ease) both; }
@@ -690,7 +722,23 @@ option { background: var(--surface); color: var(--text); }
 .preview-meta dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
 .preview-report { display: flex; flex-direction: column; gap: 12px; user-select: text; -webkit-user-select: text; }
 .preview-title { font-size: 18px; font-weight: 650; letter-spacing: -0.015em; overflow-wrap: anywhere; }
-.preview-prose { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; line-height: 1.55; }
+.preview-prose { margin: 0; overflow-wrap: anywhere; font-size: 13px; line-height: 1.55; }
+/* The description rendered the way Linear shows it. */
+.md { display: flex; flex-direction: column; gap: 8px; }
+.md p { white-space: pre-wrap; }
+.md-h { font-weight: 650; letter-spacing: -0.01em; line-height: 1.3; margin-top: 6px; }
+.md > .md-h:first-child { margin-top: 0; }
+.md-h1 { font-size: 20px; } .md-h2 { font-size: 17px; } .md-h3 { font-size: 15px; } .md-h4, .md-h5, .md-h6 { font-size: 13.5px; }
+.md ul, .md ol { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 3px; }
+.md li::marker { color: var(--muted); }
+.md li.md-task { list-style: none; margin-left: -20px; display: flex; align-items: baseline; gap: 8px; }
+.md-box { flex-shrink: 0; width: 13px; height: 13px; border-radius: 4px; border: 1.5px solid var(--muted); transform: translateY(2px); }
+.md-box.checked { border-color: var(--primary); background: var(--primary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5 9-10'/%3E%3C/svg%3E") center / 10px no-repeat; }
+.md blockquote { margin: 0; padding: 2px 0 2px 12px; border-left: 3px solid var(--border); color: var(--muted); white-space: pre-wrap; }
+.md pre { margin: 0; padding: 10px 12px; overflow-x: auto; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); }
+.md pre code { padding: 0; border: 0; background: none; font-size: 12px; white-space: pre; }
+.md hr { width: 100%; margin: 4px 0; border: 0; border-top: 1px solid var(--border); }
+.md-link { color: var(--primary); text-decoration: underline; text-underline-offset: 3px; }
 .mention-chip { padding: 0 5px; border-radius: 6px; background: color-mix(in srgb, var(--primary) 14%, transparent); color: var(--text); font-weight: 550; }
 .preview-image { display: flex; flex-direction: column; gap: 6px; margin: 0; }
 .preview-image h4 { margin: 0; font-size: 13.5px; font-weight: 600; overflow-wrap: anywhere; }

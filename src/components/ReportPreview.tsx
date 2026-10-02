@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { estimateBytes, PRIORITIES, validateSession, type Annotation, type Connection, type Session, type TeamOptions } from '../model';
 import { desktop, errorText, PREVIEW_MESSAGE } from '../native';
+import { mentionToken } from '../markdown';
 import { flatten } from '../render';
 import { composeDescription, reportParts, sectionHeading, trimEnd, type ReportParts } from '../report';
 import { useStore } from '../store';
 import Dialog from './Dialog';
 import { Icon } from './icons';
+import Markdown from './Markdown';
 
 /** The exact revision and flattened pixels a user reviewed; submission reuses them only if nothing changed since. */
 export interface PreparedReport { session: Session; exports: { id: string; dataUrl: string }[] }
@@ -80,8 +82,12 @@ export default function ReportPreview({ connection, options, onClose, onCreate }
       <article className="preview-report" aria-label="Outgoing report">
         <h3 className="preview-title">{session.title.trim() || <span className="muted">No title</span>}</h3>
         {report.error && <p className="error small">{report.error}</p>}
-        {prose.length > 0 && <p className="preview-prose">{prose.map((s, i) => 'text' in s ? <span key={i}>{s.text}</span>
-          : <span key={i} className="mention-chip" title={`Links to image ${position(s.imageId)}`}>@{s.key}</span>)}</p>}
+        {prose.length > 0 && (
+          <div className="preview-prose">
+            <Markdown source={prose.map((s, i) => 'text' in s ? s.text : mentionToken(i)).join('')}
+              mention={i => { const s = prose[i]; return s && 'key' in s ? <span className="mention-chip" title={`Links to image ${position(s.imageId)}`}>@{s.key}</span> : null; }} />
+          </div>
+        )}
         {report.parts?.sections.map((section, i) => {
           const image = session.images[i]; const url = current?.get(section.imageId);
           return (

@@ -404,10 +404,7 @@ export default function App() {
       <header className="titlebar" onMouseDown={dragWindow}>
         <span className="brand-chip" aria-hidden="true"><Mark size={15} /></span>
         <span className="grip" aria-hidden="true" />
-        <span className={`save-chip ${saveState}`} role="status" aria-label={saveText} title={saveText}>
-          {saveState === 'saving' && <><span className="spinner" aria-hidden="true" /><span>Saving…</span></>}
-          {saveState === 'saved' && <><Icon name="check" size={13} /><span>Saved</span></>}
-        </span>
+        <span className="visually-hidden" role="status" aria-label={saveText}>{saveText}</span>
         {saveState === 'error' && <span className="save-error" role="alert" title={saveText}><Icon name="alert" size={14} /> {saveText}</span>}
         {status?.cleanupError && <span className="save-error" role="alert" title={status.cleanupError}><Icon name="alert" size={14} /> Local cleanup incomplete. Retry in History or Settings.</span>}
         <div className="drag-space" aria-hidden="true" onDoubleClick={() => void editorWindow('maximize').catch(() => undefined)} />

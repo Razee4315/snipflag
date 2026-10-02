@@ -641,8 +641,6 @@ test('crop, line, nudge and duplicate change the image as expected', async ({ pa
 
 test('a missing title is reported at the title field and clears when filled in', async ({ page }) => {
   await addImages(page, [white]);
-  // The saved state is shown in the title bar.
-  await expect(page.getByRole('status', { name: 'Saved on this computer' })).toHaveText('Saved');
   const title = page.getByLabel('Title', { exact: true });
   await page.evaluate(() => (document.querySelector('#issue-form') as HTMLFormElement).requestSubmit());
   // The browser preview stops before validation; in the desktop app the same path reports the field.
@@ -782,6 +780,8 @@ test('report preview shows the exact outgoing report with protected images', asy
   await expect(dialog.getByText('Nothing has been uploaded.', { exact: false })).toBeVisible();
   await expect(report.getByRole('heading', { name: 'Checkout total is wrong' })).toBeVisible();
   await expect(report.locator('.mention-chip')).toHaveText(['@image2']);
+  // Literal code stays code, not a mention.
+  await expect(report.locator('.preview-prose code')).toHaveText(['@image1']);
   await expect(report.getByRole('heading', { level: 4 })).toHaveText(['1. @image2 · blue', '2. @image1 · white']);
   await expect(dialog.locator('[data-preview-image]')).toHaveCount(2);
   await dialog.getByText('Markdown description', { exact: true }).click();
@@ -803,6 +803,18 @@ test('report preview shows the exact outgoing report with protected images', asy
   await dialog.getByRole('button', { name: 'Keep editing' }).click();
   await expect(dialog).toBeHidden();
   await expect(page.getByRole('button', { name: /^Pixelate/ })).toHaveAttribute('aria-pressed', 'true');
+  // Markdown in the description is shown the way Linear renders it, not as raw characters.
+  await page.getByLabel('Description', { exact: true }).fill('## Steps to reproduce\n1. Open **the cart**\n2. Check @image2\n\n- [x] seen on staging\n\n`code` stays');
+  await page.getByRole('button', { name: 'Preview report' }).click();
+  await expect(report.getByRole('heading', { name: 'Steps to reproduce', exact: true })).toBeVisible();
+  await expect(report.getByText('##')).toHaveCount(0);
+  await expect(report.locator('.preview-prose ol li')).toHaveText(['Open the cart', 'Check @image2']);
+  await expect(report.locator('.preview-prose ol strong')).toHaveText('the cart');
+  await expect(report.locator('.preview-prose ol .mention-chip')).toHaveText('@image2');
+  await expect(report.locator('.preview-prose ul li')).toHaveText(['seen on staging']);
+  await expect(report.getByRole('heading', { level: 4 })).toHaveCount(2);
+  await page.screenshot({ path: testInfo.outputPath('report-preview-markdown.png'), animations: 'disabled' });
+  await dialog.getByRole('button', { name: 'Keep editing' }).click();
   // A changed revision is previewed afresh.
   await page.getByLabel('Caption for screenshot 2').fill('Checkout');
   await page.getByRole('button', { name: 'Preview report' }).click();

@@ -16,6 +16,8 @@ All notable changes to Snipflag are documented here. The format follows [Keep a 
 - Marks snap to the image's edges and middle and to other marks while you move them, with guide lines (hold Alt to move freely); zoom buttons glide to the new scale.
 - Optional setting: save every capture to Pictures/Snipflag.
 - Drawing no longer stops when the pointer leaves the picture: the stroke follows the edge until the button is released.
+- Themes feel like their names: Paper is a ruled notebook page with pulp grain and drifting daylight, Blossom has falling petals, Midnight a twinkling night sky over an aurora, Graphite a carbon weave with light sliding over brushed metal. The motion stops when animations are off.
+- The report preview renders the description's Markdown (headings, lists, tasks, quotes, code, emphasis) instead of showing raw characters.
 - Notes on numbered steps, written in a list that floats over the canvas; they can be added to the description.
 - The Linear issue panel can be hidden for quick mark-up and sharing; the choice is remembered.
 - Four more themes, each with its own texture: Paper, Blossom, Midnight and Graphite. A picked theme previews at once.
