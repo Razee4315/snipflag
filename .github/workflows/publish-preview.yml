@@ -8,6 +8,11 @@ on:
       build_run:
         description: Successful Development installers run ID for this commit
         required: true
+      platforms:
+        description: Platforms in the installer run. Windows only when the owner releases for Windows alone; other platforms keep the previous version.
+        type: choice
+        options: [all, windows]
+        default: all
 permissions:
   contents: write
   actions: read
@@ -21,6 +26,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           CHECKS_RUN: ${{ inputs.checks_run }}
           BUILD_RUN: ${{ inputs.build_run }}
+          PLATFORMS: ${{ inputs.platforms }}
           EXPECTED_SHA: ${{ github.sha }}
           GH_REPO: ${{ github.repository }}
         run: |
@@ -48,8 +54,10 @@ jobs:
                   if dest.exists():
                       raise SystemExit('Duplicate asset filename')
                   shutil.copy2(path, dest); assets.append(dest)
-          if len(assets) != 6:
-              raise SystemExit(f'Expected six installers; found {len(assets)}')
+          windows_only = os.environ['PLATFORMS'] == 'windows'
+          expected = 2 if windows_only else 6
+          if len(assets) != expected:
+              raise SystemExit(f'Expected {expected} installers; found {len(assets)}')
           # Signed update manifest. Signatures come from the build's updater key; unsigned-key builds publish none.
           base = f'https://github.com/{repo}/releases/download/{tag}/'
           platforms = {}
@@ -83,7 +91,7 @@ jobs:
                   platforms[key] = {'signature': sig, 'url': base + asset}
           manifest = None
           if platforms:
-              required = {'windows-x86_64', 'darwin-aarch64', 'darwin-x86_64', 'linux-x86_64'}
+              required = {'windows-x86_64'} if windows_only else {'windows-x86_64', 'darwin-aarch64', 'darwin-x86_64', 'linux-x86_64'}
               if not required <= platforms.keys():
                   raise SystemExit(f'Update manifest is missing {sorted(required - platforms.keys())}')
               import datetime
