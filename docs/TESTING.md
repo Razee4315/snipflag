@@ -1,5 +1,21 @@
 # Test and release gates
 
+## Audit changes (branch `audit/core-flow-improvements`, 2026-10-02)
+
+Automated coverage: unit tests for the toast stack (replace a repeated message, keep offers to undo, lifetimes), for Undo across removals, crops and reorders, and for a sent session loaded through `hydrate`; Rust tests for salvaging valid settings when one is invalid, the History timestamp, content-named shared files, and a PNG with a signature but no readable header; browser tests for the Settings unsaved-changes prompt, Settings sections as tabs, mark keys blocked behind a dialog, Ctrl+Enter showing a hidden issue panel, Ctrl+Z restoring a removed screenshot and withdrawing its toast, and the text plate burned into the export and remembered after reload. `cargo clippy -D warnings` runs in Checks.
+
+Native gates (nothing below has been run in the installed app):
+- **Capture from the tray** with ten screenshots or a locked report: the editor comes forward and shows the reason. "Adding the capture…" appears between the selection and the picture.
+- **Offline**: launch without a network: the panel shows the error with Retry and "Sign in again", not the Connect card; Retry works once online; an expired token while offline says to check the connection, not to reconnect.
+- **Submission** (authorized synthetic content only): three or more screenshots upload in batches of three and arrive in filmstrip order; the progress bar moves; choosing a team and pressing Ctrl+Enter at once no longer fails with "another operation"; a refused create (for example a label removed in Linear) reports the reason and leaves the report editable, with no lock; a lost response still locks and reconciles as before.
+- **Updates**: the chip shows download percent; a failed install keeps the chip and a second try works.
+- **Settings**: Escape with unsaved changes asks; Escape again discards (WebView2 closes the dialog itself on the second Escape); Disconnect then Save does not bring remembered teams back; a failing settings write restores the previous shortcut and login item.
+- **No tray** (a Linux session without one): close minimizes, `--minimized` still shows the window, the close button says so.
+- **Editor**: a long arrow no longer blocks clicking marks inside its box, at several zoom levels; Tab on the screenshot steps through marks and leaves after the last; Space pans only from the canvas, toolbar and image bar and presses buttons elsewhere; arrow keys in the color and width groups do not nudge a selected mark; focus ring in Windows high contrast.
+- **Drafts**: after sending and restarting, the editor starts empty; New session on a draft says it is in History; an emptied draft does not appear in History; History order matches the times shown.
+- **Copy for AI** twice without changes writes no new files; Copy image on a 4K capture does not freeze the window.
+- **Performance** (unmeasured): typing and drawing in a long session, save time with a large History, idle CPU in the tray with each theme.
+
 ## Themes and report preview
 
 Automated coverage: unit tests for the Markdown reader (blocks and inline spans); browser test that the preview shows headings, lists, emphasis, tasks and mentions without raw markers. Theme backdrops were tuned by eye in a static mock page using the real stylesheet, not in the app.
