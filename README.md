@@ -24,7 +24,7 @@ See a bug anywhere on your screen, snip it, mark it up, and send it to Linear wi
 
 It runs on Windows (primary), macOS, and Linux, and is built with Tauri 2, Rust, React, and TypeScript.
 
-> **Website:** [razee4315.github.io/snipflag](https://razee4315.github.io/snipflag/) · **v1.3.0:** [Download the release (unsigned installers)](https://github.com/Razee4315/snipflag/releases/tag/v1.3.0). Native runtime acceptance and signing are still pending; see [verification status](docs/STATUS.md).
+> **Website:** [razee4315.github.io/snipflag](https://razee4315.github.io/snipflag/) · **v1.4.0:** [Download the release (unsigned installers)](https://github.com/Razee4315/snipflag/releases/tag/v1.4.0) for Windows; macOS and Linux use [v1.3.0](https://github.com/Razee4315/snipflag/releases/tag/v1.3.0). Native runtime acceptance and signing are still pending; see [verification status](docs/STATUS.md).
 
 ## See it in action
 
@@ -93,7 +93,7 @@ Snipflag is designed and built by **Saqlain Razee** ([GitHub](https://github.com
 
 ## Getting started
 
-Download [v1.3.0 installers](https://github.com/Razee4315/snipflag/releases/tag/v1.3.0) from GitHub Releases. All installers are built on GitHub Actions.
+Download [v1.4.0 for Windows](https://github.com/Razee4315/snipflag/releases/tag/v1.4.0) or [v1.3.0 for macOS and Linux](https://github.com/Razee4315/snipflag/releases/tag/v1.3.0) from GitHub Releases. All installers are built on GitHub Actions.
 
 Additional development installers are produced by the [Development installers](https://github.com/Razee4315/snipflag/actions/workflows/build.yml) workflow:
 
