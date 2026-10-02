@@ -581,19 +581,24 @@ test('crop, line, nudge and duplicate change the image as expected', async ({ pa
   await page.keyboard.press('Control+d');
   await expect(tile(page, 1)).toHaveAccessibleName(/2 marks$/);
   expect((await exportPixels(page, [[216, 176]])).pixels[0]).toEqual([239, 68, 68, 255]);
-  // Crop to the middle: the export shrinks, marks keep their place in the picture, and Undo restores the original.
-  await page.keyboard.press('c');
-  await drag(page, [0.25, 0.25], [0.75, 0.75]);
-  await expect(page.getByText('Cropped to 200 × 150.')).toBeVisible();
-  const cropped = await exportPixels(page, [[100, 85], [100, 75]]);
-  expect([cropped.width, cropped.height]).toEqual([200, 150]);
-  expect(cropped.pixels[0]).toEqual([239, 68, 68, 255]);
-  expect(cropped.pixels[1]).toEqual([255, 255, 255, 255]);
+  // Crop to the middle, then undo it from the toast. The draft autosaves in between, and the uncropped image still comes back.
+  const cropMiddle = async () => {
+    await page.keyboard.press('c');
+    await drag(page, [0.25, 0.25], [0.75, 0.75]);
+    await expect(page.getByText('Cropped to 200 × 150.')).toBeVisible();
+  };
+  await cropMiddle();
   await expect(page.getByRole('status', { name: 'Saved on this computer' })).toBeVisible();
   await page.getByRole('button', { name: 'Undo crop' }).click();
   const restored = await exportPixels(page, [[200, 160]]);
   expect([restored.width, restored.height]).toEqual([400, 300]);
   expect(restored.pixels[0]).toEqual([239, 68, 68, 255]);
+  // Crop again: the export shrinks and marks keep their place in the picture.
+  await cropMiddle();
+  const cropped = await exportPixels(page, [[100, 85], [100, 75]]);
+  expect([cropped.width, cropped.height]).toEqual([200, 150]);
+  expect(cropped.pixels[0]).toEqual([239, 68, 68, 255]);
+  expect(cropped.pixels[1]).toEqual([255, 255, 255, 255]);
   await expect(page.getByRole('status', { name: 'Saved on this computer' })).toBeVisible();
   await page.reload();
   await expect(tile(page, 1)).toHaveAccessibleName(/2 marks$/);
