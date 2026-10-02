@@ -255,11 +255,12 @@ export default function App() {
       finally { useStore.getState().setBusy(false); setProgress(''); }
       return;
     }
+    // The connection comes first: without it the team cannot be chosen, so field errors would point at a disabled picker.
+    if (!connection) { fail(connectionState === 'unreachable' ? 'Linear could not be reached. Retry the connection, then create the issue.' : 'Connect Linear before creating the issue.'); return; }
     const invalid = validateSession(s.session);
     if (invalid) { fail(invalid); return; }
     const missing = missingImageReferences(s.session.description, s.session.images, s.session.imageReferences ?? {});
     if (missing.length) { fail(`Fix the missing image reference: @${missing[0]}.`); return; }
-    if (!connection) { fail('Connect Linear before creating the issue.'); return; }
     s.setBusy(true); setSubmitError(''); setProgress('Saving draft…');
     try {
       await flush();
@@ -283,7 +284,7 @@ export default function App() {
       } catch { useStore.getState().setSubmissionLocked(true); }
       useStore.getState().setBusy(false); setProgress(''); fail(errorText(e));
     }
-  }, [connection, flush, notify, updateSettings]);
+  }, [connection, connectionState, flush, notify, updateSettings]);
 
   const connect = useCallback(async () => {
     setConnectionState('connecting'); setConnectionError('');

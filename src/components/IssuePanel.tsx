@@ -210,7 +210,7 @@ export default function IssuePanel(p: Props) {
           <button type="button" className="button" onClick={p.onNewSession} disabled={busy}><Icon name="plus" size={16} /> New session</button>
           <button type="button" className="button square" onClick={() => setPreviewing(true)} disabled={busy || !count} aria-label="Preview report" title="Preview report"><Icon name="eye" size={16} /></button>
           <button type="submit" form="issue-form" className={busy ? 'button primary busy' : 'button primary'} disabled={busy || !count} aria-keyshortcuts="Control+Enter">
-            {busy ? 'Working…' : submissionLocked ? 'Check previous attempt' : p.pendingState && p.pendingState !== 'retryable' ? 'Retry create issue' : 'Create issue'}<Icon name="right" size={16} />
+            {busy ? 'Working…' : submissionLocked ? 'Check previous attempt' : desktop && !connected ? 'Connect Linear to send' : p.pendingState && p.pendingState !== 'retryable' ? 'Retry create issue' : 'Create issue'}<Icon name="right" size={16} />
           </button>
         </div>
       </footer>
