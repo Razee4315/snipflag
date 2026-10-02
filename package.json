@@ -1,6 +1,6 @@
 {
   "name": "snipflag",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "private": true,
   "description": "Snip screenshots, mark them up, and flag them as one Linear issue.",
   "license": "MIT",

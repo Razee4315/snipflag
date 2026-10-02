@@ -2,9 +2,9 @@
 
 All notable changes to Snipflag are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.4.0] - 2026-10-02
 
-Work from the 2026-10-02 audit ([docs/AUDIT-2026-10-02.md](docs/AUDIT-2026-10-02.md)), on branch `audit/core-flow-improvements`. Not released.
+Work from the 2026-10-02 audit ([docs/AUDIT-2026-10-02.md](docs/AUDIT-2026-10-02.md)). Released for Windows only; macOS and Linux stay on 1.3.0.
 
 ### Added
 
