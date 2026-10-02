@@ -45,7 +45,7 @@ const paths = {
   file: 'M6 3h9l4 4v14H6zM14 3v5h5',
   note: 'M5 4h14v11l-5 5H5zM14 20v-5h5M8.5 9h7M8.5 12.5h4',
   panel: 'M4 5h16v14H4zM14.5 5v14',
-  spark: 'M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9L12 17.5l-1.9-5.1L5 10.5l5.1-1.9zM18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z',
+  terminal: 'M5.5 4.5h13a2 2 0 012 2v11a2 2 0 01-2 2h-13a2 2 0 01-2-2v-11a2 2 0 012-2zM7.5 9.5l3 2.5-3 2.5M13 14.5h3.5',
 } as const;
 export type IconName = keyof typeof paths;
 /** Filled details layered on top of the outline. */

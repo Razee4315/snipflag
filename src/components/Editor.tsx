@@ -181,6 +181,8 @@ export default function Editor({ image, zoom, onZoom, onScale, onCrop }: Props) 
       return;
     }
     start.current = p;
+    // Keep receiving this pointer after it leaves the picture: the stroke follows along the edge instead of ending.
+    (e.evt.target as Element | null)?.setPointerCapture?.(e.evt.pointerId);
     if (tool === 'crop') { setCrop({ x: p.x, y: p.y, width: 0, height: 0 }); return; }
     penSegment.current = null;
     setDraft({
@@ -318,7 +320,8 @@ export default function Editor({ image, zoom, onZoom, onScale, onCrop }: Props) 
       <div key={image.id} className="canvas-frame" style={{ width: stageWidth, height: stageHeight, cursor }} data-testid="canvas"
         onPointerMove={brushTool ? moveBrush : undefined} onPointerLeave={() => { if (brush.current) brush.current.style.opacity = '0'; }}>
         <Stage width={stageWidth} height={stageHeight} scaleX={scale} scaleY={scale}
-          onPointerDown={onDown} onPointerMove={e => updateDrawing.current(e.evt.shiftKey, samples(e.evt))} onPointerUp={onUp} onPointerLeave={() => { textStart.current = null; if (draftRef.current || cropRef.current) onUp(); }} onWheel={onWheel}>
+          onPointerDown={onDown} onPointerMove={e => updateDrawing.current(e.evt.shiftKey, samples(e.evt))} onPointerUp={onUp} onPointerLeave={e => { textStart.current = null; if (!e.evt.buttons && (draftRef.current || cropRef.current)) onUp(); }}
+          onPointerCancel={() => { if (draftRef.current || cropRef.current) onUp(); }} onWheel={onWheel}>
           <Layer ref={layer}>
             {source && <KonvaImage image={source} width={image.width} height={image.height} listening={false} />}
             {ordered.map(a => renderShape(a, true))}

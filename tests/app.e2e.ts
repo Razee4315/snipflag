@@ -574,6 +574,27 @@ test('the issue panel tucks away and step notes travel with the report', async (
   await expect(tile(page, 1)).toHaveAccessibleName(/1 mark$/);
 });
 
+test('a stroke keeps going when the pointer leaves the picture and follows the edge', async ({ page }) => {
+  await addImages(page, [white]);
+  await page.keyboard.press('a');
+  const box = (await page.getByTestId('canvas').boundingBox())!;
+  // Start inside, go 60 px past the right edge at the same height, release out there.
+  await page.mouse.move(box.x + box.width * 0.5, box.y + box.height * 0.5);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width * 0.9, box.y + box.height * 0.5, { steps: 4 });
+  await page.mouse.move(box.x + box.width + 60, box.y + box.height * 0.5, { steps: 4 });
+  await page.mouse.up();
+  await expect(tile(page, 1)).toHaveAccessibleName(/1 mark$/);
+  // The arrow reaches the right edge of the 400 px image instead of stopping where the pointer crossed it.
+  const marks = await page.evaluate(async () => {
+    const db = await new Promise<IDBDatabase>((resolve, reject) => { const r = indexedDB.open('snipflag-preview'); r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error); });
+    const sessions = await new Promise<import('../src/model').Session[]>((resolve, reject) => { const r = db.transaction('sessions').objectStore('sessions').getAll(); r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error); });
+    db.close();
+    return (sessions[0]?.images[0]?.annotations ?? []).map(a => Math.round(a.x + a.points[2]));
+  });
+  expect(marks).toEqual([400]);
+});
+
 test('crop, line, nudge and duplicate change the image as expected', async ({ page }) => {
   await addImages(page, [white]);
   await page.keyboard.press('l');

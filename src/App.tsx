@@ -448,7 +448,7 @@ export default function App() {
             </div>
             <div className="share" role="group" aria-label="Share this screenshot" onMouseDown={dragWindow}>
               <button type="button" className="button primary" onClick={() => void exportActive(true)}><Icon name="copy" size={16} /> Copy image</button>
-              <button type="button" className="button" disabled={!desktop} onClick={() => void shareForAi()}><Icon name="spark" size={16} /> Copy for AI</button>
+              <button type="button" className="button" disabled={!desktop} onClick={() => void shareForAi()}><Icon name="terminal" size={16} /> Copy for AI</button>
               <button type="button" className="button" onClick={() => void exportActive(false)}><Icon name="save" size={16} /> Save image</button>
               <span className="share-hint small muted">{desktop ? 'Copy for AI saves the screenshots and copies their paths with your notes.' : 'Copy for AI works in the desktop app.'}</span>
               {!panelOpen && <button type="button" className="button share-linear" onClick={() => showPanel(true)}><Icon name="panel" size={16} /> Linear issue</button>}
