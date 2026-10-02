@@ -4,8 +4,9 @@ import { thumbnail } from '../render';
 import { useStore } from '../store';
 
 /**
- * Durable drafts: a new screenshot is saved at once and every other change shortly after it happens. `flush` saves at once (before capture, network
- * work or leaving the session); `settle` cancels the pending save and waits for the ones already running.
+ * Durable drafts: a new screenshot is saved at once and every other change shortly after it happens. `flush` saves
+ * now (before capture, network work or leaving the session); `settle` cancels the pending save and waits for the
+ * ones already running.
  */
 export function useAutosave(ready: boolean) {
   const session = useStore(s => s.session);
@@ -41,8 +42,9 @@ export function useAutosave(ready: boolean) {
     const { session: s, durable, persisted, saveState: current, setSaveState } = useStore.getState();
     if (current === 'saved' && (durable || s.images.length || s.title.trim() || s.description.trim())) setSaveState('saving');
     window.clearTimeout(timer.current);
-    // A new screenshot is saved at once: its pixels exist nowhere else. Typing and drawing wait for a short pause.
-    const newPixels = s.images.some(i => !persisted.includes(i.id));
+    // A new screenshot is saved at once: its pixels exist nowhere else. Typing and drawing wait for a short pause,
+    // and so do retries after a failed save.
+    const newPixels = current !== 'error' && s.images.some(i => !persisted.includes(i.id));
     timer.current = window.setTimeout(() => { saveNow().catch(() => undefined); }, newPixels ? 0 : 400);
     return () => window.clearTimeout(timer.current);
   }, [session, ready, saveNow]);
