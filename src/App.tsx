@@ -235,15 +235,27 @@ export default function App() {
     return () => { subs.forEach(p => p.then(u => u())); };
   }, [addImages, notify]);
 
+  /** Saves the open session before another takes its place. Returns whether an unsent draft stays behind in History. */
+  const leaveSession = useCallback(async () => {
+    await flush();
+    const { session: s, durable } = useStore.getState();
+    if (!durable || s.issue) return false;
+    if (s.images.length || s.title.trim() || s.description.trim()) return true;
+    // An emptied draft has nothing to come back to; it would only clutter History.
+    await deleteSession(s.id).catch(() => undefined);
+    return false;
+  }, [flush]);
   const newSession = useCallback(async () => {
     if (useStore.getState().busy) return;
-    try { await flush(); } catch { notify('The current draft could not be saved. Fix the problem before starting a new session.', 'error'); return; }
+    let kept = false;
+    try { kept = await leaveSession(); } catch { notify('The current draft could not be saved. Fix the problem before starting a new session.', 'error'); return; }
     useStore.getState().reset(); setZoom('fit');
-  }, [flush, notify]);
+    if (kept) notify('The draft you left is in History.');
+  }, [leaveSession, notify]);
   const openSession = useCallback(async (id: string) => {
-    await flush();
+    await leaveSession();
     useStore.getState().hydrate(await loadSession(id)); setZoom('fit'); setDialog(null);
-  }, [flush]);
+  }, [leaveSession]);
 
   const deleteLocal = useCallback(async (id?: string) => {
     const s = useStore.getState();

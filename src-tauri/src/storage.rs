@@ -279,10 +279,12 @@ impl Storage {
     }
     pub fn list(&self) -> Result<Vec<Value>, String> {
         let db = self.db.lock().map_err(|_| "Database unavailable.")?;
-        let mut stmt = db.prepare("SELECT data, EXISTS(SELECT 1 FROM deletions WHERE deletions.id=sessions.id) FROM sessions ORDER BY updated DESC LIMIT 200").map_err(|_| "Cannot list drafts.")?;
-        let raw: Vec<(String, bool)> = stmt.query_map([], |r| Ok((r.get(0)?, r.get(1)?))).map_err(|_| "Cannot list drafts.")?.collect::<Result<_, _>>().map_err(|_| "Cannot read history.")?;
-        let sessions = raw.iter().filter_map(|(r, deleting)| serde_json::from_str::<Value>(r).ok().map(|v| (v, deleting))).map(|(mut v, deleting)| {
+        let mut stmt = db.prepare("SELECT data, EXISTS(SELECT 1 FROM deletions WHERE deletions.id=sessions.id), updated FROM sessions ORDER BY updated DESC LIMIT 200").map_err(|_| "Cannot list drafts.")?;
+        let raw: Vec<(String, bool, i64)> = stmt.query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?))).map_err(|_| "Cannot list drafts.")?.collect::<Result<_, _>>().map_err(|_| "Cannot read history.")?;
+        let sessions = raw.iter().filter_map(|(r, deleting, updated)| serde_json::from_str::<Value>(r).ok().map(|v| (v, deleting, updated))).map(|(mut v, deleting, updated)| {
             v["deletionPending"] = json!(deleting);
+            // History shows the time it sorts by: when the session was last saved, which opening it refreshes.
+            v["updatedAt"] = json!(updated);
             v.as_object_mut().map(|o| o.remove("annotationHistories"));
             // History only needs a summary; annotations stay on disk until a draft is opened.
             if let Some(images) = v["images"].as_array_mut() { for img in images { img["annotations"] = json!([]); } }
@@ -451,6 +453,13 @@ mod tests {
         assert!(!store.image_path(s["id"].as_str().unwrap(), &removed).exists());
         s["issue"] = json!({"id":"x","identifier":"ENG-1","url":"https://linear.app/x"}); store.save(&s).unwrap();
         s["issue"] = Value::Null; assert!(store.save(&s).is_err());
+    }
+    #[test] fn history_shows_the_time_it_is_sorted_by() {
+        let store = temp(); let mut s = session(vec![image(2, 2)]); s["updatedAt"] = json!(5);
+        store.save(&s).unwrap();
+        store.db.lock().unwrap().execute("UPDATE sessions SET updated=1234", []).unwrap();
+        assert_eq!(store.list().unwrap()[0]["updatedAt"], 1234);
+        assert_eq!(store.load(s["id"].as_str().unwrap()).unwrap()["updatedAt"], 5);
     }
     #[test] fn delete_keeps_submission_receipt() {
         let store = temp(); let s = session(vec![image(2, 2)]); let sid = s["id"].as_str().unwrap();
