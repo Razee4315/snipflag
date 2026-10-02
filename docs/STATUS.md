@@ -2,9 +2,34 @@
 
 Entries before the capture-speed work (2026-09-26 to 2026-09-28) are in [STATUS-archive.md](STATUS-archive.md). Read it only when that history is needed.
 
-## End-to-end audit (owner request) — 2026-10-02, awaiting approval
+## Audit implemented on a branch (owner request) — 2026-10-02, awaiting review
 
-Audited `de97087` from source only; findings and a phased plan are in [AUDIT-2026-10-02.md](AUDIT-2026-10-02.md) (33 findings, no P0; missing features, cleanup and optimization lists). No application code changed, nothing built or run, no CI dispatched, nothing committed. Gains in the optimization list are estimates, not measurements. Next: the owner approves a phase (and answers the five decisions at the end of the audit) before any code is modified.
+The owner approved the audit ([AUDIT-2026-10-02.md](AUDIT-2026-10-02.md), made from `de97087`) and asked for it on branch **`audit/core-flow-improvements`**: one commit per finding with its ID, never on main, no force-push, no PR or merge without approval. `main` is unchanged at `de97087`. Version stays 1.3.0; no release, tag or asset change.
+
+**Done** (IDs are the audit's; details in CHANGELOG "Unreleased"):
+- Core flows: F-01 to F-12, F-14 to F-31, F-33.
+- Missing features: M-02 (one Undo for removals, crops, reorders), M-05 (text plate), M-08 (progress bar), M-11 (tray hint); M-03, M-04, M-06 and M-09 are F-02, F-22, F-16 and F-24.
+- Cleanup: C-01 to C-08, C-10 (clippy only), C-11, C-12.
+- Optimization: O-03, O-05, O-06, O-09, O-10; O-02, O-04, O-07 and O-08 in part.
+- Found while verifying: a new screenshot is now saved at once instead of after the 400 ms typing pause; the three dialogs load on first use.
+
+**Not done, with reasons:**
+- Owner decisions still open: F-32 (capture timing line in Settings) and C-13 (`saveOnCapture`). Left as they are.
+- F-13 (delay countdown), M-01 (window capture), M-12 (drag-out): native features that CI cannot exercise; M-12 also needs a new dependency and lock file.
+- M-07 (resume uploads) and M-10 (add to an existing issue): need a real Linear workspace to design and verify.
+- O-01 (canvas layers): the highlighter multiplies into the screenshot and pixelation clears it, so both must stay on the screenshot's layer; splitting layers changes what is drawn. Needs a design the owner can look at.
+- C-09 (typed Rust models), O-12 (binary IPC), O-11 (separate overlay stylesheet), the rest of O-02/O-04/O-07/O-08 (thumbnail without a full flatten, raw clipboard pixels, history in its own column, History summary columns): larger or schema-changing; not started.
+- C-10 ESLint: needs new dev dependencies and a regenerated lock file, and will report many existing patterns. C-14 and C-15: local or optional.
+
+**Verification (Windows only, per the build rule):** CHECKS_PLACEHOLDER
+
+Failures on the way, all fixed at the root: a CSS rule broken by a scripted edit (production build failed); two new browser tests that acted before the reloaded app was ready or before the draft was saved; six clippy findings in existing code (`is_none_or`, `as_chunks`, a test module moved to the end of `lib.rs`).
+
+**Not verified:** nothing here has run in the installed app. Every native gate under "Audit changes" in TESTING.md is open, in particular: the capture refusal from the tray, the offline state, batched uploads and the refused-create path against real Linear, update download progress, the no-tray fallback (Linux), ink hit-testing and Tab stepping with a real pointer and keyboard, and every performance claim (none was measured). macOS and Linux were not compiled for this branch (`as_chunks` needs a current stable Rust).
+
+Build output, `main` → branch: editor chunk 443.84 → 422.42 kB (dialogs moved to their own chunks), all JavaScript 680.50 → 693.57 kB, CSS 64.61 → 64.84 kB. Tests: 58 → 64 unit, 31 → 33 browser, 36 → 38 Rust.
+
+Next: the owner reviews the branch and tests the Windows artifact against the checklist in the final report, then decides on merging and on the open items above.
 
 ## v1.3.0 released as Latest — 2026-10-02
 
