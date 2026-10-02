@@ -4,19 +4,19 @@ import Editor, { type Zoom } from './components/Editor';
 import Filmstrip from './components/Filmstrip';
 import HistoryDialog from './components/HistoryDialog';
 import { Icon, Mark } from './components/icons';
-import IssuePanel, { type ConnectionState } from './components/IssuePanel';
+import IssuePanel from './components/IssuePanel';
 import SettingsDialog from './components/SettingsDialog';
 import StepNotes from './components/StepNotes';
 import type { PreparedReport } from './components/ReportPreview';
 import Toasts from './components/Toasts';
 import Toolbar, { TOOLS } from './components/Toolbar';
-import { defaults, FIELD_ERRORS, imageLabel, shortcutLabel, validateSession, type CaptureImage, type Connection, type Settings } from './model';
+import { defaults, FIELD_ERRORS, imageLabel, shortcutLabel, validateSession, type CaptureImage, type Settings } from './model';
 import {
-  appStatus, cancelLogin, clearHistory, connectLinear, deleteSession, desktop, disconnectLinear, editorWindow, errorText, exportPng, linearConnection, listSessions, loadSession,
-  copyText, loadSettings, on, PREVIEW_MESSAGE, readClipboardImage, saveSession, saveSettings, startCapture, submissionStatus, submitIssue, reconcileIssue, finishQuit, checkUpdate, installUpdate, shareImages, type AppStatus, type AvailableUpdate, type RawImage,
+  appStatus, cancelLogin, clearHistory, deleteSession, desktop, editorWindow, errorText, exportPng, listSessions, loadSession,
+  copyText, loadSettings, on, PREVIEW_MESSAGE, readClipboardImage, saveSettings, startCapture, submissionStatus, submitIssue, reconcileIssue, finishQuit, shareImages, type AppStatus, type RawImage,
 } from './native';
 import type { Box } from './geometry';
-import { cropImage, fileBaseName, flatten, importImage, thumbnail } from './render';
+import { cropImage, fileBaseName, flatten, importImage } from './render';
 import { activeImage, cropKey, isLocked, removalKey, useStore } from './store';
 import { missingImageReferences } from './mentions';
 import { ease, smooth } from './motion';
@@ -25,7 +25,10 @@ import { play, primeSound, setSoundEnabled } from './sound';
 import { saveBeforeQuit } from './lifecycle';
 import { isTyping } from './desktop';
 import { rememberDetails, templatesOf } from './templates';
-import { addToast, type Toast, type ToastAction } from './toasts';
+import { useAutosave } from './hooks/useAutosave';
+import { useLinearConnection } from './hooks/useLinearConnection';
+import { useToasts } from './hooks/useToasts';
+import { useUpdater } from './hooks/useUpdater';
 
 const PANEL_KEY = 'snipflag-panel';
 /** The session that was open last on this device; only that one is restored at launch. */
@@ -40,12 +43,9 @@ export default function App() {
   /** Background preference updates build on the latest saved settings. */
   const updateSettings = useCallback((change: (s: Settings) => Settings) => saveSettings(change(settingsRef.current)).then(setSettings), []);
   const [status, setStatus] = useState<AppStatus | null>(null);
-  const [connection, setConnection] = useState<Connection | null>(null);
-  const [connectionState, setConnectionState] = useState<ConnectionState>('idle');
-  const [connectionError, setConnectionError] = useState('');
+  const { toasts, notify, dismiss: dismissToast } = useToasts();
+  const { connection, connectionState, connectionError, refreshConnection, connect, disconnect: signOut } = useLinearConnection(notify);
   const [dialog, setDialog] = useState<'settings' | 'history' | null>(null);
-  const [toasts, setToasts] = useState<Toast[]>([]);
-  const toastId = useRef(0);
   const [zoom, setZoom] = useState<Zoom>('fit'); const [scale, setScale] = useState(1);
   /** What a submission is doing, and how far it is (0 to 1) when that can be estimated. */
   const [progress, setProgress] = useState<{ text: string; fraction: number | null }>({ text: '', fraction: null });
@@ -53,10 +53,10 @@ export default function App() {
   const [submitError, setSubmitError] = useState('');
   const [pendingState, setPendingState] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const { flush, settle } = useAutosave(ready);
   const [flash, setFlash] = useState(0);
   /** From the capture request until its picture is in the session (or it is cancelled). */
   const [capturing, setCapturing] = useState(false);
-  const [update, setUpdate] = useState<AvailableUpdate | null>(null);
   /** The share action in progress; its button says so and the others wait. */
   const [sharing, setSharing] = useState<'copy' | 'save' | 'ai' | null>(null);
   const sharingNow = useRef(false);
@@ -67,58 +67,6 @@ export default function App() {
     try { localStorage.setItem(PANEL_KEY, open ? 'open' : 'closed'); } catch { /* The panel still works for this run. */ }
   }, []);
   const fileInput = useRef<HTMLInputElement>(null);
-  const saveChain = useRef<Promise<void>>(Promise.resolve());
-  const saveTimer = useRef<number | undefined>(undefined);
-  const saveAttempts = useRef(new Set<string>());
-
-  const notify = useCallback((text: string, kind: 'error' | 'info' = 'info', action?: ToastAction, undoKey?: string) => {
-    const id = ++toastId.current;
-    setToasts(list => addToast(list, { id, kind, text, action, undoKey }));
-  }, []);
-  const dismissToast = useCallback((id: number) => setToasts(list => list.filter(t => t.id !== id)), []);
-
-  // Durable drafts: every change is saved shortly after it happens, and immediately before capture or network work.
-  const saveNow = useCallback(() => {
-    const run = async () => {
-      const { session: s, persisted, durable, submissionLocked, setSaveState, markPersisted } = useStore.getState();
-      if (submissionLocked) {
-        // A failed status read must not turn a failed draft save into permission to exit.
-        if (useStore.getState().saveState === 'error') throw new Error(useStore.getState().saveError || 'The draft has not been saved.');
-        setSaveState('saved'); return; // The durable attempted revision is immutable until reconciliation.
-      }
-      if (!durable && !saveAttempts.current.has(s.id) && !s.images.length && !s.title.trim() && !s.description.trim()) { setSaveState('idle'); return; }
-      saveAttempts.current.add(s.id); // A failed save can have committed metadata before cleanup failed.
-      setSaveState('saving');
-      try {
-        // History shows this protected thumbnail; a failed render only leaves the entry without a picture.
-        const preview = s.images[0] ? await thumbnail(s.images[0]).catch(() => '') : '';
-        await saveSession({ ...s, preview }, persisted); markPersisted(s.id, s.images.map(i => i.id));
-        if (useStore.getState().session.id === s.id) setSaveState(useStore.getState().session === s ? 'saved' : 'saving');
-      } catch (e) { if (useStore.getState().session.id === s.id) setSaveState('error', errorText(e)); throw e; }
-    };
-    const next = saveChain.current.then(run, run); saveChain.current = next.catch(() => undefined); return next;
-  }, []);
-  const flush = useCallback(() => { window.clearTimeout(saveTimer.current); return saveNow(); }, [saveNow]);
-  useEffect(() => {
-    if (!ready) return;
-    // Pending edits are never reported as saved: the status only returns to "saved" after this change is durable.
-    const { session: s, durable, saveState: current, setSaveState } = useStore.getState();
-    if (current === 'saved' && (durable || s.images.length || s.title.trim() || s.description.trim())) setSaveState('saving');
-    window.clearTimeout(saveTimer.current);
-    saveTimer.current = window.setTimeout(() => { saveNow().catch(() => undefined); }, 400);
-    return () => window.clearTimeout(saveTimer.current);
-  }, [session, ready, saveNow]);
-
-  const refreshConnection = useCallback(async () => {
-    if (!desktop) return;
-    setConnectionState('loading');
-    try {
-      const c = await linearConnection(); setConnection(c); setConnectionError(''); setConnectionState('idle');
-      // The issue panel picks the remembered team for drafts without one.
-      const { session: s, patch } = useStore.getState();
-      if (c && !s.issue && s.teamId && !c.teams.some(t => t.id === s.teamId)) patch({ teamId: '', projectId: '', assigneeId: '', labelIds: [] });
-    } catch (e) { setConnection(null); setConnectionError(errorText(e)); setConnectionState('unreachable'); }
-  }, []);
 
   useEffect(() => {
     primeSound();
@@ -226,6 +174,7 @@ export default function App() {
     });
     return () => { void listener.then(unlisten => unlisten()); };
   }, [saveThenExit, notify]);
+  const { update, updating, findUpdate, applyUpdate } = useUpdater({ background: ready && !!status?.updates && settings.autoUpdate, saveThenExit, notify });
 
   useEffect(() => {
     const subs = [
@@ -271,17 +220,17 @@ export default function App() {
   const deleteLocal = useCallback(async (id?: string) => {
     const s = useStore.getState();
     if (s.busy) throw new Error('Wait for the current operation to finish.');
-    s.setBusy(true); window.clearTimeout(saveTimer.current);
+    s.setBusy(true);
     try {
       // Drain old saves before deletion; never flush content back into a deletion tombstone.
-      await saveChain.current;
+      await settle();
       if (id) await deleteSession(id); else await clearHistory();
     } finally {
       if (!id || useStore.getState().session.id === id) useStore.getState().reset();
       else useStore.getState().setBusy(false);
       void appStatus().then(setStatus).catch(() => undefined);
     }
-  }, []);
+  }, [settle]);
 
   const submit = useCallback(async (prepared?: PreparedReport) => {
     const s = useStore.getState();
@@ -334,45 +283,14 @@ export default function App() {
     }
   }, [connection, connectionState, flush, notify, report, updateSettings]);
 
-  const connect = useCallback(async () => {
-    setConnectionState('connecting'); setConnectionError('');
-    try { await connectLinear(); await refreshConnection(); notify('Linear connected.'); play('success'); }
-    catch (e) { setConnectionState('error'); setConnectionError(errorText(e)); }
-  }, [notify, refreshConnection]);
   const disconnect = useCallback(async () => {
-    await disconnectLinear(); setConnection(null); setConnectionState('idle');
+    await signOut();
     setSettings(await loadSettings()); notify('Linear disconnected.');
-  }, [notify]);
+  }, [notify, signOut]);
   const rememberTeam = useCallback((teamId: string) => {
     if (!connection) return;
     updateSettings(v => ({ ...v, teamMemory: { ...v.teamMemory, [connection.workspaceId]: teamId } })).catch(() => undefined);
   }, [connection, updateSettings]);
-
-  // Signed updates: checked quietly in the background, installed only when the user asks.
-  const findUpdate = useCallback(async () => { const found = await checkUpdate(); setUpdate(found); return found; }, []);
-  useEffect(() => {
-    if (!ready || !status?.updates || !settings.autoUpdate) return;
-    const run = () => { void findUpdate().catch(() => undefined); };
-    const first = window.setTimeout(run, 8000); const every = window.setInterval(run, 6 * 60 * 60 * 1000);
-    return () => { window.clearTimeout(first); window.clearInterval(every); };
-  }, [ready, status?.updates, settings.autoUpdate, findUpdate]);
-  /** What the update chip says while an install is running; null otherwise. */
-  const [updating, setUpdating] = useState<string | null>(null);
-  useEffect(() => {
-    const listener = on<{ percent: number | null }>('update-progress', p => setUpdating(p.percent === null ? 'Downloading…' : p.percent < 100 ? `Downloading ${p.percent}%` : 'Installing…'));
-    return () => { void listener.then(unlisten => unlisten()); };
-  }, []);
-  const applyUpdate = useCallback(async () => {
-    setUpdating('Saving your draft…');
-    try {
-      // Same guarantees as Quit: active edits are committed and the draft is saved before the app restarts.
-      await saveThenExit(async saved => { if (saved) await installUpdate(); });
-    } catch (e) {
-      notify(`Update not installed: ${errorText(e)}`, 'error');
-      // Checking again makes the update installable once more, so the chip stays for another try.
-      void findUpdate().catch(() => setUpdate(null));
-    } finally { setUpdating(null); }
-  }, [saveThenExit, notify, findUpdate]);
 
   /** Runs one share action at a time and shows which one is working. */
   const share = useCallback(async (kind: 'copy' | 'save' | 'ai', run: () => Promise<void>) => {
@@ -408,9 +326,6 @@ export default function App() {
       notify(`Cropped to ${next.width} × ${next.height}.`, 'info', { label: 'Undo crop', run: () => { if (useStore.getState().undoStructure(cropKey(next.id))) setZoom('fit'); } }, cropKey(next.id));
     } catch (e) { notify(errorText(e), 'error'); }
   }, [notify]);
-  // An offer to undo leaves once Undo (or anything else) has already taken that change back.
-  const structure = useStore(s => s.structure);
-  useEffect(() => { setToasts(list => list.some(t => t.undoKey && !structure.some(c => c.key === t.undoKey)) ? list.filter(t => !t.undoKey || structure.some(c => c.key === t.undoKey)) : list); }, [structure]);
   /** Saves every flattened screenshot to Pictures/Snipflag and copies their paths with the report text and step notes. */
   const shareForAi = useCallback(() => share('ai', async () => {
     const { session: s } = useStore.getState(); if (!s.images.length) return;
