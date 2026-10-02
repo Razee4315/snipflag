@@ -187,7 +187,7 @@ export async function cropImage(image: CaptureImage, rect: Box): Promise<Capture
   const box = cropBox(image, rect);
   const source = await sourceOf(image);
   const c = canvas(box.width, box.height); c.getContext('2d')!.drawImage(source, -box.x, -box.y);
-  return { ...image, id: crypto.randomUUID(), width: box.width, height: box.height, dataUrl: c.toDataURL('image/png'), annotations: cropAnnotations(image.annotations, box) };
+  return { ...image, id: crypto.randomUUID(), width: box.width, height: box.height, dataUrl: await pngUrl(c), annotations: cropAnnotations(image.annotations, box) };
 }
 /** Authoritative export: original dimensions, flattened pixels, pixelation burned in. */
 export async function flattenedCanvas(image: CaptureImage): Promise<HTMLCanvasElement> {
@@ -197,7 +197,17 @@ export async function flattenedCanvas(image: CaptureImage): Promise<HTMLCanvasEl
   for (const a of paintOrder(image.annotations)) drawAnnotation(ctx, source, a);
   return c;
 }
-export async function flatten(image: CaptureImage): Promise<string> { return (await flattenedCanvas(image)).toDataURL('image/png'); }
+/** PNG data URL of a canvas. Unlike `toDataURL`, the encoding does not hold up the interface. */
+function pngUrl(c: HTMLCanvasElement): Promise<string> {
+  const failed = () => new Error('This image could not be encoded.');
+  return new Promise((resolve, reject) => c.toBlob(blob => {
+    if (!blob) { reject(failed()); return; }
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result)); reader.onerror = () => reject(failed());
+    reader.readAsDataURL(blob);
+  }, 'image/png'));
+}
+export async function flatten(image: CaptureImage): Promise<string> { return pngUrl(await flattenedCanvas(image)); }
 
 const thumbnails = new WeakMap<Annotation[], { source: string; result: Promise<string> }>();
 let thumbnailQueue: Promise<void> = Promise.resolve();
