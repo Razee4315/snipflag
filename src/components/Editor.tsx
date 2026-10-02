@@ -4,14 +4,14 @@ import { Image as KonvaImage, Layer, Line, Rect, Shape, Stage, Transformer } fro
 import { isTyping } from '../desktop';
 import { bounds, duplicate, isMeaningful, snapAngle, snapBox, transform, translate, type Box, type Point } from '../geometry';
 import { arrowHead, clampRect, isFreehand, isOutline, isSegment, nextStep, normalizeRect, stepSize, type Annotation, type CaptureImage } from '../model';
-import { drawAnnotation, FONT_FAMILY, LINE_HEIGHT, paintOrder, paintPixelation, pixelate } from '../render';
+import { contrastText, drawAnnotation, FONT_FAMILY, LINE_HEIGHT, paintOrder, paintPixelation, pixelate, textPlatePad } from '../render';
 import { isLocked, useStore } from '../store';
 
 export type Zoom = number | 'fit';
 interface Props { image: CaptureImage; zoom: Zoom; onZoom: (zoom: Zoom) => void; onScale: (scale: number) => void; onCrop: (rect: Box) => void }
 /** Smallest crop, in image pixels, that is treated as intended. */
 const MIN_CROP = 8;
-interface TextEdit { id: string | null; x: number; y: number; value: string; fontSize: number; color: string }
+interface TextEdit { id: string | null; x: number; y: number; value: string; fontSize: number; color: string; backdrop: boolean }
 
 function useImageElement(src: string) {
   const [img, setImg] = useState<HTMLImageElement | null>(null);
@@ -43,7 +43,7 @@ export function measureText(text: string, fontSize: number) {
 
 export default function Editor({ image, zoom, onZoom, onScale, onCrop }: Props) {
   const tool = useStore(s => s.tool); const color = useStore(s => s.color); const stroke = useStore(s => s.stroke); const fontSize = useStore(s => s.fontSize);
-  const highlightColor = useStore(s => s.highlightColor); const highlightSize = useStore(s => s.highlightSize);
+  const highlightColor = useStore(s => s.highlightColor); const highlightSize = useStore(s => s.highlightSize); const textBackdrop = useStore(s => s.textBackdrop);
   const brush = useRef<HTMLDivElement>(null);
   const selection = useStore(s => s.selection); const locked = useStore(isLocked);
   const { edit, setSelection, removeAnnotation } = useStore.getState();
@@ -155,7 +155,7 @@ export default function Editor({ image, zoom, onZoom, onScale, onCrop }: Props) 
     if (!text.trim()) { if (existing) removeAnnotation(existing.id); return; }
     const m = measureText(text, t.fontSize);
     if (existing) edit(image.annotations.map(a => a.id === existing.id ? { ...a, text, width: m.width, height: m.height } : a));
-    else edit([...image.annotations, { ...base(), kind: 'text', x: t.x, y: t.y, text, fontSize: t.fontSize, color: t.color, width: m.width, height: m.height }]);
+    else edit([...image.annotations, { ...base(), kind: 'text', x: t.x, y: t.y, text, fontSize: t.fontSize, color: t.color, width: m.width, height: m.height, ...(t.backdrop ? { backdrop: true } : {}) }]);
   };
 
   const onDown = (e: Konva.KonvaEventObject<PointerEvent>) => {
@@ -228,7 +228,7 @@ export default function Editor({ image, zoom, onZoom, onScale, onCrop }: Props) 
   };
   const onUp = () => {
     const t = textStart.current; textStart.current = null;
-    if (t && tool === 'text') { setTextEdit({ id: null, x: t.x, y: t.y - fontSize * LINE_HEIGHT / 2, value: '', fontSize, color }); return; }
+    if (t && tool === 'text') { setTextEdit({ id: null, x: t.x, y: t.y - fontSize * LINE_HEIGHT / 2, value: '', fontSize, color, backdrop: textBackdrop }); return; }
     const area = cropRef.current;
     if (area) { setCrop(null); start.current = null; if (area.width >= MIN_CROP && area.height >= MIN_CROP) onCrop(area); return; }
     const d = draftRef.current; start.current = null; penSegment.current = null; setDraft(null);
@@ -283,7 +283,7 @@ export default function Editor({ image, zoom, onZoom, onScale, onCrop }: Props) 
           } else ctx.rect(0, 0, shape.width(), shape.height());
           ctx.closePath(); ctx.fillStrokeShape(shape);
         }}
-        onDblClick={() => { if (a.kind === 'text' && tool === 'select' && !locked) setTextEdit({ id: a.id, x: a.x, y: a.y, value: a.text, fontSize: a.fontSize, color: a.color }); }}
+        onDblClick={() => { if (a.kind === 'text' && tool === 'select' && !locked) setTextEdit({ id: a.id, x: a.x, y: a.y, value: a.text, fontSize: a.fontSize, color: a.color, backdrop: !!a.backdrop }); }}
         onDragStart={() => setSelection(a.id)}
         onDragMove={(e) => {
           // Line up with the image and the other marks; hold Alt to move freely.
@@ -331,6 +331,8 @@ export default function Editor({ image, zoom, onZoom, onScale, onCrop }: Props) 
   };
   const textStyle: CSSProperties | undefined = textEdit ? {
     left: textEdit.x * scale, top: textEdit.y * scale, fontSize: textEdit.fontSize * scale, color: textEdit.color, fontFamily: FONT_FAMILY, lineHeight: LINE_HEIGHT,
+    // The plate is drawn around the box, so typing with it on does not move the letters.
+    ...(textEdit.backdrop ? { background: contrastText(textEdit.color), boxShadow: `0 0 0 ${textPlatePad(textEdit.fontSize) * scale / 2}px ${contrastText(textEdit.color)}` } : {}),
   } : undefined;
 
   return (

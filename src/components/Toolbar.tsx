@@ -35,7 +35,7 @@ const SIZES = [14, 18, 22, 28, 36, 48, 64];
 /** Empty toolbar space moves the window, like a title bar. */
 export default function Toolbar({ onDragWindow }: { onDragWindow?: (e: MouseEvent) => void }) {
   const tool = useStore(s => s.tool); const color = useStore(s => s.color); const stroke = useStore(s => s.stroke); const fontSize = useStore(s => s.fontSize);
-  const highlightColor = useStore(s => s.highlightColor); const highlightSize = useStore(s => s.highlightSize);
+  const highlightColor = useStore(s => s.highlightColor); const highlightSize = useStore(s => s.highlightSize); const textBackdrop = useStore(s => s.textBackdrop);
   const locked = useStore(isLocked); const undoable = useStore(canUndo); const redoable = useStore(canRedo);
   const selected = useStore(s => activeImage(s)?.annotations.find(a => a.id === s.selection));
   const { setTool, setStyle, undo, redo, updateAnnotation, removeAnnotation } = useStore.getState();
@@ -66,6 +66,9 @@ export default function Toolbar({ onDragWindow }: { onDragWindow?: (e: MouseEven
   const showText = tool === 'text' || styled?.kind === 'text';
   const plain = tool === 'pixelate' || tool === 'crop';
   const showWidth = !showText && !plain;
+  // The plate behind text: the selected text's own setting, otherwise the one new text will get.
+  const plate = styled?.kind === 'text' ? !!styled.backdrop : textBackdrop;
+  const togglePlate = () => { setStyle({ textBackdrop: !plate }); if (styled?.kind === 'text') updateAnnotation(styled.id, { backdrop: !plate }); };
   const pick = (hex: string) => {
     setCustom(c => ({ ...c, [set]: saveCustomColor(set, hex, palette.map(p => p.value)) }));
     style({ color: hex }); setPicker(false);
@@ -105,6 +108,10 @@ export default function Toolbar({ onDragWindow }: { onDragWindow?: (e: MouseEven
               </button>
             ))}
           </div>
+        )}
+        {showText && (
+          <button type="button" className={plate ? 'tool active' : 'tool'} aria-pressed={plate} disabled={locked} onClick={togglePlate}
+            aria-label="Background behind text" title="Background behind text, so it stays readable on a busy screenshot"><Icon name="plate" /></button>
         )}
         {showText && (
           <label className="compact-field">

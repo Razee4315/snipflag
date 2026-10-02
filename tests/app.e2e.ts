@@ -736,6 +736,31 @@ test('numbered steps count up per image and ellipses draw', async ({ page }) => 
   expect(badge).toEqual([239, 68, 68, 255]);
 });
 
+test('text can sit on a contrasting plate that is burned into the export', async ({ page }) => {
+  await addImages(page, [white]);
+  await page.keyboard.press('t');
+  await page.getByRole('radio', { name: 'White' }).click();
+  const plate = page.getByRole('button', { name: 'Background behind text' });
+  await expect(plate).toHaveAttribute('aria-pressed', 'false');
+  await plate.click();
+  await expect(plate).toHaveAttribute('aria-pressed', 'true');
+  const box = (await page.getByTestId('canvas').boundingBox())!;
+  const k = box.width / 400;
+  await page.mouse.click(box.x + 40 * k, box.y + 60 * k);
+  await page.getByLabel('Annotation text').fill('Wrong total');
+  await page.keyboard.press('Enter');
+  await expect(tile(page, 1)).toHaveAccessibleName(/1 mark$/);
+  // Just left of the first letter is plate, not paper; far from the text the paper is untouched.
+  const [beside, away] = (await exportPixels(page, [[36, 60], [300, 250]])).pixels;
+  expect(beside[0]).toBeLessThan(90);
+  expect(away).toEqual([255, 255, 255, 255]);
+  // The choice is remembered for the next text and after a restart.
+  await expect(page.getByRole('status', { name: 'Saved on this computer' })).toBeVisible();
+  await page.reload();
+  await page.keyboard.press('t');
+  await expect(page.getByRole('button', { name: 'Background behind text' })).toHaveAttribute('aria-pressed', 'true');
+});
+
 test('custom colors use a themed picker and are remembered', async ({ page }, testInfo) => {
   await addImages(page, [white]);
   await page.keyboard.press('p');

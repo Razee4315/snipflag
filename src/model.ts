@@ -21,6 +21,8 @@ export interface Annotation {
   width: number; height: number; points: number[]; color: string; stroke: number; text: string; fontSize: number;
   /** What a numbered step means. Shared as text; never drawn on the image. */
   note?: string;
+  /** Text only: a plate in the contrasting tone behind the letters, for busy screenshots. */
+  backdrop?: boolean;
 }
 export interface CaptureImage { id: string; name: string; width: number; height: number; dataUrl: string; annotations: Annotation[] }
 export interface IssueResult { id: string; identifier: string; url: string }

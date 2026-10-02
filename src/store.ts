@@ -41,6 +41,8 @@ function renamed(structure: StructureChange[], from: string, to: string): Struct
 export type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 interface State {
   session: Session; activeId: string; tool: Tool; color: string; stroke: number; fontSize: number; highlightColor: string; highlightSize: number;
+  /** New text marks get a plate behind them. */
+  textBackdrop: boolean;
   histories: Record<string, History>; busy: boolean; selection: string | null; saveState: SaveState; saveError: string;
   /** Counts mark edits, undos and redos in this session. */
   edits: number;
@@ -63,7 +65,7 @@ interface State {
   /** Swaps an image for a changed copy with a new identity (crop and its undo). Mentions follow; undo history is `history` or empty. */
   replaceImage: (id: string, next: CaptureImage, history?: History) => void;
   moveImage: (from: number, to: number) => void;
-  setTool: (tool: Tool) => void; setStyle: (style: Partial<Pick<State, 'color' | 'stroke' | 'fontSize' | 'highlightColor' | 'highlightSize'>>) => void;
+  setTool: (tool: Tool) => void; setStyle: (style: Partial<ToolStyle>) => void;
   setBusy: (busy: boolean) => void; setSelection: (id: string | null) => void;
   /** Sets a step's note without an undo entry: notes are text about the image, not marks on it. */
   noteAnnotation: (id: string, note: string) => void;
@@ -72,9 +74,9 @@ interface State {
 }
 const locked = (s: State) => s.busy || s.submissionLocked || !!s.session.issue;
 
-type ToolStyle = Pick<State, 'color' | 'stroke' | 'fontSize' | 'highlightColor' | 'highlightSize'>;
+type ToolStyle = Pick<State, 'color' | 'stroke' | 'fontSize' | 'highlightColor' | 'highlightSize' | 'textBackdrop'>;
 const STYLE_KEY = 'snipflag-tool-style';
-const DEFAULT_STYLE: ToolStyle = { color: '#EF4444', stroke: 8, fontSize: 22, highlightColor: '#FDE047', highlightSize: 24 };
+const DEFAULT_STYLE: ToolStyle = { color: '#EF4444', stroke: 8, fontSize: 22, highlightColor: '#FDE047', highlightSize: 24, textBackdrop: false };
 /** The colors and sizes used last on this device. A convenience: anything missing or unreadable is the default. */
 function loadStyle(): ToolStyle {
   try {
@@ -82,12 +84,12 @@ function loadStyle(): ToolStyle {
     const size = (value: unknown, fallback: number) => typeof value === 'number' && value >= 1 && value <= 400 ? value : fallback;
     return {
       color: normalizeHex(String(saved.color ?? '')) ?? DEFAULT_STYLE.color, stroke: size(saved.stroke, DEFAULT_STYLE.stroke), fontSize: size(saved.fontSize, DEFAULT_STYLE.fontSize),
-      highlightColor: normalizeHex(String(saved.highlightColor ?? '')) ?? DEFAULT_STYLE.highlightColor, highlightSize: size(saved.highlightSize, DEFAULT_STYLE.highlightSize),
+      highlightColor: normalizeHex(String(saved.highlightColor ?? '')) ?? DEFAULT_STYLE.highlightColor, highlightSize: size(saved.highlightSize, DEFAULT_STYLE.highlightSize), textBackdrop: saved.textBackdrop === true,
     };
   } catch { return DEFAULT_STYLE; }
 }
-function saveStyle({ color, stroke, fontSize, highlightColor, highlightSize }: ToolStyle) {
-  try { localStorage.setItem(STYLE_KEY, JSON.stringify({ color, stroke, fontSize, highlightColor, highlightSize })); } catch { /* The style still applies for this run. */ }
+function saveStyle({ color, stroke, fontSize, highlightColor, highlightSize, textBackdrop }: ToolStyle) {
+  try { localStorage.setItem(STYLE_KEY, JSON.stringify({ color, stroke, fontSize, highlightColor, highlightSize, textBackdrop })); } catch { /* The style still applies for this run. */ }
 }
 
 export const useStore = create<State>((set, get) => ({

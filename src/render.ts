@@ -90,6 +90,8 @@ export function paintPixelation(ctx: CanvasRenderingContext2D, pixels: HTMLCanva
   ctx.clearRect(rect.x, rect.y, rect.width, rect.height);
   ctx.drawImage(pixels, rect.x, rect.y);
 }
+/** How far the plate behind a text mark reaches past the letters, in image pixels. */
+export const textPlatePad = (fontSize: number) => fontSize * 0.3;
 /** Black or white, whichever reads better on a badge color. */
 export function contrastText(hex: string) {
   const v = hex.replace('#', ''); const n = parseInt(v.length === 3 ? v.split('').map(c => c + c).join('') : v, 16);
@@ -124,7 +126,14 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, source: CanvasImag
   if (a.kind === 'pixelate' && a.width >= 1 && a.height >= 1) paintPixelation(ctx, pixelate(source, a), a);
   if (a.kind === 'text') {
     ctx.font = `bold ${a.fontSize}px ${FONT_FAMILY}`; ctx.textBaseline = 'middle';
-    a.text.split('\n').forEach((line, i) => ctx.fillText(line, a.x, a.y + (i + 0.5) * a.fontSize * LINE_HEIGHT));
+    const lines = a.text.split('\n');
+    if (a.backdrop) {
+      const pad = textPlatePad(a.fontSize); const width = Math.max(...lines.map(line => ctx.measureText(line).width));
+      ctx.save(); ctx.fillStyle = contrastText(a.color); ctx.globalAlpha = 0.92;
+      ctx.beginPath(); ctx.roundRect(a.x - pad, a.y - pad / 2, width + pad * 2, lines.length * a.fontSize * LINE_HEIGHT + pad, pad); ctx.fill();
+      ctx.restore();
+    }
+    lines.forEach((line, i) => ctx.fillText(line, a.x, a.y + (i + 0.5) * a.fontSize * LINE_HEIGHT));
   }
   if (a.kind === 'highlight' && a.points.length >= 4) {
     ctx.translate(a.x, a.y); ctx.globalAlpha = HIGHLIGHT_ALPHA; ctx.globalCompositeOperation = 'multiply';
