@@ -133,7 +133,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 button { -webkit-tap-highlight-color: transparent; padding: 0; }
 /* Desktop feel: interface chrome is not selectable text; fields and a few values stay selectable. */
 body { user-select: none; -webkit-user-select: none; cursor: default; }
-input, textarea, [contenteditable="true"], .selectable, .sent-id, .sent-title, .error { user-select: text; -webkit-user-select: text; }
+input, textarea, [contenteditable="true"], .sent-id, .sent-title, .error { user-select: text; -webkit-user-select: text; }
 img { -webkit-user-drag: none; }
 button svg { flex-shrink: 0; }
 button:disabled { cursor: not-allowed; }
@@ -179,8 +179,6 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 0.85; 
 }
 .button.primary:hover:not(:disabled) { background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 78%, white), var(--primary)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 10px 22px -8px color-mix(in srgb, var(--primary) 85%, transparent); }
 .button.primary.busy::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.28) 50%, transparent 70%); background-size: 220% 100%; animation: shimmer 1.3s linear infinite; }
-.button.subtle { background: transparent; box-shadow: none; border-color: transparent; color: var(--muted); padding: 0 9px; min-height: 30px; font-size: 12px; }
-.button.subtle:hover:not(:disabled) { background: var(--hover); color: var(--text); transform: none; }
 .button.danger { background: var(--danger); border-color: var(--danger); color: #fff; }
 .button.danger-outline { color: var(--danger); }
 .button.danger-outline:hover:not(:disabled) { border-color: color-mix(in srgb, var(--danger) 50%, transparent); background: color-mix(in srgb, var(--danger) 8%, var(--surface)); }
@@ -432,7 +430,6 @@ option { background: var(--surface); color: var(--text); }
 .size[aria-checked="true"] { background: var(--surface); box-shadow: var(--shadow-sm), 0 0 0 1px color-mix(in srgb, var(--primary) 45%, transparent); }
 .size[aria-checked="true"] i { opacity: 1; }
 .size:disabled { opacity: 0.4; }
-.tool-hint { font-size: 11.5px; color: var(--muted); }
 .color-add { position: relative; display: inline-flex; }
 .swatch-add { display: inline-grid; place-items: center; width: 20px; height: 20px; margin: 1px 2px; border-radius: 50%; border: 1.5px dashed color-mix(in srgb, var(--muted) 60%, transparent);
   background: conic-gradient(from 0deg, #EF4444, #F59E0B, #22C55E, #3B82F6, #A855F7, #EF4444); color: #fff; cursor: pointer; transition: box-shadow 140ms, border-color 140ms; }
