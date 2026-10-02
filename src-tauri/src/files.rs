@@ -40,7 +40,7 @@ pub async fn export_png(window: WebviewWindow, app: AppHandle, data_url: String,
     let picked = app.dialog().file().set_title("Save screenshot").add_filter("PNG image", &["png"]).set_file_name(safe_name(&name)).blocking_save_file();
     let Some(picked) = picked else { return Ok(false) };
     let mut path = picked.into_path().map_err(|_| "Choose a folder on this computer.")?;
-    if path.extension().map_or(true, |e| !e.eq_ignore_ascii_case("png")) { path.set_extension("png"); }
+    if path.extension().is_none_or(|e| !e.eq_ignore_ascii_case("png")) { path.set_extension("png"); }
     std::fs::write(&path, &bytes).map_err(|_| "Could not save the file. Check the folder permissions and free space.")?;
     Ok(true)
 }

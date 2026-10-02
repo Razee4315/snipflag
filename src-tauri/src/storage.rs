@@ -208,7 +208,7 @@ impl Storage {
                 let future = history["future"].as_array().ok_or("Invalid redo history.")?;
                 if past.len() + future.len() > 100 || history.to_string().len() > 2 * 1024 * 1024 { return Err("Annotation history exceeds its limit.".into()); }
                 for snapshot in past.iter().chain(future) {
-                    if snapshot.as_array().map_or(true, |s| s.len() > MAX_ANNOTATIONS) { return Err("Invalid history snapshot.".into()); }
+                    if snapshot.as_array().is_none_or(|s| s.len() > MAX_ANNOTATIONS) { return Err("Invalid history snapshot.".into()); }
                 }
             }
         }
@@ -218,7 +218,7 @@ impl Storage {
         for (index, img) in images.iter().enumerate() {
             let image_id = id(img["id"].as_str().ok_or("Missing image ID.")?)?;
             if !unique.insert(image_id.clone()) { return Err("Duplicate image ID.".into()); }
-            if img["annotations"].as_array().map_or(true, |a| a.len() > MAX_ANNOTATIONS) { return Err("Too many annotations on one image.".into()); }
+            if img["annotations"].as_array().is_none_or(|a| a.len() > MAX_ANNOTATIONS) { return Err("Too many annotations on one image.".into()); }
             if img["name"].as_str().unwrap_or("").len() > 500 { return Err("Image caption is too long.".into()); }
             let path = self.image_path(&session_id, &image_id);
             if !path.exists() {

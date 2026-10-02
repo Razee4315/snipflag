@@ -96,7 +96,7 @@ pub fn bmp(image: &RgbaImage) -> Vec<u8> {
     let raw = image.as_raw();
     for (row, line) in out[54..].chunks_exact_mut(stride).enumerate() {
         let source = &raw[(height - 1 - row) * width * 4..][..width * 4];
-        for (pixel, rgba) in line.chunks_exact_mut(3).zip(source.chunks_exact(4)) { pixel[0] = rgba[2]; pixel[1] = rgba[1]; pixel[2] = rgba[0]; }
+        for (pixel, rgba) in line.as_chunks_mut::<3>().0.iter_mut().zip(source.as_chunks::<4>().0) { pixel[0] = rgba[2]; pixel[1] = rgba[1]; pixel[2] = rgba[0]; }
     }
     out
 }

@@ -192,31 +192,6 @@ fn editor_window(window: WebviewWindow, app: AppHandle, action: String, image_wi
     result.map_err(|_| "Could not update the editor window.".into())
 }
 
-#[cfg(test)]
-mod editor_window_tests {
-    use super::{needs_full_screen, workspace_size};
-    #[test]
-    fn workspace_is_large_on_common_displays() {
-        let (width, height) = workspace_size((1920.0, 1040.0));
-        assert!(width >= 1400.0 && height >= 880.0);
-        assert!(width <= 1896.0 && height <= 1016.0);
-    }
-    #[test]
-    fn only_screenshots_too_large_for_the_workspace_go_full_screen() {
-        assert!(!needs_full_screen((800, 500), 1.0, (1920.0, 1040.0)));
-        assert!(needs_full_screen((1920, 1080), 1.0, (1920.0, 1040.0)));
-        // A full 4K monitor at 200% is 1920 x 1080 logical pixels: too large for the workspace.
-        assert!(needs_full_screen((3840, 2160), 2.0, (1920.0, 1040.0)));
-        assert!(!needs_full_screen((1600, 1000), 2.0, (1920.0, 1040.0)));
-    }
-    #[test]
-    fn workspace_stays_inside_small_work_areas() {
-        let (width, height) = workspace_size((960.0, 520.0));
-        assert!(width < 960.0 && height < 520.0);
-        assert!(width >= 640.0 && height >= 480.0);
-    }
-}
-
 fn build_tray(app: &AppHandle) -> tauri::Result<()> {
     let capture = MenuItem::with_id(app, "capture", "Capture screenshot", true, None::<&str>)?;
     let show = MenuItem::with_id(app, "show", "Open Snipflag", true, None::<&str>)?;
@@ -320,4 +295,29 @@ pub fn run() {
         RunEvent::Reopen { .. } => show_main(app),
         _ => {}
     });
+}
+
+#[cfg(test)]
+mod editor_window_tests {
+    use super::{needs_full_screen, workspace_size};
+    #[test]
+    fn workspace_is_large_on_common_displays() {
+        let (width, height) = workspace_size((1920.0, 1040.0));
+        assert!(width >= 1400.0 && height >= 880.0);
+        assert!(width <= 1896.0 && height <= 1016.0);
+    }
+    #[test]
+    fn only_screenshots_too_large_for_the_workspace_go_full_screen() {
+        assert!(!needs_full_screen((800, 500), 1.0, (1920.0, 1040.0)));
+        assert!(needs_full_screen((1920, 1080), 1.0, (1920.0, 1040.0)));
+        // A full 4K monitor at 200% is 1920 x 1080 logical pixels: too large for the workspace.
+        assert!(needs_full_screen((3840, 2160), 2.0, (1920.0, 1040.0)));
+        assert!(!needs_full_screen((1600, 1000), 2.0, (1920.0, 1040.0)));
+    }
+    #[test]
+    fn workspace_stays_inside_small_work_areas() {
+        let (width, height) = workspace_size((960.0, 520.0));
+        assert!(width < 960.0 && height < 520.0);
+        assert!(width >= 640.0 && height >= 480.0);
+    }
 }
