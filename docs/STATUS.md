@@ -1,5 +1,24 @@
 # Current state / handoff
 
+## Editor overhaul: sharing beyond Linear, canvas, filmstrip, panel, history (owner request) — 2026-10-02
+
+The owner asked for a component-by-component improvement and for Snipflag to be useful outside Linear (mark up, then send to a person or to Claude Code). Implemented in order, each with tests; all at `70e3a9c`:
+- **Share (`1afae5e`):** share bar under the image (Copy image, Copy for AI, Save image). Copy for AI writes every flattened screenshot to `Pictures/Snipflag` (Rust `share_images`, names chosen in Rust) and copies title, description, paths and step notes (`src/share.ts`). Notes on numbered steps (`Annotation.note`, no undo entries) in a list floating over the canvas corner; "Add step notes" appends them to the description. The Linear panel can be hidden (remembered in localStorage) with a view transition (`src/motion.ts`). Ctrl+C copies the image, Ctrl+Shift+C copies for AI.
+- **Canvas (`84a7b7e`, `3ecae24`, `542c6bc`):** crop (new image ID, marks translated, Undo crop in the toast), line tool, Ctrl+wheel zoom toward the pointer, Space/middle-button pan, arrow-key nudge, Ctrl+D duplicate, snap guides while moving marks (Alt to move freely), eased zoom buttons, auto-margin centering so zoomed images scroll to every edge. Strokes capture the pointer, so drawing continues along the edge when the pointer leaves the picture (owner-reported bug).
+- **Filmstrip (`5f93868`, `b605d0d`):** pointer-based drag to reorder (HTML drag-and-drop did not start reliably from a button in CI), tiles glide, "Put back" after remove (restored under a new ID with alias and history), larger thumbnails.
+- **Issue panel and title bar (`87e2d7e`):** label chips with a search-to-add combobox, title/team errors at the field, joined search+select for long lists, visible Saved indicator, maximize toggle (Rust `editor_window` action `maximize`), toolbar and share bar drag the window, rounder dialog close button.
+- **History (`b605d0d`):** protected thumbnail saved with the draft (`preview`, bounded PNG data URL validated in Rust, excluded from report content), search, All/Drafts/Sent.
+- **Optional `saveOnCapture` setting (`3ecae24`), off by default:** writes each raw capture to `Pictures/Snipflag`. The owner questioned the clutter; kept off by default pending their decision to keep or remove it.
+- "Copy for AI" uses a terminal icon at the owner's request (the sparkle was disliked).
+
+Verification: [Checks 36967400869](https://github.com/Razee4315/snipflag/actions/runs/36967400869) **passed** at `70e3a9c` (frontend build, unit tests, 32 browser tests; Rust tests and all-target check on **Windows only**). [Development installers 36967799586](https://github.com/Razee4315/snipflag/actions/runs/36967799586) **passed, Windows only**: [NSIS/MSI](https://github.com/Razee4315/snipflag/actions/runs/36967799586/artifacts/11210439031). Failures on the way were all in new tests (raw mouse input during the panel slide, a toast replacing Undo, an animation wait rejecting on cancel, wrong snap arithmetic, reading storage before the save) except one real change: filmstrip drag was rewritten from HTML drag-and-drop to pointer tracking.
+
+**Not verified (no native run):** Copy for AI file writing and clipboard text, Ctrl+C shortcuts, maximize, window dragging from the toolbar, label picker interaction and field errors (need a connected workspace), pan/zoom feel with a real mouse, view transitions in WebView2, and every capture-overlay item from earlier rounds. macOS/Linux have not been compiled since `c4d9d42`.
+
+**Not built yet (owner wants them):** capture a window with one click, pin a screenshot on screen, drag the image out to other apps (needs a native drag plugin and a regenerated lock file), OCR copy-text (needs the Windows OCR API as a new dependency). Scrolling capture and GIF recording were proposed as later work.
+
+Next: owner tests the Windows artifact; then window capture, pin, drag-out, OCR in that order.
+
 ## Themes, capture options, Windows-only builds (owner requests) — 2026-10-02
 
 - **Build policy (`b5811b3`):** the owner asked that builds stop running for every OS. `ci.yml` native job runs on Windows only unless dispatched with `all_platforms`; `build.yml` has `platforms` (`windows` default, `all`). Use all platforms only when the owner explicitly asks. A release still needs the four-platform installer run, so ask first. The in-progress three-OS Checks 36931783259 was cancelled at the owner's request.
