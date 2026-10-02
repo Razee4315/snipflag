@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
+import { lazy, Suspense, useEffect, useId, useRef, useState, type CSSProperties } from 'react';
 import { FIELD_ERRORS, LIMITS, PRIORITIES, type Connection, type Named, type TeamDefaults, type TeamOptions, type Template } from '../model';
 import { detailsToFill } from '../templates';
 import { copyText, desktop, errorText, openIssue, teamOptions } from '../native';
@@ -7,7 +7,10 @@ import { isLocked, useStore } from '../store';
 import { Icon } from './icons';
 import DescriptionEditor from './DescriptionEditor';
 import LabelPicker from './LabelPicker';
-import ReportPreview, { type PreparedReport } from './ReportPreview';
+import type { PreparedReport } from './ReportPreview';
+
+// The preview and its Markdown reader are loaded when the preview is first opened.
+const ReportPreview = lazy(() => import('./ReportPreview'));
 
 /** `unreachable`: a saved connection exists but Linear (or the credential store) could not be reached. */
 export type ConnectionState = 'idle' | 'loading' | 'connecting' | 'error' | 'unreachable';
@@ -227,8 +230,8 @@ export default function IssuePanel(p: Props) {
           </button>
         </div>
       </footer>
-      {previewing && <ReportPreview connection={p.connection} options={options} onClose={() => setPreviewing(false)}
-        onCreate={report => { setPreviewing(false); p.onSubmit(report); }} />}
+      {previewing && <Suspense fallback={null}><ReportPreview connection={p.connection} options={options} onClose={() => setPreviewing(false)}
+        onCreate={report => { setPreviewing(false); p.onSubmit(report); }} /></Suspense>}
     </aside>
   );
 }

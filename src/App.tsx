@@ -1,11 +1,9 @@
-import { useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
 import EmptyState from './components/EmptyState';
 import Editor, { type Zoom } from './components/Editor';
 import Filmstrip from './components/Filmstrip';
-import HistoryDialog from './components/HistoryDialog';
 import { Icon, Mark } from './components/icons';
 import IssuePanel from './components/IssuePanel';
-import SettingsDialog from './components/SettingsDialog';
 import StepNotes from './components/StepNotes';
 import type { PreparedReport } from './components/ReportPreview';
 import Toasts from './components/Toasts';
@@ -29,6 +27,10 @@ import { useAutosave } from './hooks/useAutosave';
 import { useLinearConnection } from './hooks/useLinearConnection';
 import { useToasts } from './hooks/useToasts';
 import { useUpdater } from './hooks/useUpdater';
+
+// Dialogs are loaded when first opened, so they do not weigh on the editor's start.
+const HistoryDialog = lazy(() => import('./components/HistoryDialog'));
+const SettingsDialog = lazy(() => import('./components/SettingsDialog'));
 
 const PANEL_KEY = 'snipflag-panel';
 /** The session that was open last on this device; only that one is restored at launch. */
@@ -448,13 +450,13 @@ export default function App() {
         onChange={e => { const files = [...(e.target.files ?? [])]; e.target.value = ''; if (files.length) void importFiles(files); }} />
       <Toasts toasts={toasts} onDismiss={dismissToast} />
       {dialog === 'settings' && (
-        <SettingsDialog settings={settings} status={status} connection={connection} connectionState={connectionState} connectionError={connectionError}
+        <Suspense fallback={null}><SettingsDialog settings={settings} status={status} connection={connection} connectionState={connectionState} connectionError={connectionError}
           onSave={async next => { setSettings(await saveSettings(next)); setStatus(await appStatus()); }}
           onConnect={() => void connect()} onCancelConnect={() => void cancelLogin().catch(() => undefined)} onRetryConnection={() => void refreshConnection()} onDisconnect={disconnect}
-          onClearHistory={() => deleteLocal()} onCheckUpdate={findUpdate} onInstallUpdate={() => { setDialog(null); void applyUpdate(); }} onClose={() => setDialog(null)} />
+          onClearHistory={() => deleteLocal()} onCheckUpdate={findUpdate} onInstallUpdate={() => { setDialog(null); void applyUpdate(); }} onClose={() => setDialog(null)} /></Suspense>
       )}
       {dialog === 'history' && (
-        <HistoryDialog currentId={session.id} onOpen={openSession} onClose={() => setDialog(null)} onDelete={deleteLocal} />
+        <Suspense fallback={null}><HistoryDialog currentId={session.id} onOpen={openSession} onClose={() => setDialog(null)} onDelete={deleteLocal} /></Suspense>
       )}
     </div>
   );
