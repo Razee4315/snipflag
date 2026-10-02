@@ -536,9 +536,7 @@ test('the issue panel tucks away and step notes travel with the report', async (
   await page.screenshot({ path: testInfo.outputPath('step-notes.png'), animations: 'disabled' });
   // Notes are text about the image, not marks: typing them adds no undo steps.
   await page.getByRole('button', { name: 'Add step notes' }).click();
-  await expect(page.getByLabel('Description', { exact: true })).toHaveValue('1. Add a second notebook
-2. The total stays at $12
-');
+  await expect(page.getByLabel('Description', { exact: true })).toHaveValue('1. Add a second notebook\n2. The total stays at $12\n');
   await expect(page.getByRole('button', { name: 'Add step notes' })).toHaveCount(0);
   await expect(page.getByRole('status', { name: 'Saved on this computer' })).toBeVisible();
   await page.reload();
