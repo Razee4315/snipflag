@@ -76,7 +76,7 @@ export default function SettingsDialog(p: Props) {
         {p.connection ? (
           <div className="row between">
             <p className="small">Connected to <strong>{p.connection.workspace}</strong> as {p.connection.name}.</p>
-            <button type="button" className="button" onClick={() => p.onDisconnect().catch(e => setError(errorText(e)))}>Disconnect</button>
+            <button type="button" className="button" onClick={() => p.onDisconnect().then(() => setDraft(d => ({ ...d, teamMemory: {}, teamDefaults: {} }))).catch(e => setError(errorText(e)))}>Disconnect</button>
           </div>
         ) : p.connectionState === 'connecting' ? (
           <div className="row between"><p className="small">Waiting for you to approve access in the browser…</p><button type="button" className="button" onClick={p.onCancelConnect}>Cancel</button></div>
