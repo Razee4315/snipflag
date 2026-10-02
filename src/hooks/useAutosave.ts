@@ -4,7 +4,7 @@ import { thumbnail } from '../render';
 import { useStore } from '../store';
 
 /**
- * Durable drafts: every change is saved shortly after it happens. `flush` saves at once (before capture, network
+ * Durable drafts: a new screenshot is saved at once and every other change shortly after it happens. `flush` saves at once (before capture, network
  * work or leaving the session); `settle` cancels the pending save and waits for the ones already running.
  */
 export function useAutosave(ready: boolean) {
@@ -38,10 +38,12 @@ export function useAutosave(ready: boolean) {
   useEffect(() => {
     if (!ready) return;
     // Pending edits are never reported as saved: the status only returns to "saved" after this change is durable.
-    const { session: s, durable, saveState: current, setSaveState } = useStore.getState();
+    const { session: s, durable, persisted, saveState: current, setSaveState } = useStore.getState();
     if (current === 'saved' && (durable || s.images.length || s.title.trim() || s.description.trim())) setSaveState('saving');
     window.clearTimeout(timer.current);
-    timer.current = window.setTimeout(() => { saveNow().catch(() => undefined); }, 400);
+    // A new screenshot is saved at once: its pixels exist nowhere else. Typing and drawing wait for a short pause.
+    const newPixels = s.images.some(i => !persisted.includes(i.id));
+    timer.current = window.setTimeout(() => { saveNow().catch(() => undefined); }, newPixels ? 0 : 400);
     return () => window.clearTimeout(timer.current);
   }, [session, ready, saveNow]);
   return { flush, settle };

@@ -549,6 +549,7 @@ test('the issue panel tucks away and step notes travel with the report', async (
   await expect(panel).toBeHidden();
   await expect(page.getByTestId('canvas')).toBeInViewport();
   await page.screenshot({ path: testInfo.outputPath('workspace-solo.png'), animations: 'disabled' });
+  await expect(page.getByRole('status', { name: 'Saved on this computer' })).toBeVisible();
   await page.reload();
   await expect(page.getByTestId('tile')).toHaveCount(1);
   await expect(panel).toBeHidden();
