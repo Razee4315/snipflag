@@ -17,7 +17,7 @@ import {
 } from './native';
 import type { Box } from './geometry';
 import { cropImage, fileBaseName, flatten, importImage, thumbnail } from './render';
-import { activeImage, isLocked, useStore } from './store';
+import { activeImage, cropKey, isLocked, removalKey, useStore } from './store';
 import { missingImageReferences } from './mentions';
 import { ease, smooth } from './motion';
 import { sharePrompt } from './share';
@@ -351,25 +351,25 @@ export default function App() {
   const scaleNow = useRef(scale); scaleNow.current = scale;
   const stopZoom = useRef<() => void>(() => undefined);
   const zoomTo = useCallback((target: number) => { stopZoom.current(); stopZoom.current = ease(scaleNow.current, target, 150, setZoom); }, []);
-  /** Removes a screenshot; the toast can put it back in the same place with its marks and undo history. */
+  /** Removes a screenshot. The toast or Undo puts it back in the same place with its marks and undo history. */
   const removeImage = useCallback((id: string) => {
     const s = useStore.getState(); const index = s.session.images.findIndex(i => i.id === id); const removed = s.session.images[index];
     if (!removed || isLocked(s)) return;
-    const history = s.histories[id];
     smooth(() => useStore.getState().removeImage(id));
-    notify(`${imageLabel(removed, index)} removed.`, 'info', { label: 'Put back', run: () => smooth(() => useStore.getState().restoreImage(removed, index, history)) });
+    notify(`${imageLabel(removed, index)} removed.`, 'info', { label: 'Put back', run: () => smooth(() => { useStore.getState().undoStructure(removalKey(id)); }) }, removalKey(id));
   }, [notify]);
-  /** Crops the active screenshot. The toast can put the uncropped image and its undo history back. */
+  /** Crops the active screenshot. The toast or Undo puts the uncropped image and its undo history back. */
   const cropActive = useCallback(async (rect: Box) => {
     const s = useStore.getState(); const before = activeImage(s); if (!before || isLocked(s)) return;
-    const history = s.histories[before.id];
     try {
       const next = await cropImage(before, rect);
-      useStore.getState().replaceImage(before.id, next); useStore.getState().setTool('select'); setZoom('fit');
-      // The restored copy gets a new identity too: the original file may already have been cleaned up.
-      notify(`Cropped to ${next.width} × ${next.height}.`, 'info', { label: 'Undo crop', run: () => { useStore.getState().replaceImage(next.id, { ...before, id: crypto.randomUUID() }, history); setZoom('fit'); } });
+      useStore.getState().cropImage(before.id, next); useStore.getState().setTool('select'); setZoom('fit');
+      notify(`Cropped to ${next.width} × ${next.height}.`, 'info', { label: 'Undo crop', run: () => { if (useStore.getState().undoStructure(cropKey(next.id))) setZoom('fit'); } }, cropKey(next.id));
     } catch (e) { notify(errorText(e), 'error'); }
   }, [notify]);
+  // An offer to undo leaves once Undo (or anything else) has already taken that change back.
+  const structure = useStore(s => s.structure);
+  useEffect(() => { setToasts(list => list.some(t => t.undoKey && !structure.some(c => c.key === t.undoKey)) ? list.filter(t => !t.undoKey || structure.some(c => c.key === t.undoKey)) : list); }, [structure]);
   /** Saves every flattened screenshot to Pictures/Snipflag and copies their paths with the report text and step notes. */
   const shareForAi = useCallback(() => share('ai', async () => {
     const { session: s } = useStore.getState(); if (!s.images.length) return;

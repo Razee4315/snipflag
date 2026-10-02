@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Annotation, CaptureImage } from './model';
-import { useStore } from './store';
+import { removalKey, useStore } from './store';
 
 const image = (): CaptureImage => ({ id: crypto.randomUUID(), name: '', width: 10, height: 10, dataUrl: 'data:image/png;base64,AAAA', annotations: [] });
 const mark = (): Annotation => ({ id: crypto.randomUUID(), kind: 'rectangle', x: 1, y: 1, width: 5, height: 5, points: [], color: '#f00', stroke: 3, text: '', fontSize: 22 });
@@ -119,6 +119,42 @@ describe('session store', () => {
     expect(state().session.imageReferences).toEqual({ image1: restored.id, image2: b.id });
     expect(state().histories[restored.id]).toEqual(history);
     expect(state().activeId).toBe(restored.id);
+  });
+  it('undoes a removal, a crop or a reorder first when it is the newest change, then goes back to marks', () => {
+    const [a, b] = [image(), image()];
+    state().addImages([a, b]); state().select(a.id); state().edit([mark()]);
+    state().removeImage(b.id);
+    expect(state().session.images).toHaveLength(1);
+    state().undo();
+    expect(state().session.images).toHaveLength(2);
+    expect(state().session.images[0].annotations).toHaveLength(1);
+    // Nothing structural is left, so the next undo takes back the mark.
+    state().select(a.id); state().undo();
+    expect(state().session.images[0].annotations).toHaveLength(0);
+
+    state().moveImage(0, 1);
+    expect(state().session.images[1].id).toBe(a.id);
+    state().undo();
+    expect(state().session.images[0].id).toBe(a.id);
+
+    const cropped = { ...image(), width: 5, height: 5 };
+    state().cropImage(a.id, cropped);
+    expect(state().session.images[0].width).toBe(5);
+    state().undo();
+    expect(state().session.images[0].width).toBe(10);
+    expect(state().structure).toHaveLength(0);
+  });
+  it('lets a newer mark edit be undone before an older removal, which stays available by key', () => {
+    const [a, b] = [image(), image()];
+    state().addImages([a, b]);
+    state().removeImage(b.id);
+    state().select(a.id); state().edit([mark()]);
+    state().undo();
+    expect(state().session.images).toHaveLength(1);
+    expect(state().session.images[0].annotations).toHaveLength(0);
+    expect(state().undoStructure(removalKey(b.id))).toBe(true);
+    expect(state().session.images).toHaveLength(2);
+    expect(state().undoStructure(removalKey(b.id))).toBe(false);
   });
   it('writes step notes without adding undo entries', () => {
     const a = image(); state().addImages([a]);
