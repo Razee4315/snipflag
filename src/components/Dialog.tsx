@@ -12,6 +12,9 @@ export default function Dialog({ title, onClose, children, footer, wide }: { tit
   }, []);
   return (
     <dialog ref={ref} className={wide ? 'dialog wide' : 'dialog'} aria-labelledby="dialog-title" onCancel={e => { e.preventDefault(); onClose(); }}
+      // The webview closes a dialog itself when Escape is pressed again right after a declined close; follow it.
+      // A dialog that is open again by the time the event arrives was only re-shown, not dismissed.
+      onClose={() => { if (!ref.current?.open) onClose(); }}
       onMouseDown={e => { if (e.target === ref.current) onClose(); }}>
       <div className="dialog-inner">
         <header className="dialog-head">

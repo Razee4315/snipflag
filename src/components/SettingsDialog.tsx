@@ -50,9 +50,9 @@ export default function SettingsDialog(p: Props) {
     return () => apply(savedTheme.current);
   }, [draft.theme]);
   const dirty = JSON.stringify(draft) !== JSON.stringify(p.settings);
-  // Closing with unsaved changes asks first. Asking again (a second Escape) goes back to editing.
+  // Closing with unsaved changes asks first. Closing again while it asks (a second Escape) discards them.
   const [leaving, setLeaving] = useState(false);
-  const requestClose = () => { if (dirty) setLeaving(asking => !asking); else p.onClose(); };
+  const requestClose = () => { if (dirty && !leaving) setLeaving(true); else p.onClose(); };
   const save = async (next = draft) => {
     setError(''); setSaved('');
     const tidy = { ...next, templates: tidyTemplates(next.templates) }; setDraft(tidy);

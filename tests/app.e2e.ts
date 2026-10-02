@@ -495,10 +495,10 @@ test('themes preview at once, revert when not saved, and capture options persist
     await expect(html).toHaveAttribute('data-theme', theme.toLowerCase());
     await page.screenshot({ path: testInfo.outputPath(`theme-${theme.toLowerCase()}-settings.png`), animations: 'disabled' });
   }
-  // Closing with unsaved changes asks first; a second Escape goes back to editing.
+  // Closing with unsaved changes asks first.
   await page.keyboard.press('Escape');
   await expect(dialog.getByRole('alert').filter({ hasText: 'You have unsaved changes.' })).toBeVisible();
-  await page.keyboard.press('Escape');
+  await dialog.getByRole('button', { name: 'Keep editing' }).click();
   await expect(dialog.getByRole('button', { name: 'Save settings' })).toBeVisible();
   // Discarding returns to the saved theme.
   await page.keyboard.press('Escape');
