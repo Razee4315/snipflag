@@ -1,10 +1,14 @@
-import type { MouseEvent } from 'react';
+import { useState, type MouseEvent } from 'react';
 import { desktop } from '../native';
 import { Icon, Mark } from './icons';
 
-interface Props { shortcut: string; onCapture: () => void; onAdd: () => void; onPaste: () => void; onDragWindow: (e: MouseEvent) => void }
+interface Props { shortcut: string; tray: boolean; onCapture: () => void; onAdd: () => void; onPaste: () => void; onDragWindow: (e: MouseEvent) => void }
+const HINT_KEY = 'snipflag-hint-tray';
 
-export default function EmptyState({ shortcut, onCapture, onAdd, onPaste, onDragWindow }: Props) {
+export default function EmptyState({ shortcut, tray, onCapture, onAdd, onPaste, onDragWindow }: Props) {
+  // Shown until dismissed once: where Snipflag goes when its window is closed.
+  const [hint, setHint] = useState(() => { try { return localStorage.getItem(HINT_KEY) !== 'seen'; } catch { return false; } });
+  const dismissHint = () => { setHint(false); try { localStorage.setItem(HINT_KEY, 'seen'); } catch { /* It goes away for this run. */ } };
   return (
     <div className="empty" onMouseDown={onDragWindow}>
       {/* The Snipflag mark on a theme-colored tile inside a quiet selection frame; static by design. */}
@@ -21,6 +25,10 @@ export default function EmptyState({ shortcut, onCapture, onAdd, onPaste, onDrag
         <button type="button" className="button large" onClick={onAdd}><Icon name="image" /> Add images</button>
         <button type="button" className="button large" onClick={onPaste}><Icon name="paste" /> Paste</button>
       </div>
+      {desktop && tray && hint && (
+        <p className="empty-tip small muted">Closing this window keeps Snipflag in the tray, so <kbd>{shortcut}</kbd> keeps working. Quit is in the tray menu.{' '}
+          <button type="button" className="link-button" onClick={dismissHint}>Got it</button></p>
+      )}
     </div>
   );
 }

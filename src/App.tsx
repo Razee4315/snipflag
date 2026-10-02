@@ -513,7 +513,7 @@ export default function App() {
             {flash > 0 && <div key={flash} className="capture-flash" aria-hidden="true" />}
           </>
         ) : (
-          <EmptyState shortcut={shortcutLabel(settings.shortcut)} onCapture={() => void capture()} onAdd={() => fileInput.current?.click()} onPaste={() => void pasteImage()} onDragWindow={dragWindow} />
+          <EmptyState shortcut={shortcutLabel(settings.shortcut)} tray={status?.tray !== false} onCapture={() => void capture()} onAdd={() => fileInput.current?.click()} onPaste={() => void pasteImage()} onDragWindow={dragWindow} />
         )}
         {capturing && <div className="capture-status" role="status"><span className="spinner" aria-hidden="true" /> Adding the capture…</div>}
         {count > 0 && <Filmstrip canCapture={desktop} onCapture={() => void capture()} onAdd={() => fileInput.current?.click()} onRemove={removeImage} />}

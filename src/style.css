@@ -544,6 +544,7 @@ option { background: var(--surface); color: var(--text); }
   background-image: var(--canvas-pattern); background-size: var(--canvas-size); }
 .empty h1 { font-size: 30px; line-height: 1.1; letter-spacing: -0.035em; font-weight: 650; animation: rise 500ms 120ms var(--ease) both; }
 .empty-hint { font-size: 12.5px; color: var(--muted); animation: rise 500ms 180ms var(--ease) both; }
+.empty-tip { max-width: 440px; margin-top: 14px; text-align: center; animation: rise 500ms 300ms var(--ease) both; }
 .empty-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 8px; animation: rise 500ms 240ms var(--ease) both; }
 .hero { position: relative; width: 168px; height: 132px; display: grid; place-items: center; margin-bottom: 12px; animation: rise 520ms var(--ease) both; }
 .hero-frame { position: absolute; inset: 0; border-radius: 26px; border: 1.5px dashed color-mix(in srgb, var(--muted) 45%, transparent);
