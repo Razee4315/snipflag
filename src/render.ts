@@ -20,6 +20,19 @@ export function loadImage(src: string): Promise<HTMLImageElement> {
     const img = new Image(); img.onload = () => resolve(img); img.onerror = () => reject(new Error('This image could not be read.')); img.src = src;
   });
 }
+/** Decoded pixels of the screenshots used most recently, so thumbnails and exports do not decode the same PNG again. */
+const decoded = new Map<string, { dataUrl: string; image: Promise<HTMLImageElement> }>();
+const MAX_DECODED = 3;
+function sourceOf(image: Pick<CaptureImage, 'id' | 'dataUrl'>): Promise<HTMLImageElement> {
+  const hit = decoded.get(image.id);
+  // Re-inserting keeps the most recently used image last.
+  decoded.delete(image.id);
+  const entry = hit && hit.dataUrl === image.dataUrl ? hit : { dataUrl: image.dataUrl, image: loadImage(image.dataUrl) };
+  decoded.set(image.id, entry);
+  entry.image.catch(() => { if (decoded.get(image.id) === entry) decoded.delete(image.id); });
+  for (const oldest of decoded.keys()) { if (decoded.size <= MAX_DECODED) break; decoded.delete(oldest); }
+  return entry.image;
+}
 function canvas(width: number, height: number) {
   const c = document.createElement('canvas'); c.width = width; c.height = height; return c;
 }
@@ -172,13 +185,13 @@ export function cropAnnotations(annotations: Annotation[], box: Box) {
  */
 export async function cropImage(image: CaptureImage, rect: Box): Promise<CaptureImage> {
   const box = cropBox(image, rect);
-  const source = await loadImage(image.dataUrl);
+  const source = await sourceOf(image);
   const c = canvas(box.width, box.height); c.getContext('2d')!.drawImage(source, -box.x, -box.y);
   return { ...image, id: crypto.randomUUID(), width: box.width, height: box.height, dataUrl: c.toDataURL('image/png'), annotations: cropAnnotations(image.annotations, box) };
 }
 /** Authoritative export: original dimensions, flattened pixels, pixelation burned in. */
 export async function flattenedCanvas(image: CaptureImage): Promise<HTMLCanvasElement> {
-  const source = await loadImage(image.dataUrl);
+  const source = await sourceOf(image);
   const c = canvas(image.width, image.height); const ctx = c.getContext('2d')!;
   ctx.drawImage(source, 0, 0);
   for (const a of paintOrder(image.annotations)) drawAnnotation(ctx, source, a);
