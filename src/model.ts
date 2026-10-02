@@ -48,6 +48,8 @@ export interface Settings {
   magnifier: boolean;
   /** Also put every capture on the clipboard. */
   copyOnCapture: boolean;
+  /** Also write every capture, unmarked, to Pictures/Snipflag. */
+  saveOnCapture: boolean;
   /** Seconds to wait before the screen is frozen: 0, 3, 5 or 10. */
   captureDelay: number;
   /** Short synthesized cues for capture, success and failure. */
@@ -70,7 +72,7 @@ export const LIMITS = { images: 10, imageBytes: 20 * 1024 * 1024, sessionBytes: 
 export const PRIORITIES = [
   { value: 0, label: 'No priority' }, { value: 1, label: 'Urgent' }, { value: 2, label: 'High' }, { value: 3, label: 'Medium' }, { value: 4, label: 'Low' },
 ];
-export const defaults: Settings = { clientId: '', shortcut: 'CommandOrControl+Shift+Digit2', theme: 'system', retentionDays: 30, launchAtLogin: false, sounds: true, motion: true, autoUpdate: true, adjustSelection: false, magnifier: false, copyOnCapture: false, captureDelay: 0, teamMemory: {}, templates: null, teamDefaults: {} };
+export const defaults: Settings = { clientId: '', shortcut: 'CommandOrControl+Shift+Digit2', theme: 'system', retentionDays: 30, launchAtLogin: false, sounds: true, motion: true, autoUpdate: true, adjustSelection: false, magnifier: false, copyOnCapture: false, saveOnCapture: false, captureDelay: 0, teamMemory: {}, templates: null, teamDefaults: {} };
 export const REDIRECT_URI = 'http://127.0.0.1:47839/callback';
 
 export function newSession(): Session {

@@ -43,6 +43,18 @@ pub async fn export_png(window: WebviewWindow, app: AppHandle, data_url: String,
     std::fs::write(&path, &bytes).map_err(|_| "Could not save the file. Check the folder permissions and free space.")?;
     Ok(true)
 }
+/// Pictures/Snipflag, created on first use. The only folder Snipflag writes screenshots to without a save dialog.
+fn shared_folder(app: &AppHandle) -> Result<std::path::PathBuf, String> {
+    let folder = app.path().picture_dir().map_err(|_| "Cannot find your Pictures folder.")?.join("Snipflag");
+    std::fs::create_dir_all(&folder).map_err(|_| "Could not create the Snipflag folder in Pictures.")?;
+    Ok(folder)
+}
+/// Writes one new capture (already PNG-encoded) to Pictures/Snipflag and returns its path.
+pub fn save_capture(app: &AppHandle, bytes: &[u8]) -> Result<String, String> {
+    let path = shared_folder(app)?.join(shared_name(now(), 0));
+    std::fs::write(&path, bytes).map_err(|_| "Could not save the capture. Check free disk space.")?;
+    Ok(path.to_string_lossy().into_owned())
+}
 #[derive(serde::Deserialize)]
 pub struct SharedImage { #[serde(rename = "dataUrl")] data_url: String }
 /// File name for a shared copy: sortable, and free of spaces so it pastes cleanly into a terminal.
@@ -53,8 +65,7 @@ pub fn shared_name(millis: u64, index: usize) -> String { format!("snipflag-{mil
 pub async fn share_images(window: WebviewWindow, app: AppHandle, images: Vec<SharedImage>) -> Result<Vec<String>, String> {
     main_only(&window)?;
     if images.is_empty() || images.len() > MAX_IMAGES { return Err("Share between 1 and 10 screenshots.".into()); }
-    let folder = app.path().picture_dir().map_err(|_| "Cannot find your Pictures folder.")?.join("Snipflag");
-    std::fs::create_dir_all(&folder).map_err(|_| "Could not create the Snipflag folder in Pictures.")?;
+    let folder = shared_folder(&app)?;
     let stamp = now();
     let mut paths = Vec::new();
     for (index, image) in images.iter().enumerate() {

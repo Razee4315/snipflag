@@ -9,12 +9,12 @@ pub struct Frame { x: i32, y: i32, width: u32, height: u32, image: Arc<RgbaImage
 pub struct Active { generation: u64, frames: Vec<Frame>, started: Instant, editor: u64, settle: u64, grab: u64, shown: bool, options: Options }
 /// Capture preferences read from settings when a capture starts.
 #[derive(Clone, Copy, Default)]
-struct Options { adjust: bool, magnifier: bool, copy: bool, delay: u64 }
+struct Options { adjust: bool, magnifier: bool, copy: bool, save: bool, delay: u64 }
 impl Options {
     fn read(app: &AppHandle) -> Self {
         let Ok(settings) = app.state::<Storage>().settings() else { return Options::default() };
         let on = |key: &str| settings[key].as_bool().unwrap_or(false);
-        Options { adjust: on("adjustSelection"), magnifier: on("magnifier"), copy: on("copyOnCapture"), delay: settings["captureDelay"].as_u64().unwrap_or(0).min(10) }
+        Options { adjust: on("adjustSelection"), magnifier: on("magnifier"), copy: on("copyOnCapture"), save: on("saveOnCapture"), delay: settings["captureDelay"].as_u64().unwrap_or(0).min(10) }
     }
     /// What an overlay needs to know about a capture.
     fn overlay(&self, generation: u64) -> Value { json!({"generation": generation, "adjust": self.adjust, "magnifier": self.magnifier}) }
@@ -290,23 +290,25 @@ pub fn capture_timing(window: WebviewWindow, app: AppHandle) -> Result<Option<Va
 #[tauri::command]
 pub async fn capture_select(window: WebviewWindow, app: AppHandle, x: f64, y: f64, width: f64, height: f64) -> Result<(), String> {
     let index = overlay_index(&window)?;
-    let (frame, copy) = {
+    let (frame, options) = {
         let state = app.state::<CaptureState>(); let mut guard = state.active.lock().map_err(|_| "Capture is unavailable.")?;
         let mut active = guard.take().ok_or("This capture has ended.")?;
         if index >= active.frames.len() { return Err("This capture has ended.".into()); }
-        (active.frames.swap_remove(index).image, active.options.copy)
+        (active.frames.swap_remove(index).image, active.options)
     };
     finish(&app);
     let handle = app.clone();
     let result = tauri::async_runtime::spawn_blocking(move || -> Result<Value, String> {
         let cropped = crop(&frame, x, y, width, height).ok_or("Select a larger area.")?;
         // `copied` is null unless the setting is on; false tells the editor the copy failed.
-        let copied = copy.then(|| crate::files::copy_image(&handle, &cropped).is_ok());
+        let copied = options.copy.then(|| crate::files::copy_image(&handle, &cropped).is_ok());
         // Fast compression returns to the editor sooner; only an oversized result gets the slower, denser pass.
         let mut bytes = encode_png(&cropped, true)?;
         if bytes.len() > MAX_IMAGE_BYTES { bytes = encode_png(&cropped, false)?; }
         if bytes.len() > MAX_IMAGE_BYTES { return Err("The captured area exceeds 20 MB. Select a smaller area.".to_string()); }
-        Ok(json!({"dataUrl": png_url(&bytes), "width": cropped.width(), "height": cropped.height(), "copied": copied}))
+        // `saved` is null unless the setting is on; false tells the editor the file could not be written.
+        let saved = options.save.then(|| crate::files::save_capture(&handle, &bytes).is_ok());
+        Ok(json!({"dataUrl": png_url(&bytes), "width": cropped.width(), "height": cropped.height(), "copied": copied, "saved": saved}))
     }).await.map_err(|_| "Could not finish the capture.".to_string()).and_then(|r| r);
     match result {
         Ok(payload) => { let _ = app.emit_to("main", "capture-complete", payload); }

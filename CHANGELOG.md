@@ -13,6 +13,8 @@ All notable changes to Snipflag are documented here. The format follows [Keep a 
 - Issue panel: labels are colored chips with a search-to-add field; a missing title or team is reported at that field; long team, project and assignee lists show their search joined to the list.
 - Title bar: a visible Saved indicator, a maximize button (or double-click the bar), and the toolbar and share bar also drag the window.
 - History shows a thumbnail of each session's first screenshot (the flattened one, so pixelated areas stay hidden), with search and All / Drafts / Sent filters.
+- Marks snap to the image's edges and middle and to other marks while you move them, with guide lines (hold Alt to move freely); zoom buttons glide to the new scale.
+- Optional setting: save every capture to Pictures/Snipflag.
 - Notes on numbered steps, written in a list that floats over the canvas; they can be added to the description.
 - The Linear issue panel can be hidden for quick mark-up and sharing; the choice is remembered.
 - Four more themes, each with its own texture: Paper, Blossom, Midnight and Graphite. A picked theme previews at once.

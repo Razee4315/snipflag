@@ -4,7 +4,7 @@
 
 Automated coverage: unit tests for line bounds, duplicate placement, crop rounding and which marks survive a crop, and image replacement in the store; browser test for line export pixels, Shift+Arrow nudge, Ctrl+D, crop dimensions and mark positions, crop Undo, and persistence.
 
-Native gates: Ctrl+wheel keeps the point under the pointer at several zoom levels; Space-drag and middle-drag pan with a real mouse and a touchpad; Space no longer presses a focused toolbar button; every edge of a zoomed-in image is reachable; cropping a 4K capture; crop then Create issue uploads the cropped image and `@image` mentions still resolve.
+Snap guides: unit-tested geometry only. Native gates: guides appear and marks land exactly on the line at several zoom levels, Alt moves freely, guides clear on release; zoom buttons glide and stop cleanly when clicked repeatedly; with Save every capture on, each capture appears in Pictures/Snipflag and a write failure is reported. Ctrl+wheel keeps the point under the pointer at several zoom levels; Space-drag and middle-drag pan with a real mouse and a touchpad; Space no longer presses a focused toolbar button; every edge of a zoomed-in image is reachable; cropping a 4K capture; crop then Create issue uploads the cropped image and `@image` mentions still resolve.
 
 ## History
 

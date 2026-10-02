@@ -61,7 +61,7 @@ fn write_atomic(path: &Path, bytes: &[u8]) -> Result<(), String> {
 
 pub fn default_settings() -> Value {
     // Empty means use this build's public client. Never persist a build default as a user override.
-    json!({"clientId": "", "shortcut": "CommandOrControl+Shift+Digit2", "theme": "system", "retentionDays": 30, "launchAtLogin": false, "sounds": true, "motion": true, "teamMemory": {}, "templates": null, "teamDefaults": {}, "autoUpdate": true, "adjustSelection": false, "magnifier": false, "copyOnCapture": false, "captureDelay": 0})
+    json!({"clientId": "", "shortcut": "CommandOrControl+Shift+Digit2", "theme": "system", "retentionDays": 30, "launchAtLogin": false, "sounds": true, "motion": true, "teamMemory": {}, "templates": null, "teamDefaults": {}, "autoUpdate": true, "adjustSelection": false, "magnifier": false, "copyOnCapture": false, "saveOnCapture": false, "captureDelay": 0})
 }
 /// Returns a complete, validated settings object. Unknown keys are dropped.
 pub fn normalize_settings(input: &Value) -> Result<Value, String> {
@@ -89,7 +89,7 @@ pub fn normalize_settings(input: &Value) -> Result<Value, String> {
     if let Some(v) = input.get("sounds") { out["sounds"] = json!(v.as_bool().ok_or("Invalid sound setting.")?); }
     if let Some(v) = input.get("motion") { out["motion"] = json!(v.as_bool().ok_or("Invalid animation setting.")?); }
     if let Some(v) = input.get("autoUpdate") { out["autoUpdate"] = json!(v.as_bool().ok_or("Invalid update setting.")?); }
-    for key in ["adjustSelection", "magnifier", "copyOnCapture"] {
+    for key in ["adjustSelection", "magnifier", "copyOnCapture", "saveOnCapture"] {
         if let Some(v) = input.get(key) { out[key] = json!(v.as_bool().ok_or("Invalid capture setting.")?); }
     }
     if let Some(v) = input.get("captureDelay") {
@@ -507,6 +507,8 @@ mod tests {
         assert_eq!(capture["adjustSelection"], json!(true));
         assert_eq!(capture["magnifier"], json!(false));
         assert_eq!(capture["copyOnCapture"], json!(false));
+        assert_eq!(capture["saveOnCapture"], json!(false));
+        assert_eq!(normalize_settings(&json!({"saveOnCapture":true})).unwrap()["saveOnCapture"], json!(true));
         assert_eq!(capture["captureDelay"], json!(3));
         assert!(normalize_settings(&json!({"captureDelay":4})).is_err());
         assert!(normalize_settings(&json!({"magnifier":"yes"})).is_err());

@@ -56,6 +56,24 @@ export function duplicate(a: Annotation, size: { width: number; height: number }
   const dx = box.x + box.width + 16 <= size.width ? 16 : -16; const dy = box.y + box.height + 16 <= size.height ? 16 : -16;
   return { ...translate(a, dx, dy), id: crypto.randomUUID(), points: [...a.points] };
 }
+export interface Snap { dx: number; dy: number; x: number | null; y: number | null }
+/**
+ * Nudges a moving box so one of its edges or its middle lines up with the image's edges or middle, or with
+ * another mark's, when it is within `threshold`. `x`/`y` are the guide lines to draw, or null.
+ */
+export function snapBox(box: Box, others: Box[], size: { width: number; height: number }, threshold: number): Snap {
+  const axis = (start: number, length: number, targets: number[]) => {
+    let best: { delta: number; line: number } | null = null;
+    for (const target of targets) for (const edge of [start, start + length / 2, start + length]) {
+      const delta = target - edge;
+      if (Math.abs(delta) <= threshold && (!best || Math.abs(delta) < Math.abs(best.delta))) best = { delta, line: target };
+    }
+    return best;
+  };
+  const x = axis(box.x, box.width, [0, size.width / 2, size.width, ...others.flatMap(o => [o.x, o.x + o.width / 2, o.x + o.width])]);
+  const y = axis(box.y, box.height, [0, size.height / 2, size.height, ...others.flatMap(o => [o.y, o.y + o.height / 2, o.y + o.height])]);
+  return { dx: x?.delta ?? 0, dy: y?.delta ?? 0, x: x?.line ?? null, y: y?.line ?? null };
+}
 /** Whether a finished drag produced something worth keeping. */
 export function isMeaningful(a: Annotation): boolean {
   if (a.kind === 'text') return a.text.trim().length > 0;

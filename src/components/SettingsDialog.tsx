@@ -178,6 +178,11 @@ export default function SettingsDialog(p: Props) {
           Copy every capture to the clipboard
         </label>
         <small className="muted">The capture still opens in the editor; the unmarked image is also ready to paste elsewhere.</small>
+        <label className="check switch">
+          <input type="checkbox" role="switch" checked={draft.saveOnCapture} onChange={e => setDraft({ ...draft, saveOnCapture: e.target.checked })} />
+          Save every capture to Pictures/Snipflag
+        </label>
+        <small className="muted">A PNG of each capture as taken, before any marks. These files stay until you delete them.</small>
         <label className="field">
           <span>Delay before the screen is frozen</span>
           <select value={draft.captureDelay} onChange={e => setDraft({ ...draft, captureDelay: Number(e.target.value) })}>

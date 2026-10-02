@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bounds, duplicate, intersects, isMeaningful, snapAngle, transform, translate } from './geometry';
+import { bounds, duplicate, intersects, isMeaningful, snapAngle, snapBox, transform, translate } from './geometry';
 import { cropAnnotations, cropBox } from './render';
 import type { Annotation } from './model';
 
@@ -51,6 +51,16 @@ describe('geometry', () => {
     expect(copy).toMatchObject({ x: 26, y: 26, width: 20, height: 10 });
     expect(copy.id).not.toBe('a');
     expect(duplicate(a({ x: 375, y: 285 }), { width: 400, height: 300 })).toMatchObject({ x: 359, y: 269 });
+  });
+  it('snaps a moving box to the image middle and to other marks, nearest line first, and leaves it alone when far', () => {
+    const size = { width: 400, height: 300 };
+    // The box's middle (197 + 10) is 7 from the image middle: too far at threshold 6, close enough at 8.
+    expect(snapBox({ x: 187, y: 100, width: 20, height: 10 }, [], size, 6)).toEqual({ dx: 0, dy: 0, x: null, y: null });
+    expect(snapBox({ x: 195, y: 100, width: 20, height: 10 }, [], size, 6)).toEqual({ dx: -5, dy: 0, x: 200, y: null });
+    // Left edge lines up with another mark's left edge; top stays free.
+    expect(snapBox({ x: 52, y: 40, width: 30, height: 10 }, [{ x: 50, y: 200, width: 80, height: 20 }], size, 6)).toMatchObject({ dx: -2, x: 50, dy: 0, y: null });
+    // Bottom edge to the image bottom.
+    expect(snapBox({ x: 90, y: 287, width: 30, height: 10 }, [], size, 6)).toMatchObject({ dy: 3, y: 300 });
   });
   it('crops to whole pixels inside the image and keeps only the marks that still show', () => {
     expect(cropBox({ width: 400, height: 300 }, { x: 10.6, y: 20.2, width: 100.1, height: 50 })).toEqual({ x: 10, y: 20, width: 101, height: 51 });

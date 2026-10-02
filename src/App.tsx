@@ -18,7 +18,7 @@ import type { Box } from './geometry';
 import { cropImage, fileBaseName, flatten, importImage, thumbnail } from './render';
 import { activeImage, isLocked, useStore } from './store';
 import { missingImageReferences } from './mentions';
-import { smooth } from './motion';
+import { ease, smooth } from './motion';
 import { sharePrompt } from './share';
 import { play, primeSound, setSoundEnabled } from './sound';
 import { saveBeforeQuit } from './lifecycle';
@@ -192,12 +192,13 @@ export default function App() {
   useEffect(() => {
     const subs = [
       on('capture-requested', () => { void captureRef.current(); }),
-      on<RawImage & { copied?: boolean | null }>('capture-complete', p => {
+      on<RawImage & { copied?: boolean | null; saved?: boolean | null }>('capture-complete', p => {
         useStore.getState().setBusy(false);
         if (addImages([{ id: crypto.randomUUID(), name: '', width: p.width, height: p.height, dataUrl: p.dataUrl, annotations: [] }])) {
           play('capture'); setFlash(f => f + 1);
           if (p.copied) notify('Capture copied to the clipboard.');
           else if (p.copied === false) notify('The capture was added, but it could not be copied to the clipboard.', 'error');
+          if (p.saved === false) notify('The capture was added, but it could not be saved to Pictures/Snipflag.', 'error');
         }
       }),
       on('capture-cancelled', () => useStore.getState().setBusy(false)),
@@ -326,6 +327,10 @@ export default function App() {
     } catch (e) { notify(errorText(e), 'error'); }
   }, [notify]);
 
+  // Zoom buttons glide to the new scale instead of jumping.
+  const scaleNow = useRef(scale); scaleNow.current = scale;
+  const stopZoom = useRef<() => void>(() => undefined);
+  const zoomTo = useCallback((target: number) => { stopZoom.current(); stopZoom.current = ease(scaleNow.current, target, 150, setZoom); }, []);
   /** Removes a screenshot; the toast can put it back in the same place with its marks and undo history. */
   const removeImage = useCallback((id: string) => {
     const s = useStore.getState(); const index = s.session.images.findIndex(i => i.id === id); const removed = s.session.images[index];
@@ -435,9 +440,9 @@ export default function App() {
               </label>
               <span className="dims">{image.width} × {image.height}</span>
               <div className="zoom" role="group" aria-label="Zoom">
-                <button type="button" className="tool" aria-label="Zoom out" title="Zoom out" onClick={() => setZoom(Math.max(0.1, scale / 1.25))}><Icon name="zoomOut" /></button>
-                <button type="button" className="zoom-value" aria-label="Actual size" title="Actual size (100%)" onClick={() => setZoom(1)}>{Math.round(scale * 100)}%</button>
-                <button type="button" className="tool" aria-label="Zoom in" title="Zoom in" onClick={() => setZoom(Math.min(8, scale * 1.25))}><Icon name="zoomIn" /></button>
+                <button type="button" className="tool" aria-label="Zoom out" title="Zoom out" onClick={() => zoomTo(Math.max(0.1, scale / 1.25))}><Icon name="zoomOut" /></button>
+                <button type="button" className="zoom-value" aria-label="Actual size" title="Actual size (100%)" onClick={() => zoomTo(1)}>{Math.round(scale * 100)}%</button>
+                <button type="button" className="tool" aria-label="Zoom in" title="Zoom in" onClick={() => zoomTo(Math.min(8, scale * 1.25))}><Icon name="zoomIn" /></button>
                 <button type="button" className={zoom === 'fit' ? 'tool active' : 'tool'} aria-label="Fit to window" title="Fit to window" onClick={() => setZoom('fit')}><Icon name="fit" /></button>
               </div>
             </div>

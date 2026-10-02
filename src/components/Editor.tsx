@@ -1,7 +1,7 @@
 import Konva from 'konva';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from 'react';
-import { Image as KonvaImage, Layer, Rect, Shape, Stage, Transformer } from 'react-konva';
-import { bounds, duplicate, isMeaningful, snapAngle, transform, translate, type Box, type Point } from '../geometry';
+import { Image as KonvaImage, Layer, Line, Rect, Shape, Stage, Transformer } from 'react-konva';
+import { bounds, duplicate, isMeaningful, snapAngle, snapBox, transform, translate, type Box, type Point } from '../geometry';
 import { clampRect, isFreehand, isOutline, isSegment, nextStep, normalizeRect, stepSize, type Annotation, type CaptureImage } from '../model';
 import { drawAnnotation, FONT_FAMILY, LINE_HEIGHT, paintOrder, paintPixelation, pixelate } from '../render';
 import { isLocked, useStore } from '../store';
@@ -70,6 +70,8 @@ export default function Editor({ image, zoom, onZoom, onScale, onCrop }: Props) 
   const start = useRef<{ x: number; y: number } | null>(null);
   const textStart = useRef<{ x: number; y: number } | null>(null);
   const pixelCache = useRef(new Map<string, HTMLCanvasElement>());
+  /** Alignment lines shown while a mark is dragged, in image pixels. */
+  const [guides, setGuides] = useState<{ x: number | null; y: number | null } | null>(null);
   const [crop, setCropState] = useState<Box | null>(null);
   const cropRef = useRef<Box | null>(null);
   const setCrop = (value: Box | null) => { cropRef.current = value; setCropState(value); };
@@ -261,7 +263,15 @@ export default function Editor({ image, zoom, onZoom, onScale, onCrop }: Props) 
         hitFunc={(ctx, shape) => { ctx.beginPath(); ctx.rect(0, 0, shape.width(), shape.height()); ctx.closePath(); ctx.fillStrokeShape(shape); }}
         onDblClick={() => { if (a.kind === 'text' && tool === 'select' && !locked) setTextEdit({ id: a.id, x: a.x, y: a.y, value: a.text, fontSize: a.fontSize, color: a.color }); }}
         onDragStart={() => setSelection(a.id)}
-        onDragEnd={(e) => { const n = e.target; edit(image.annotations.map(x => x.id === a.id ? translate(x, n.x() - box.x, n.y() - box.y) : x)); }}
+        onDragMove={(e) => {
+          // Line up with the image and the other marks; hold Alt to move freely.
+          if (e.evt.altKey) { setGuides(null); return; }
+          const n = e.target;
+          const snap = snapBox({ x: n.x(), y: n.y(), width: box.width, height: box.height }, image.annotations.filter(x => x.id !== a.id).map(bounds), image, 6 / scale);
+          n.position({ x: n.x() + snap.dx, y: n.y() + snap.dy });
+          setGuides(snap.x === null && snap.y === null ? null : { x: snap.x, y: snap.y });
+        }}
+        onDragEnd={(e) => { setGuides(null); const n = e.target; edit(image.annotations.map(x => x.id === a.id ? translate(x, n.x() - box.x, n.y() - box.y) : x)); }}
         onTransformEnd={(e) => {
           const n = e.target; const sx = n.scaleX(), sy = n.scaleY(); n.scale({ x: 1, y: 1 });
           const next = transform(a, { x: n.x(), y: n.y(), width: box.width * sx, height: box.height * sy }, sx, sy);
@@ -313,6 +323,8 @@ export default function Editor({ image, zoom, onZoom, onScale, onCrop }: Props) 
             {source && <KonvaImage image={source} width={image.width} height={image.height} listening={false} />}
             {ordered.map(a => renderShape(a, true))}
             {draft && renderShape(draft, false)}
+            {guides && guides.x !== null && <Line points={[guides.x, 0, guides.x, image.height]} stroke="#14B8A6" strokeWidth={1 / scale} dash={[4 / scale, 4 / scale]} listening={false} />}
+            {guides && guides.y !== null && <Line points={[0, guides.y, image.width, guides.y]} stroke="#14B8A6" strokeWidth={1 / scale} dash={[4 / scale, 4 / scale]} listening={false} />}
             {crop && [
               // Everything outside the crop is dimmed.
               { x: 0, y: 0, width: image.width, height: crop.y }, { x: 0, y: crop.y + crop.height, width: image.width, height: image.height - crop.y - crop.height },
