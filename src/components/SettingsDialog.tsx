@@ -221,9 +221,9 @@ export default function SettingsDialog(p: Props) {
       </section>
 
       <section className="settings-section" hidden={section !== 'Privacy'}><h3>Privacy</h3><div className="privacy-card"><strong>Only shared when you choose Create issue.</strong><p className="small muted">Use Pixelate (B) to hide private details before sending. Pixelated areas are burned into the uploaded image.</p></div>
-        <p className="small muted">Drafts and their screenshots are stored only on this computer, unencrypted in the app data folder.</p>
+        <p className="small muted">Drafts and their screenshots are stored only on this computer, unencrypted in the app data folder. Old sessions are removed whether they were sent or not.</p>
         <label className="field">
-          <span>Delete drafts not opened for</span>
+          <span>Delete sessions not opened for</span>
           <select value={draft.retentionDays} onChange={e => setDraft({ ...draft, retentionDays: Number(e.target.value) })}>
             {RETENTION.map(r => <option key={r.v} value={r.v}>{r.l}</option>)}
           </select>

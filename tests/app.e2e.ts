@@ -391,7 +391,7 @@ test('settings keep unsaved preferences when switching sections', async ({ page 
   await dialog.getByText('Advanced: custom Linear application', { exact: true }).click();
   await dialog.getByLabel('Linear OAuth client ID').fill('public-client-id');
   await dialog.getByRole('button', { name: 'Privacy', exact: true }).click();
-  await dialog.getByLabel('Delete drafts not opened for').selectOption('90');
+  await dialog.getByLabel('Delete sessions not opened for').selectOption('90');
   await dialog.getByRole('button', { name: 'Connection', exact: true }).click();
   await expect(dialog.getByLabel('Linear OAuth client ID')).toHaveValue('public-client-id');
   await dialog.getByRole('button', { name: 'Save settings' }).click();
@@ -399,7 +399,7 @@ test('settings keep unsaved preferences when switching sections', async ({ page 
   await page.keyboard.press('Escape');
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
   await dialog.getByRole('button', { name: 'Privacy', exact: true }).click();
-  await expect(dialog.getByLabel('Delete drafts not opened for')).toHaveValue('90');
+  await expect(dialog.getByLabel('Delete sessions not opened for')).toHaveValue('90');
 });
 
 test('Shift constrains arrows and pen strokes and makes rectangles square', async ({ page }) => {
