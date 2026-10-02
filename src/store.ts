@@ -3,11 +3,21 @@ import { ensureImageReferences } from './mentions';
 import { estimateBytes, LIMITS, newSession, reorder, type Annotation, type AnnotationHistory, type CaptureImage, type IssueResult, type Session, type Tool } from './model';
 
 type History = AnnotationHistory;
+const snapshotSizes = new WeakMap<Annotation[], number>();
+/** Serialized size of one undo snapshot. Snapshots are never changed in place, so each is measured once. */
+function snapshotSize(snapshot: Annotation[]) {
+  let size = snapshotSizes.get(snapshot);
+  if (size === undefined) { size = JSON.stringify(snapshot).length + 1; snapshotSizes.set(snapshot, size); }
+  return size;
+}
 /** Keep recent history within 100 operations and 512 KiB per image. */
 function boundedHistory(history: History): History {
   const past = history.past.slice(-100), future = history.future.slice(0, 100);
-  while (past.length + future.length > 100 || JSON.stringify({ past, future }).length > 512 * 1024) {
-    if (past.length) past.shift(); else if (future.length) future.pop(); else break;
+  let size = [...past, ...future].reduce((sum, snapshot) => sum + snapshotSize(snapshot), 0);
+  while (past.length + future.length > 100 || size > 512 * 1024) {
+    const dropped = past.length ? past.shift() : future.pop();
+    if (!dropped) break;
+    size -= snapshotSize(dropped);
   }
   return { past, future };
 }
