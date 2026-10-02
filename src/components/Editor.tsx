@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperti
 import { Image as KonvaImage, Layer, Line, Rect, Shape, Stage, Transformer } from 'react-konva';
 import { isTyping } from '../desktop';
 import { bounds, duplicate, isMeaningful, snapAngle, snapBox, transform, translate, type Box, type Point } from '../geometry';
-import { clampRect, isFreehand, isOutline, isSegment, nextStep, normalizeRect, stepSize, type Annotation, type CaptureImage } from '../model';
+import { arrowHead, clampRect, isFreehand, isOutline, isSegment, nextStep, normalizeRect, stepSize, type Annotation, type CaptureImage } from '../model';
 import { drawAnnotation, FONT_FAMILY, LINE_HEIGHT, paintOrder, paintPixelation, pixelate } from '../render';
 import { isLocked, useStore } from '../store';
 
@@ -263,7 +263,26 @@ export default function Editor({ image, zoom, onZoom, onScale, onCrop }: Props) 
           } else if (source) drawAnnotation(native, source, a);
           native.restore();
         }}
-        hitFunc={(ctx, shape) => { ctx.beginPath(); ctx.rect(0, 0, shape.width(), shape.height()); ctx.closePath(); ctx.fillStrokeShape(shape); }}
+        hitFunc={(ctx, shape) => {
+          ctx.beginPath();
+          if ((isSegment(a.kind) || isFreehand(a.kind)) && a.points.length >= 4) {
+            // Lines and strokes are picked on their ink (at least 16 screen pixels wide), not anywhere in their box,
+            // so a long arrow does not block the marks around it. Every piece winds the same way, so overlaps add up.
+            const half = Math.max(a.stroke / 2, a.kind === 'arrow' ? arrowHead(a.stroke) / 2 : 0, 8 / scale);
+            const ox = a.x - box.x, oy = a.y - box.y; const p = a.points;
+            const dot = (x: number, y: number) => { ctx.moveTo(x + half, y); ctx.arc(x, y, half, 0, Math.PI * 2, false); };
+            dot(ox + p[0], oy + p[1]);
+            for (let i = 0; i + 3 < p.length; i += 2) {
+              const x0 = ox + p[i], y0 = oy + p[i + 1], x1 = ox + p[i + 2], y1 = oy + p[i + 3];
+              const length = Math.hypot(x1 - x0, y1 - y0);
+              if (!length) continue;
+              const nx = (y0 - y1) / length * half, ny = (x1 - x0) / length * half;
+              ctx.moveTo(x0 - nx, y0 - ny); ctx.lineTo(x1 - nx, y1 - ny); ctx.lineTo(x1 + nx, y1 + ny); ctx.lineTo(x0 + nx, y0 + ny); ctx.closePath();
+              dot(x1, y1);
+            }
+          } else ctx.rect(0, 0, shape.width(), shape.height());
+          ctx.closePath(); ctx.fillStrokeShape(shape);
+        }}
         onDblClick={() => { if (a.kind === 'text' && tool === 'select' && !locked) setTextEdit({ id: a.id, x: a.x, y: a.y, value: a.text, fontSize: a.fontSize, color: a.color }); }}
         onDragStart={() => setSelection(a.id)}
         onDragMove={(e) => {
