@@ -21,7 +21,7 @@ The owner approved the audit ([AUDIT-2026-10-02.md](AUDIT-2026-10-02.md), made f
 - C-09 (typed Rust models), O-12 (binary IPC), O-11 (separate overlay stylesheet), the rest of O-02/O-04/O-07/O-08 (thumbnail without a full flatten, raw clipboard pixels, history in its own column, History summary columns): larger or schema-changing; not started.
 - C-10 ESLint: needs new dev dependencies and a regenerated lock file, and will report many existing patterns. C-14 and C-15: local or optional.
 
-**Verification (Windows only, per the build rule):** CHECKS_PLACEHOLDER
+**Verification (Windows only, per the build rule):** [Checks 37014449208](https://github.com/Razee4315/snipflag/actions/runs/37014449208) **passed** at `a8d34bc`: strict typecheck and production frontend build, 64 unit tests, 33 browser tests; on Windows 38 Rust tests, the all-target check and `cargo clippy -D warnings`. [Development installers 37014454074](https://github.com/Razee4315/snipflag/actions/runs/37014454074) **passed, Windows only**, at the same commit: [NSIS/MSI](https://github.com/Razee4315/snipflag/actions/runs/37014454074/artifacts/11229227713), version 1.3.0, 7-day retention. Later commits on the branch change documentation only. Earlier runs on the branch: 37009588189 (Phase 1, green), 37010808748, 37011246338, 37011496158 and 37012554160 (failures described below), 37013407771 (green).
 
 Failures on the way, all fixed at the root: a CSS rule broken by a scripted edit (production build failed); two new browser tests that acted before the reloaded app was ready or before the draft was saved; six clippy findings in existing code (`is_none_or`, `as_chunks`, a test module moved to the end of `lib.rs`).
 
