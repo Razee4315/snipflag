@@ -49,6 +49,9 @@ export default function App() {
   const [ready, setReady] = useState(false);
   const [flash, setFlash] = useState(0);
   const [update, setUpdate] = useState<AvailableUpdate | null>(null);
+  /** The share action in progress; its button says so and the others wait. */
+  const [sharing, setSharing] = useState<'copy' | 'save' | 'ai' | null>(null);
+  const sharingNow = useRef(false);
   // The issue panel can be tucked away for quick mark-up-and-share work; the choice is remembered on this device.
   const [panelOpen, setPanelOpen] = useState(() => { try { return localStorage.getItem(PANEL_KEY) !== 'closed'; } catch { return true; } });
   const showPanel = useCallback((open: boolean) => {
@@ -321,14 +324,19 @@ export default function App() {
     } catch (e) { setUpdate(null); notify(`Update not installed: ${errorText(e)}`, 'error'); }
   }, [flush, notify]);
 
-  const exportActive = useCallback(async (clipboard: boolean) => {
+  /** Runs one share action at a time and shows which one is working. */
+  const share = useCallback(async (kind: 'copy' | 'save' | 'ai', run: () => Promise<void>) => {
+    if (sharingNow.current) return;
+    sharingNow.current = true; setSharing(kind);
+    try { await run(); } catch (e) { notify(errorText(e), 'error'); }
+    finally { sharingNow.current = false; setSharing(null); }
+  }, [notify]);
+  const exportActive = useCallback((clipboard: boolean) => share(clipboard ? 'copy' : 'save', async () => {
     const s = useStore.getState(); const img = activeImage(s); if (!img) return;
     const index = s.session.images.indexOf(img);
-    try {
-      const ok = await exportPng(await flatten(img), imageLabel(img, index), clipboard);
-      if (ok) notify(clipboard ? 'Image copied to the clipboard.' : 'Image saved.');
-    } catch (e) { notify(errorText(e), 'error'); }
-  }, [notify]);
+    const ok = await exportPng(await flatten(img), imageLabel(img, index), clipboard);
+    if (ok) notify(clipboard ? 'Image copied to the clipboard.' : 'Image saved.');
+  }), [notify, share]);
 
   // Zoom buttons glide to the new scale instead of jumping.
   const scaleNow = useRef(scale); scaleNow.current = scale;
@@ -354,16 +362,14 @@ export default function App() {
     } catch (e) { notify(errorText(e), 'error'); }
   }, [notify]);
   /** Saves every flattened screenshot to Pictures/Snipflag and copies their paths with the report text and step notes. */
-  const shareForAi = useCallback(async () => {
+  const shareForAi = useCallback(() => share('ai', async () => {
     const { session: s } = useStore.getState(); if (!s.images.length) return;
-    try {
-      const images: { dataUrl: string }[] = [];
-      for (const img of s.images) images.push({ dataUrl: await flatten(img) });
-      const paths = await shareImages(images);
-      await copyText(sharePrompt(s, paths));
-      notify(`${paths.length === 1 ? 'Screenshot' : `${paths.length} screenshots`} saved to Pictures/Snipflag. Paths and notes are on the clipboard.`);
-    } catch (e) { notify(errorText(e), 'error'); }
-  }, [notify]);
+    const images: { dataUrl: string }[] = [];
+    for (const img of s.images) images.push({ dataUrl: await flatten(img) });
+    const paths = await shareImages(images);
+    await copyText(sharePrompt(s, paths));
+    notify(`${paths.length === 1 ? 'Screenshot' : `${paths.length} screenshots`} saved to Pictures/Snipflag. Paths and notes are on the clipboard.`);
+  }), [notify, share]);
 
   // Keyboard: tool keys, undo/redo, submit, paste.
   useEffect(() => {
@@ -452,9 +458,9 @@ export default function App() {
               </div>
             </div>
             <div className="share" role="group" aria-label="Share this screenshot" onMouseDown={dragWindow}>
-              <button type="button" className="button primary" onClick={() => void exportActive(true)}><Icon name="copy" size={16} /> Copy image</button>
-              <button type="button" className="button" disabled={!desktop} onClick={() => void shareForAi()}><Icon name="terminal" size={16} /> Copy for AI</button>
-              <button type="button" className="button" onClick={() => void exportActive(false)}><Icon name="save" size={16} /> Save image</button>
+              <button type="button" className="button primary" disabled={!!sharing} onClick={() => void exportActive(true)}><Icon name="copy" size={16} /> {sharing === 'copy' ? 'Copying…' : 'Copy image'}</button>
+              <button type="button" className="button" disabled={!desktop || !!sharing} onClick={() => void shareForAi()}><Icon name="terminal" size={16} /> {sharing === 'ai' ? 'Saving copies…' : 'Copy for AI'}</button>
+              <button type="button" className="button" disabled={!!sharing} onClick={() => void exportActive(false)}><Icon name="save" size={16} /> {sharing === 'save' ? 'Saving…' : 'Save image'}</button>
               <span className="share-hint small muted">{desktop ? 'Copy for AI saves the screenshots and copies their paths with your notes.' : 'Copy for AI works in the desktop app.'}</span>
               {!panelOpen && <button type="button" className="button share-linear" onClick={() => showPanel(true)}><Icon name="panel" size={16} /> Linear issue</button>}
             </div>
