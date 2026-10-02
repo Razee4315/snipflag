@@ -549,7 +549,7 @@ option { background: var(--surface); color: var(--text); }
 .hero-mark .brand-arrow { stroke: var(--primary); }
 
 /* Toast */
-.toast-region { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 30; pointer-events: none; }
+.toast-region { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 30; pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .toast {
   display: flex; align-items: center; gap: 9px; max-width: min(560px, calc(100vw - 32px)); padding: 7px 7px 7px 13px; border-radius: 12px; pointer-events: auto;
   background: color-mix(in srgb, var(--text) 94%, transparent); color: var(--bg); box-shadow: var(--shadow-lg); backdrop-filter: blur(8px);

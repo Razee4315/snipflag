@@ -8,6 +8,7 @@ import IssuePanel, { type ConnectionState } from './components/IssuePanel';
 import SettingsDialog from './components/SettingsDialog';
 import StepNotes from './components/StepNotes';
 import type { PreparedReport } from './components/ReportPreview';
+import Toasts from './components/Toasts';
 import Toolbar, { TOOLS } from './components/Toolbar';
 import { defaults, FIELD_ERRORS, imageLabel, shortcutLabel, validateSession, type CaptureImage, type Connection, type Settings } from './model';
 import {
@@ -24,11 +25,9 @@ import { play, primeSound, setSoundEnabled } from './sound';
 import { saveBeforeQuit } from './lifecycle';
 import { isTyping } from './desktop';
 import { rememberDetails, templatesOf } from './templates';
+import { addToast, type Toast, type ToastAction } from './toasts';
 
 const PANEL_KEY = 'snipflag-panel';
-/** A toast; `action` offers one follow-up such as Undo while it is on screen. */
-interface NoticeAction { label: string; run: () => void }
-type Notice = { kind: 'error' | 'info'; text: string; id: number; action?: NoticeAction } | null;
 
 export default function App() {
   const session = useStore(s => s.session); const image = useStore(activeImage); const busy = useStore(s => s.busy);
@@ -42,7 +41,8 @@ export default function App() {
   const [connectionState, setConnectionState] = useState<ConnectionState>('idle');
   const [connectionError, setConnectionError] = useState('');
   const [dialog, setDialog] = useState<'settings' | 'history' | null>(null);
-  const [notice, setNotice] = useState<Notice>(null);
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const toastId = useRef(0);
   const [zoom, setZoom] = useState<Zoom>('fit'); const [scale, setScale] = useState(1);
   const [progress, setProgress] = useState(''); const [submitError, setSubmitError] = useState('');
   const [pendingState, setPendingState] = useState<string | null>(null);
@@ -63,8 +63,11 @@ export default function App() {
   const saveTimer = useRef<number | undefined>(undefined);
   const saveAttempts = useRef(new Set<string>());
 
-  const notify = useCallback((text: string, kind: 'error' | 'info' = 'info', action?: NoticeAction) => setNotice({ kind, text, id: Date.now(), action }), []);
-  useEffect(() => { if (!notice) return; const t = window.setTimeout(() => setNotice(null), notice.kind === 'error' ? 9000 : notice.action ? 8000 : 3500); return () => window.clearTimeout(t); }, [notice]);
+  const notify = useCallback((text: string, kind: 'error' | 'info' = 'info', action?: ToastAction, undoKey?: string) => {
+    const id = ++toastId.current;
+    setToasts(list => addToast(list, { id, kind, text, action, undoKey }));
+  }, []);
+  const dismissToast = useCallback((id: number) => setToasts(list => list.filter(t => t.id !== id)), []);
 
   // Durable drafts: every change is saved shortly after it happens, and immediately before capture or network work.
   const saveNow = useCallback(() => {
@@ -486,14 +489,7 @@ export default function App() {
         onOpenSettings={() => setDialog('settings')} onSubmit={report => void submit(report)} onNewSession={() => void newSession()} onTeamChosen={rememberTeam} notify={notify} />
       <input ref={fileInput} type="file" accept="image/png,image/jpeg,image/webp" multiple hidden aria-label="Add images"
         onChange={e => { const files = [...(e.target.files ?? [])]; e.target.value = ''; if (files.length) void importFiles(files); }} />
-      <div className="toast-region" role={notice?.kind === 'error' ? 'alert' : 'status'} aria-live="polite">
-        {notice && <div key={notice.id} className={`toast ${notice.kind}`}>
-          <Icon name={notice.kind === 'error' ? 'alert' : 'check'} size={16} />
-          <span>{notice.text}</span>
-          {notice.action && <button type="button" className="toast-action" onClick={() => { notice.action?.run(); setNotice(null); }}>{notice.action.label}</button>}
-          <button type="button" className="icon-button" aria-label="Dismiss" onClick={() => setNotice(null)}><Icon name="close" size={14} /></button>
-        </div>}
-      </div>
+      <Toasts toasts={toasts} onDismiss={dismissToast} />
       {dialog === 'settings' && (
         <SettingsDialog settings={settings} status={status} connection={connection} connectionState={connectionState} connectionError={connectionError}
           onSave={async next => { setSettings(await saveSettings(next)); setStatus(await appStatus()); }}
