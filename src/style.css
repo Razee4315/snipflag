@@ -475,7 +475,7 @@ option { background: var(--surface); color: var(--text); }
 .text-editor { position: absolute; min-width: 24px; padding: 0; margin: 0; border: 1.5px dashed rgba(20, 184, 166, 0.95); border-radius: 3px; background: transparent; font-weight: 700; resize: none; overflow: hidden; outline: none; white-space: pre; field-sizing: content; caret-color: currentColor; }
 .text-editor:focus, .text-editor:focus-visible { box-shadow: none; outline: none; background: transparent; }
 .capture-status { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); z-index: 6; display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); box-shadow: var(--shadow-md); font-size: 12px; animation: fade 200ms var(--ease); }
-.capture-flash {: absolute; inset: 0; z-index: 5; pointer-events: none; background: radial-gradient(circle at 50% 45%, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.6)); animation: flash 520ms var(--ease) forwards; }
+.capture-flash { position: absolute; inset: 0; z-index: 5; pointer-events: none; background: radial-gradient(circle at 50% 45%, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.6)); animation: flash 520ms var(--ease) forwards; }
 .canvas-wrap { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; }
 /* Step notes float over the canvas corner so placing a step never moves the picture. */
 .step-notes { position: absolute; left: 12px; bottom: 12px; z-index: 4; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; max-width: min(420px, calc(100% - 24px)); }
