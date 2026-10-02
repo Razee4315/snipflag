@@ -156,6 +156,13 @@ fn complete(app: &AppHandle, workspace: &str, mut session: Value, result: Value)
     Ok(issue)
 }
 
+/// Looks for the issue created under this session's ID. `Ok(None)` only when Linear confirms that none exists.
+async fn find_issue(token: &str, session_id: &str) -> Result<Option<Value>, String> {
+    let body = request(token, "query($id:String!) { issue(id:$id) { id identifier url } }", json!({"id": session_id})).await?;
+    if !body["data"]["issue"].is_null() { return Ok(Some(body["data"]["issue"].clone())); }
+    if is_not_found(&body) { Ok(None) } else { Err(describe_error(&body)) }
+}
+
 /// Checks only the immutable attempted revision. A confirmed absence unlocks the draft without sending again.
 async fn reconcile_attempt(app: &AppHandle, session_id: &str, receipt: (String, String, Option<String>)) -> Result<Option<Value>, String> {
     let token = access_token(app).await?;
@@ -169,11 +176,11 @@ async fn reconcile_attempt(app: &AppHandle, session_id: &str, receipt: (String, 
         Plan::Receipt(result) => complete(app, workspace, snapshot, serde_json::from_str(&result).map_err(|_| "Submission receipt is damaged.")?).map(Some),
         Plan::Reconcile => {
             progress(app, "Checking the exact report from the previous attempt…");
-            let body = request(&token, "query($id:String!) { issue(id:$id) { id identifier url } }", json!({"id": session_id})).await?;
-            if !body["data"]["issue"].is_null() { return complete(app, workspace, snapshot, body["data"]["issue"].clone()).map(Some); }
-            if !is_not_found(&body) { return Err(format!("{} The previous attempt is still unconfirmed; nothing new was sent.", describe_error(&body))); }
-            storage.set_submission(session_id, workspace, "retryable", None)?;
-            Ok(None)
+            match find_issue(&token, session_id).await {
+                Ok(Some(issue)) => complete(app, workspace, snapshot, issue).map(Some),
+                Ok(None) => { storage.set_submission(session_id, workspace, "retryable", None)?; Ok(None) }
+                Err(error) => Err(format!("{error} The previous attempt is still unconfirmed; nothing new was sent.")),
+            }
         }
         _ => Err("There is no uncertain submission to check.".into()),
     }
@@ -244,7 +251,16 @@ pub async fn submit_issue(window: WebviewWindow, app: AppHandle, session: Value,
     progress(&app, "Creating the Linear issue…");
     let body = request(&token, "mutation($input:IssueCreateInput!) { issueCreate(input:$input) { success issue { id identifier url } } }", json!({"input": input})).await
         .map_err(|e| format!("{e} The outcome is unknown; Retry checks this same issue first."))?;
-    if first_error(&body).is_some() { return Err(format!("{} Your draft is kept.", describe_error(&body))); }
+    if first_error(&body).is_some() {
+        // Linear answered and refused. Confirm at once that nothing exists under this ID, so an ordinary rejection
+        // (a label the team no longer has, a missing permission) leaves the report editable instead of locked.
+        let reason = describe_error(&body);
+        return match find_issue(&token, &session_id).await {
+            Ok(Some(issue)) => complete(&app, &workspace, session, issue),
+            Ok(None) => { storage.set_submission(&session_id, &workspace, "retryable", None)?; Err(format!("{reason} Nothing was created. Fix this and choose Create issue again.")) }
+            Err(_) => Err(format!("{reason} The outcome could not be confirmed; Check previous attempt looks for this issue first.")),
+        };
+    }
     let created = &body["data"]["issueCreate"];
     if created["success"] != true || created["issue"]["id"].is_null() { return Err("Issue creation was not confirmed. Retry will check this session first.".into()); }
     complete(&app, &workspace, session, created["issue"].clone())
