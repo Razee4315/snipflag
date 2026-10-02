@@ -54,6 +54,8 @@ export default function App() {
   const [pendingState, setPendingState] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [flash, setFlash] = useState(0);
+  /** From the capture request until its picture is in the session (or it is cancelled). */
+  const [capturing, setCapturing] = useState(false);
   const [update, setUpdate] = useState<AvailableUpdate | null>(null);
   /** The share action in progress; its button says so and the others wait. */
   const [sharing, setSharing] = useState<'copy' | 'save' | 'ai' | null>(null);
@@ -201,8 +203,8 @@ export default function App() {
     const refuse = (text: string) => { void editorWindow('show').catch(() => undefined); notify(text, 'error'); play('error'); };
     if (s.submissionLocked) { refuse('Check the previous submission or start a new session before capturing.'); return; }
     if (!s.session.issue && s.session.images.length >= 10) { refuse('This session already has 10 screenshots. Start a new session to capture more.'); return; }
-    s.setBusy(true);
-    try { await flush(); await startCapture(); } catch (e) { useStore.getState().setBusy(false); notify(errorText(e), 'error'); }
+    s.setBusy(true); setCapturing(true);
+    try { await flush(); await startCapture(); } catch (e) { useStore.getState().setBusy(false); setCapturing(false); notify(errorText(e), 'error'); }
   }, [flush, notify]);
   const captureRef = useRef(capture); captureRef.current = capture;
 
@@ -223,7 +225,7 @@ export default function App() {
     const subs = [
       on('capture-requested', () => { void captureRef.current(); }),
       on<RawImage & { copied?: boolean | null; saved?: boolean | null }>('capture-complete', p => {
-        useStore.getState().setBusy(false);
+        useStore.getState().setBusy(false); setCapturing(false);
         if (addImages([{ id: crypto.randomUUID(), name: '', width: p.width, height: p.height, dataUrl: p.dataUrl, annotations: [] }])) {
           play('capture'); setFlash(f => f + 1);
           if (p.copied) notify('Capture copied to the clipboard.');
@@ -231,8 +233,8 @@ export default function App() {
           if (p.saved === false) notify('The capture was added, but it could not be saved to Pictures/Snipflag.', 'error');
         }
       }),
-      on('capture-cancelled', () => useStore.getState().setBusy(false)),
-      on<string>('capture-failed', m => { useStore.getState().setBusy(false); notify(m, 'error'); play('error'); }),
+      on('capture-cancelled', () => { useStore.getState().setBusy(false); setCapturing(false); }),
+      on<string>('capture-failed', m => { useStore.getState().setBusy(false); setCapturing(false); notify(m, 'error'); play('error'); }),
       on<{ message: string; fraction: number | null }>('submission-progress', p => report(p.message, p.fraction)),
     ];
     return () => { subs.forEach(p => p.then(u => u())); };
@@ -513,6 +515,7 @@ export default function App() {
         ) : (
           <EmptyState shortcut={shortcutLabel(settings.shortcut)} onCapture={() => void capture()} onAdd={() => fileInput.current?.click()} onPaste={() => void pasteImage()} onDragWindow={dragWindow} />
         )}
+        {capturing && <div className="capture-status" role="status"><span className="spinner" aria-hidden="true" /> Adding the capture…</div>}
         {count > 0 && <Filmstrip canCapture={desktop} onCapture={() => void capture()} onAdd={() => fileInput.current?.click()} onRemove={removeImage} />}
       </main>
       <IssuePanel hidden={!panelOpen} connection={connection} connectionState={connectionState} connectionError={connectionError} hasClientId={!!settings.clientId || !!status?.builtinLinearClient}
