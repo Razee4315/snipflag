@@ -2,7 +2,43 @@
 
 All notable changes to Snipflag are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.3.0] - 2026-10-02
+## [Unreleased]
+
+Work from the 2026-10-02 audit ([docs/AUDIT-2026-10-02.md](docs/AUDIT-2026-10-02.md)), on branch `audit/core-flow-improvements`. Not released.
+
+### Added
+
+- Undo (Ctrl+Z and the toolbar button) takes back a removed screenshot, a crop or a reorder when that is the newest change.
+- Up to three messages stack at the bottom; an offer to undo is not pushed out by confirmations, and a message waits while the pointer is on it.
+- Optional plate behind text marks so they stay readable on busy screenshots.
+- The last color, width, text size and text plate are remembered between launches.
+- A progress bar while a report is prepared, uploaded and created; download progress while an update installs.
+- With the Select tool, Tab on the screenshot steps through the marks. Color, width and filter groups and the Settings sections are single Tab stops with arrow keys.
+- A first-run note that closing the window keeps Snipflag in the tray.
+
+### Changed
+
+- Launch restores only the session that was open last, and only if it is unsent. Starting a new session says when a draft stays in History; emptied drafts are removed instead of listed.
+- Settings asks before closing with unsaved changes.
+- Create issue checks the Linear connection before field validation, and Ctrl+Enter opens a hidden issue panel instead of sending from it.
+- A create that Linear refuses is confirmed at once and leaves the report editable; it no longer locks it for a manual check.
+- Lines, arrows and strokes are selected by their ink, not their whole bounding box.
+- Screenshots upload three at a time; team projects, members and labels load together; one HTTP client is reused.
+- Copy for AI reuses the saved file of an unchanged screenshot.
+- Retention wording: sessions (drafts and sent) are removed, as the code always did.
+
+### Fixed
+
+- The capture shortcut did nothing visible from the tray when the session was full or locked.
+- Being offline showed the "Connect Linear" card and "reconnect" errors instead of a Retry.
+- Delete, arrow keys and Ctrl+D edited the selected mark behind an open dialog.
+- Space did not press buttons outside the canvas area.
+- Loading team details could make Create issue fail with "another operation is in progress".
+- One invalid stored setting reset every setting; a failed settings save could leave the shortcut or login item changed.
+- Remembered team details came back after Disconnect when Settings was saved afterwards.
+- Without a tray, closing the window hid it with no way back; it now minimizes.
+- A failed update install removed the update offer until the next background check.
+
 
 ### Added
 
