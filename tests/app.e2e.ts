@@ -123,7 +123,7 @@ test('browser preview never pretends to reach Linear', async ({ page }) => {
   await expect(dialog.getByLabel('Linear OAuth client ID')).toBeVisible();
   await dialog.getByLabel('Linear OAuth client ID').fill('custom-client');
   await expect(dialog.getByRole('button', { name: 'Connect Linear' })).toBeDisabled();
-  await dialog.getByRole('button', { name: 'Appearance', exact: true }).click();
+  await dialog.getByRole('tab', { name: 'Appearance', exact: true }).click();
   await dialog.getByText('Dark', { exact: true }).click();
   await expect(dialog.getByRole('radio', { name: 'Dark', exact: true })).toBeChecked();
   await dialog.getByRole('button', { name: 'Save settings' }).click();
@@ -363,8 +363,8 @@ test('workspace composer preserves evidence and provides a QA report scaffold', 
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Settings' });
   for (const section of ['Capture', 'Privacy', 'Shortcuts', 'Appearance']) {
-    await dialog.getByRole('button', { name: section, exact: true }).click();
-    await expect(dialog.getByRole('button', { name: section, exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await dialog.getByRole('tab', { name: section, exact: true }).click();
+    await expect(dialog.getByRole('tab', { name: section, exact: true })).toHaveAttribute('aria-selected', 'true');
   }
   await dialog.getByText('Dark', { exact: true }).click();
   await expect(dialog.getByRole('radio', { name: 'Dark', exact: true })).toBeChecked();
@@ -390,15 +390,15 @@ test('settings keep unsaved preferences when switching sections', async ({ page 
   const dialog = page.getByRole('dialog', { name: 'Settings' });
   await dialog.getByText('Advanced: custom Linear application', { exact: true }).click();
   await dialog.getByLabel('Linear OAuth client ID').fill('public-client-id');
-  await dialog.getByRole('button', { name: 'Privacy', exact: true }).click();
+  await dialog.getByRole('tab', { name: 'Privacy', exact: true }).click();
   await dialog.getByLabel('Delete sessions not opened for').selectOption('90');
-  await dialog.getByRole('button', { name: 'Connection', exact: true }).click();
+  await dialog.getByRole('tab', { name: 'Connection', exact: true }).click();
   await expect(dialog.getByLabel('Linear OAuth client ID')).toHaveValue('public-client-id');
   await dialog.getByRole('button', { name: 'Save settings' }).click();
   await expect(dialog.getByText('Settings saved.', { exact: true })).toBeVisible();
   await page.keyboard.press('Escape');
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  await dialog.getByRole('button', { name: 'Privacy', exact: true }).click();
+  await dialog.getByRole('tab', { name: 'Privacy', exact: true }).click();
   await expect(dialog.getByLabel('Delete sessions not opened for')).toHaveValue('90');
 });
 
@@ -489,7 +489,7 @@ test('themes preview at once, revert when not saved, and capture options persist
   const html = page.locator('html');
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Settings' });
-  await dialog.getByRole('button', { name: 'Appearance', exact: true }).click();
+  await dialog.getByRole('tab', { name: 'Appearance', exact: true }).click();
   for (const theme of ['Paper', 'Blossom', 'Midnight', 'Graphite']) {
     await dialog.getByText(theme, { exact: true }).click();
     await expect(html).toHaveAttribute('data-theme', theme.toLowerCase());
@@ -507,7 +507,7 @@ test('themes preview at once, revert when not saved, and capture options persist
   await expect(html).not.toHaveAttribute('data-theme', 'graphite');
 
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  await dialog.getByRole('button', { name: 'Capture', exact: true }).click();
+  await dialog.getByRole('tab', { name: 'Capture', exact: true }).click();
   const adjust = dialog.getByRole('switch', { name: 'Adjust the selection before capturing' });
   const magnifier = dialog.getByRole('switch', { name: 'Show a magnifier at the pointer' });
   const copy = dialog.getByRole('switch', { name: 'Copy every capture to the clipboard' });
@@ -515,7 +515,7 @@ test('themes preview at once, revert when not saved, and capture options persist
   await adjust.click();
   await copy.click();
   await page.screenshot({ path: testInfo.outputPath('settings-capture.png'), animations: 'disabled' });
-  await dialog.getByRole('button', { name: 'Appearance', exact: true }).click();
+  await dialog.getByRole('tab', { name: 'Appearance', exact: true }).click();
   await dialog.getByText('Midnight', { exact: true }).click();
   await dialog.getByRole('button', { name: 'Save settings' }).click();
   await page.keyboard.press('Escape');
@@ -524,12 +524,12 @@ test('themes preview at once, revert when not saved, and capture options persist
   await page.reload();
   await expect(html).toHaveAttribute('data-theme', 'midnight');
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  await dialog.getByRole('button', { name: 'Capture', exact: true }).click();
+  await dialog.getByRole('tab', { name: 'Capture', exact: true }).click();
   await expect(adjust).toBeChecked();
   await expect(copy).toBeChecked();
   await expect(magnifier).not.toBeChecked();
   for (const theme of ['Paper', 'Graphite', 'Blossom']) {
-    await dialog.getByRole('button', { name: 'Appearance', exact: true }).click();
+    await dialog.getByRole('tab', { name: 'Appearance', exact: true }).click();
     await dialog.getByText(theme, { exact: true }).click();
     await dialog.getByRole('button', { name: 'Save settings' }).click();
     await page.keyboard.press('Escape');
@@ -657,7 +657,7 @@ test('a missing title is reported at the title field and clears when filled in',
 test('sound and animation preferences persist and apply', async ({ page }, testInfo) => {
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Settings' });
-  await dialog.getByRole('button', { name: 'Appearance', exact: true }).click();
+  await dialog.getByRole('tab', { name: 'Appearance', exact: true }).click();
   const sounds = dialog.getByRole('switch', { name: 'Play sound effects' });
   const motion = dialog.getByRole('switch', { name: 'Interface animations' });
   await expect(sounds).toBeChecked();
@@ -672,7 +672,7 @@ test('sound and animation preferences persist and apply', async ({ page }, testI
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-motion', 'off');
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  await dialog.getByRole('button', { name: 'Appearance', exact: true }).click();
+  await dialog.getByRole('tab', { name: 'Appearance', exact: true }).click();
   await expect(dialog.getByRole('switch', { name: 'Play sound effects' })).not.toBeChecked();
   await expect(dialog.getByRole('switch', { name: 'Interface animations' })).not.toBeChecked();
 });
@@ -683,7 +683,7 @@ test('settings dialog keeps a fixed size and scrolls long sections inside', asyn
   const dialog = page.getByRole('dialog', { name: 'Settings' });
   const heights: number[] = [];
   for (const section of ['Connection', 'Capture', 'Templates', 'Appearance', 'Privacy', 'Shortcuts', 'About']) {
-    await dialog.getByRole('button', { name: section, exact: true }).click();
+    await dialog.getByRole('tab', { name: section, exact: true }).click();
     heights.push(Math.round((await dialog.boundingBox())!.height));
   }
   expect(new Set(heights).size).toBe(1);
@@ -763,7 +763,7 @@ test('custom colors use a themed picker and are remembered', async ({ page }, te
 test('about section credits the creator', async ({ page }, testInfo) => {
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Settings' });
-  await dialog.getByRole('button', { name: 'About', exact: true }).click();
+  await dialog.getByRole('tab', { name: 'About', exact: true }).click();
   await expect(dialog.getByText('Saqlain Razee')).toBeVisible();
   await expect(dialog.getByRole('button', { name: /GitHub\s*Razee4315/ })).toBeVisible();
   await expect(dialog.getByRole('button', { name: /LinkedIn\s*saqlainrazee/ })).toBeVisible();
@@ -838,7 +838,7 @@ test('description templates are editable, persist, and never replace written tex
 
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Settings' });
-  await dialog.getByRole('button', { name: 'Templates', exact: true }).click();
+  await dialog.getByRole('tab', { name: 'Templates', exact: true }).click();
   const design = dialog.locator('details', { hasText: 'Design feedback' });
   await design.getByText('Design feedback', { exact: true }).click();
   await design.getByLabel('Template text').fill('## Screen\n');
@@ -866,7 +866,7 @@ test('description templates are editable, persist, and never replace written tex
   await expect(description).toHaveValue('## Assistive technology\n');
 
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  await dialog.getByRole('button', { name: 'Templates', exact: true }).click();
+  await dialog.getByRole('tab', { name: 'Templates', exact: true }).click();
   await dialog.getByRole('button', { name: 'Restore built-in templates' }).click();
   await dialog.getByRole('button', { name: 'Save settings' }).click();
   await expect(dialog.getByText('Settings saved.', { exact: true })).toBeVisible();

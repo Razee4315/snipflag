@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { filterSessions, type HistoryFilter } from '../history';
 import { sessionLabel, type Session } from '../model';
 import { errorText, listSessions } from '../native';
+import { rovingKeys } from '../roving';
 import Dialog from './Dialog';
 import { Icon } from './icons';
 
@@ -29,9 +30,9 @@ export default function HistoryDialog({ currentId, onOpen, onDelete, onClose }: 
         <>
           <div className="history-tools">
             <input type="search" className="history-search" autoComplete="off" spellCheck={false} placeholder="Search titles, descriptions and issue IDs" aria-label="Search history" value={query} onChange={e => setQuery(e.target.value)} />
-            <div className="segmented" role="radiogroup" aria-label="Show">
+            <div className="segmented" role="radiogroup" aria-label="Show" onKeyDown={rovingKeys}>
               {FILTERS.map(f => (
-                <button key={f.value} type="button" role="radio" aria-checked={filter === f.value} className={filter === f.value ? 'active' : undefined} onClick={() => setFilter(f.value)}>
+                <button key={f.value} type="button" role="radio" aria-checked={filter === f.value} tabIndex={filter === f.value ? 0 : -1} className={filter === f.value ? 'active' : undefined} onClick={() => setFilter(f.value)}>
                   {f.label} <span>{filterSessions(sessions, query, f.value).length}</span>
                 </button>
               ))}

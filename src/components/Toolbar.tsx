@@ -1,6 +1,7 @@
 import { useCallback, useState, type CSSProperties, type MouseEvent } from 'react';
 import { loadCustomColors, saveCustomColor } from '../color';
 import { stepSize, type Tool } from '../model';
+import { rovingKeys, rovingTabIndex } from '../roving';
 import { activeImage, canRedo, canUndo, isLocked, useStore } from '../store';
 import ColorPicker from './ColorPicker';
 import { Icon, type IconName } from './icons';
@@ -58,6 +59,7 @@ export default function Toolbar({ onDragWindow }: { onDragWindow?: (e: MouseEven
   const palette = marker ? HIGHLIGHTS : COLORS;
   const set = marker ? 'marker' : 'pen';
   const extras = custom[set].filter(c => !palette.some(p => p.value === c));
+  const colors = [...palette, ...extras.map(value => ({ value, name: `Custom ${value}` }))];
   const activeColor = (styled && (styled.kind === 'highlight') === marker ? styled.color : marker ? highlightColor : color).toUpperCase();
   const widths = marker ? HIGHLIGHT_SIZES : STROKES;
   const activeWidth = styled && styled.kind !== 'text' && (styled.kind === 'highlight') === marker ? styled.stroke : marker ? highlightSize : stroke;
@@ -80,9 +82,10 @@ export default function Toolbar({ onDragWindow }: { onDragWindow?: (e: MouseEven
       </div>
       <div className="tool-options">
         {!plain && (
-          <div className="tool-group" role="radiogroup" aria-label={marker ? 'Highlighter color' : 'Color'}>
-            {[...palette, ...extras.map(value => ({ value, name: `Custom ${value}` }))].map(c => (
+          <div className="tool-group" role="radiogroup" aria-label={marker ? 'Highlighter color' : 'Color'} onKeyDown={rovingKeys}>
+            {colors.map((c, i) => (
               <button key={c.value} type="button" role="radio" aria-checked={activeColor === c.value} aria-label={c.name} title={c.name.replace('Custom ', '')}
+                tabIndex={rovingTabIndex(activeColor === c.value, i, colors.some(x => x.value === activeColor))}
                 className={marker ? 'swatch marker' : 'swatch'} style={{ '--swatch': c.value } as CSSProperties} disabled={locked} onClick={() => style({ color: c.value })} />
             ))}
             <span className="color-add">
@@ -93,9 +96,10 @@ export default function Toolbar({ onDragWindow }: { onDragWindow?: (e: MouseEven
           </div>
         )}
         {showWidth && (
-          <div className="tool-group sizes" role="radiogroup" aria-label={marker ? 'Highlighter size' : tool === 'step' || styled?.kind === 'step' ? 'Badge size' : 'Width'}>
+          <div className="tool-group sizes" role="radiogroup" aria-label={marker ? 'Highlighter size' : tool === 'step' || styled?.kind === 'step' ? 'Badge size' : 'Width'} onKeyDown={rovingKeys}>
             {widths.map((w, i) => (
               <button key={w} type="button" role="radio" aria-checked={activeWidth === w} aria-label={`${w} px`} title={`${w} px`} className="size" disabled={locked}
+                tabIndex={rovingTabIndex(activeWidth === w, i, widths.includes(activeWidth))}
                 onClick={() => style({ stroke: w })}>
                 <i style={{ width: 4 + i * 3, height: 4 + i * 3, background: marker ? (styled?.kind === 'highlight' ? styled.color : highlightColor) : 'currentColor' }} />
               </button>

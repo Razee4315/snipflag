@@ -4,6 +4,7 @@ import { TEMPLATE_LIMITS, templatesOf, tidyTemplates } from '../templates';
 import { captureTiming, copyText, desktop, errorText, openAboutLink, openLinearSetup, type AboutLink, type AppStatus, type AvailableUpdate, type CaptureTiming } from '../native';
 import Dialog from './Dialog';
 import { Icon, Mark, type IconName } from './icons';
+import { rovingKeys } from '../roving';
 import { play } from '../sound';
 import type { ConnectionState } from './IssuePanel';
 
@@ -76,11 +77,11 @@ export default function SettingsDialog(p: Props) {
       <button type="button" className="button primary" disabled={!dirty} onClick={() => void save()}>Save settings</button>
     </>}>
 
-      <nav className="settings-nav" aria-label="Settings sections" style={{ '--i': SECTIONS.indexOf(section), '--n': SECTIONS.length } as CSSProperties}>
-        {SECTIONS.map(name => <button key={name} type="button" className={section === name ? 'active' : ''} aria-pressed={section === name} onClick={() => setSection(name)}>{name}</button>)}
-      </nav>
+      <div className="settings-nav" role="tablist" aria-label="Settings sections" onKeyDown={rovingKeys} style={{ '--i': SECTIONS.indexOf(section), '--n': SECTIONS.length } as CSSProperties}>
+        {SECTIONS.map(name => <button key={name} type="button" role="tab" id={`settings-tab-${name}`} className={section === name ? 'active' : ''} aria-selected={section === name} tabIndex={section === name ? 0 : -1} onClick={() => setSection(name)}>{name}</button>)}
+      </div>
       {error && <p className="error" role="alert">{error}</p>}
-      <section className="settings-section" hidden={section !== 'Connection'}><h3>Your Linear workspace</h3>
+      <section className="settings-section" role="tabpanel" aria-labelledby="settings-tab-Connection" hidden={section !== 'Connection'}><h3>Your Linear workspace</h3>
         {p.connection ? (
           <div className="row between">
             <p className="small">Connected to <strong>{p.connection.workspace}</strong> as {p.connection.name}.</p>
@@ -124,7 +125,7 @@ export default function SettingsDialog(p: Props) {
         )}
       </section>
 
-      <section className="settings-section" hidden={section !== 'Templates'}><h3>Description templates</h3>
+      <section className="settings-section" role="tabpanel" aria-labelledby="settings-tab-Templates" hidden={section !== 'Templates'}><h3>Description templates</h3>
         <p className="small muted">Offered under an empty description. A template fills the description; it never replaces text you wrote.</p>
         <div className="template-list">
           {templates.map(t => (
@@ -151,7 +152,7 @@ export default function SettingsDialog(p: Props) {
         </div>
       </section>
 
-      <section className="settings-section" hidden={section !== 'Capture'}><h3>Capture</h3><p className="small muted">Every capture opens the full editor. Closing saves your draft and tucks Snipflag into the tray.</p>
+      <section className="settings-section" role="tabpanel" aria-labelledby="settings-tab-Capture" hidden={section !== 'Capture'}><h3>Capture</h3><p className="small muted">Every capture opens the full editor. Closing saves your draft and tucks Snipflag into the tray.</p>
         <label className="field">
           <span>Global capture shortcut</span>
           <input readOnly value={recording ? 'Press the new shortcut…' : shortcutLabel(draft.shortcut)} aria-describedby="shortcut-help"
@@ -202,7 +203,7 @@ export default function SettingsDialog(p: Props) {
         </label>
       </section>
 
-      <section className="settings-section" hidden={section !== 'Appearance'}><h3>Appearance</h3>
+      <section className="settings-section" role="tabpanel" aria-labelledby="settings-tab-Appearance" hidden={section !== 'Appearance'}><h3>Appearance</h3>
         <div className="theme-options" role="radiogroup" aria-label="Theme">
           {THEMES.map(t => (
             <label key={t.value} className={draft.theme === t.value ? 'theme-option selected' : 'theme-option'}>
@@ -228,7 +229,7 @@ export default function SettingsDialog(p: Props) {
         <small className="muted">Your system's reduce-motion setting is always respected.</small>
       </section>
 
-      <section className="settings-section" hidden={section !== 'Privacy'}><h3>Privacy</h3><div className="privacy-card"><strong>Only shared when you choose Create issue.</strong><p className="small muted">Use Pixelate (B) to hide private details before sending. Pixelated areas are burned into the uploaded image.</p></div>
+      <section className="settings-section" role="tabpanel" aria-labelledby="settings-tab-Privacy" hidden={section !== 'Privacy'}><h3>Privacy</h3><div className="privacy-card"><strong>Only shared when you choose Create issue.</strong><p className="small muted">Use Pixelate (B) to hide private details before sending. Pixelated areas are burned into the uploaded image.</p></div>
         <p className="small muted">Drafts and their screenshots are stored only on this computer, unencrypted in the app data folder. Old sessions are removed whether they were sent or not.</p>
         <label className="field">
           <span>Delete sessions not opened for</span>
@@ -244,14 +245,14 @@ export default function SettingsDialog(p: Props) {
           </div>
         ) : <button type="button" className="button danger-outline" onClick={() => setConfirmClear(true)}>Delete local history…</button>}
       </section>
-      <section className="settings-section" hidden={section !== 'Shortcuts'}>
+      <section className="settings-section" role="tabpanel" aria-labelledby="settings-tab-Shortcuts" hidden={section !== 'Shortcuts'}>
         <h3>Keyboard shortcuts</h3>
         <dl className="shortcut-list">
           {[['Capture from anywhere', shortcutLabel(draft.shortcut)], ['Select / Arrow / Line', 'V / A / L'], ['Rectangle / Ellipse', 'R / E'], ['Pen / Highlighter / Text', 'P / H / T'], ['Numbered step / Pixelate / Crop', 'N / B / C'], ['Move selected mark', 'Arrow keys (Shift: 10 px)'], ['Duplicate selected mark', 'Ctrl / ⌘ + D'], ['Pan the canvas', 'Hold Space and drag, or middle mouse'], ['Copy image / Copy for AI', 'Ctrl / ⌘ + C / Shift + C'], ['Snap arrow / pen to 15°', 'Hold Shift'], ['Square or circle', 'Shift + Rectangle / Ellipse'], ['Undo / Redo', 'Ctrl / ⌘ + Z / Shift + Z'], ['Delete selected mark', 'Delete'], ['Paste screenshot', 'Ctrl / ⌘ + V'], ['Create issue', 'Ctrl / ⌘ + Enter'], ['Zoom canvas', 'Ctrl / ⌘ + scroll']].map(([label, keys]) => <div key={label}><dt>{label}</dt><dd><kbd>{keys}</kbd></dd></div>)}
         </dl>
         <p className="small muted">Tool shortcuts pause while you type. Each screenshot keeps its own undo history.</p>
       </section>
-      <section className="settings-section" hidden={section !== 'About'}>
+      <section className="settings-section" role="tabpanel" aria-labelledby="settings-tab-About" hidden={section !== 'About'}>
         <div className="about-hero">
           <span className="about-mark" aria-hidden="true"><Mark size={30} /></span>
           <div>
