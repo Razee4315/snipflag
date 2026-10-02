@@ -35,14 +35,17 @@ pub fn decode_image(bytes: &[u8]) -> Result<DynamicImage, String> {
     if image.width() as u64 * image.height() as u64 > MAX_PIXELS { return Err("Image exceeds 40 megapixels.".into()); }
     Ok(image)
 }
-/// Validates a PNG data URL and returns its encoded bytes plus dimensions.
+/// Validates a PNG data URL from the editor and returns its encoded bytes plus dimensions. The size comes from the
+/// PNG header: these images were just encoded by the editor's canvas, so their pixels are not decoded again here.
+/// Files of unknown origin go through `decode_image`.
 pub fn decode_png(value: &str) -> Result<(Vec<u8>, u32, u32), String> {
     let raw = value.strip_prefix("data:image/png;base64,").ok_or("Expected a PNG image.")?;
     if raw.len() > MAX_IMAGE_BYTES / 3 * 4 + 8 { return Err("Image exceeds the 20 MB limit.".into()); }
     let bytes = STANDARD.decode(raw).map_err(|_| "Invalid image encoding.")?;
     if !bytes.starts_with(b"\x89PNG\r\n\x1a\n") { return Err("Expected a PNG image.".into()); }
-    let image = decode_image(&bytes)?;
-    let (width, height) = (image.width(), image.height());
+    let (width, height) = ImageReader::with_format(Cursor::new(&bytes), ImageFormat::Png).into_dimensions().map_err(|_| "Invalid image.")?;
+    if width == 0 || height == 0 || width > 20_000 || height > 20_000 { return Err("Invalid image.".into()); }
+    if width as u64 * height as u64 > MAX_PIXELS { return Err("Image exceeds 40 megapixels.".into()); }
     Ok((bytes, width, height))
 }
 pub fn png_url(bytes: &[u8]) -> String { format!("data:image/png;base64,{}", STANDARD.encode(bytes)) }
@@ -403,6 +406,8 @@ mod tests {
         assert!(decode_png("data:text/plain;base64,SGVsbG8=").is_err());
         assert!(decode_png("data:image/png;base64,SGVsbG8=").is_err());
         let (_, w, h) = decode_png(&png(3, 2)).unwrap(); assert_eq!((w, h), (3, 2));
+        // A PNG signature without a readable header is rejected.
+        assert!(decode_png(&png_url(b"\x89PNG\r\n\x1a\nnot a header")).is_err());
     }
     #[test] fn session_round_trip_keeps_order_and_pixels() {
         let store = temp(); let s = session(vec![image(4, 3), image(2, 2)]);
