@@ -287,6 +287,7 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 0.85; 
   radial-gradient(1.4px 1.4px at 270px 210px, #c9d0ff, transparent), radial-gradient(1.1px 1.1px at 20px 240px, #fff, transparent), radial-gradient(1.7px 1.7px at 130px 30px, #fff, transparent); }
 /* Graphite: light sliding over brushed metal. */
 :root[data-theme="graphite"] .stage-area::before { content: ""; inset: 0 -60%; background: linear-gradient(105deg, transparent 42%, rgba(255, 255, 255, 0.075) 50%, transparent 58%); animation: sheen 11s ease-in-out infinite alternate; }
+:root[data-idle] .stage-area::before, :root[data-idle] .stage-area::after { animation-play-state: paused; }
 @keyframes drift { from { transform: translate(-22%, -12%); } to { transform: translate(22%, 14%); } }
 @keyframes fall { to { transform: translate(420px, 420px); } }
 @keyframes twinkle { from { opacity: 0.35; } to { opacity: 1; } }

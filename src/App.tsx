@@ -161,6 +161,12 @@ export default function App() {
     if (settings.motion) delete root.dataset.motion; else root.dataset.motion = 'off';
     setSoundEnabled(settings.sounds);
   }, [settings.theme, settings.motion, settings.sounds]);
+  // The living theme backdrops rest while the window is hidden or minimized.
+  useEffect(() => {
+    const rest = () => { if (document.hidden) document.documentElement.dataset.idle = 'true'; else delete document.documentElement.dataset.idle; };
+    rest(); document.addEventListener('visibilitychange', rest);
+    return () => document.removeEventListener('visibilitychange', rest);
+  }, []);
   useEffect(() => { if (status?.shortcutError) notify(status.shortcutError, 'error'); }, [status, notify]);
   // A field error goes away once that field is filled in.
   useEffect(() => { setSubmitError(e => (e === FIELD_ERRORS.title && session.title.trim()) || (e === FIELD_ERRORS.team && session.teamId) ? '' : e); }, [session.title, session.teamId]);
