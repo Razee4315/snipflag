@@ -238,6 +238,7 @@ pub fn run() {
         .register_asynchronous_uri_scheme_protocol("snipframe", capture::frame_protocol)
         .manage(update::PendingUpdate(tokio::sync::Mutex::new(None)))
         .manage(auth::NetworkLock(tokio::sync::Mutex::new(())))
+        .manage(auth::TokenLock(tokio::sync::Mutex::new(())))
         .manage(auth::LoginCancel(Mutex::new(None)))
         .manage(capture::CaptureState::default())
         .manage(files::ClipboardState(Mutex::new(None)))

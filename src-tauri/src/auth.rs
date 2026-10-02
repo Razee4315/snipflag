@@ -18,8 +18,11 @@ fn resolve_client_id<'a>(custom: &'a str, builtin: &'a str) -> Result<&'a str, S
     Ok(id)
 }
 
-/// Serializes Linear operations so refresh-token rotation and keyring writes never race.
+/// One exclusive Linear operation at a time: sign-in, submit, reconcile, disconnect and update install.
 pub struct NetworkLock(pub tokio::sync::Mutex<()>);
+/// Guards the saved credential so refresh-token rotation and keyring writes never race. It is held only while the
+/// token is read or renewed, so loading teams and team details never makes Create issue wait or fail.
+pub struct TokenLock(pub tokio::sync::Mutex<()>);
 /// Lets the editor abandon a browser login that the user closed.
 pub struct LoginCancel(pub Mutex<Option<oneshot::Sender<()>>>);
 
@@ -62,8 +65,9 @@ async fn token_request(fields: &[(&str, &str)]) -> Result<Value, String> {
     if !response.status().is_success() { return Err("Linear could not authorize this connection. Check the client ID and registered callback, then reconnect.".into()); }
     response.json().await.map_err(|_| "Invalid authorization response.".into())
 }
-/// Call only while NetworkLock is held.
-pub async fn access_token() -> Result<String, String> {
+/// A valid access token, renewed first when it is about to expire.
+pub async fn access_token(app: &AppHandle) -> Result<String, String> {
+    let lock = app.state::<TokenLock>(); let _guard = lock.0.lock().await;
     let saved = read()?.ok_or("Connect Linear in Settings to continue.")?;
     if saved.expires_at > now() + 90_000 { return Ok(saved.access_token); }
     if saved.refresh_token.is_empty() { return Err("Your Linear connection has expired. Reconnect in Settings.".into()); }
@@ -125,7 +129,7 @@ pub async fn connect_linear(window: WebviewWindow, app: AppHandle) -> Result<(),
     if let Ok(mut pending) = app.state::<LoginCancel>().0.lock() { pending.take(); }
     let code = result?;
     let value = token_request(&[("grant_type", "authorization_code"), ("client_id", &client_id), ("redirect_uri", REDIRECT), ("code", &code), ("code_verifier", &verifier)]).await?;
-    store(&value, &client_id, "")?;
+    { let lock = app.state::<TokenLock>(); let _token = lock.0.lock().await; store(&value, &client_id, "")?; }
     crate::show_main(&app);
     Ok(())
 }
@@ -140,7 +144,7 @@ pub async fn disconnect_linear(window: WebviewWindow, app: AppHandle) -> Result<
     main_only(&window)?;
     let lock = app.state::<NetworkLock>();
     let _guard = lock.0.try_lock().map_err(|_| "Wait for the current Linear operation to finish.")?;
-    forget()?;
+    { let lock = app.state::<TokenLock>(); let _token = lock.0.lock().await; forget()?; }
     // Disconnecting also clears remembered workspace selections.
     let storage = app.state::<Storage>();
     let mut settings = storage.settings()?; settings["teamMemory"] = serde_json::json!({}); settings["teamDefaults"] = serde_json::json!({});

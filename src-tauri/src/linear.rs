@@ -58,8 +58,7 @@ async fn paginate(token: &str, query: &str, variables: Value, path: &[&str]) -> 
 pub async fn linear_connection(window: WebviewWindow, app: AppHandle) -> Result<Value, String> {
     main_only(&window)?;
     if !is_connected()? { return Ok(Value::Null); }
-    let lock = app.state::<NetworkLock>(); let _guard = lock.0.lock().await;
-    let token = access_token().await?;
+    let token = access_token(&app).await?;
     let who = identity(&token).await?;
     let teams = paginate(&token, "query($after:String) { teams(first:100,after:$after) { nodes { id name key } pageInfo { hasNextPage endCursor } } }", json!({}), &["teams"]).await?;
     Ok(json!({"name": who["viewer"]["name"], "workspace": who["organization"]["name"], "workspaceId": who["organization"]["id"], "teams": teams}))
@@ -67,8 +66,7 @@ pub async fn linear_connection(window: WebviewWindow, app: AppHandle) -> Result<
 #[tauri::command]
 pub async fn linear_team_options(window: WebviewWindow, app: AppHandle, team_id: String) -> Result<Value, String> {
     main_only(&window)?; let team_id = id(&team_id)?;
-    let lock = app.state::<NetworkLock>(); let _guard = lock.0.lock().await;
-    let token = access_token().await?;
+    let token = access_token(&app).await?;
     let mut result = json!({});
     for (field, fields) in [("projects", "id name"), ("members", "id name displayName"), ("labels", "id name color")] {
         // Field names are compiled constants; user values are always GraphQL variables.
@@ -160,7 +158,7 @@ fn complete(app: &AppHandle, workspace: &str, mut session: Value, result: Value)
 
 /// Checks only the immutable attempted revision. A confirmed absence unlocks the draft without sending again.
 async fn reconcile_attempt(app: &AppHandle, session_id: &str, receipt: (String, String, Option<String>)) -> Result<Option<Value>, String> {
-    let token = access_token().await?;
+    let token = access_token(app).await?;
     let who = identity(&token).await?;
     let workspace = who["organization"]["id"].as_str().ok_or("Workspace is unavailable.")?;
     let decision = plan(Some((&receipt.0, &receipt.1, receipt.2.as_deref())), workspace);
@@ -222,7 +220,7 @@ pub async fn submit_issue(window: WebviewWindow, app: AppHandle, session: Value,
     let storage = app.state::<Storage>();
     storage.save(&session)?;
     progress(&app, "Checking your Linear connection…");
-    let token = access_token().await?;
+    let token = access_token(&app).await?;
     let who = identity(&token).await?;
     let workspace = who["organization"]["id"].as_str().ok_or("Workspace is unavailable.")?.to_string();
     let receipt = storage.submission(&session_id)?;
