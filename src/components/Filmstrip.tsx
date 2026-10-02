@@ -58,9 +58,9 @@ export default function Filmstrip({ onCapture, onAdd, onRemove, canCapture }: Pr
       <ol ref={strip}>
         {images.map((image, index) => {
           const label = imageLabel(image, index); const marks = image.annotations.length;
-          const moving = drag?.from === index;
+          const moving = drag && drag.from === index ? drag : null;
           const classes = ['tile', image.id === activeId && 'active', moving && 'dragging', marker(index)].filter(Boolean).join(' ');
-          const style = { viewTransitionName: `tile-${image.id}`, ...(moving ? { transform: `translateX(${drag.dx}px)` } : {}) } as CSSProperties;
+          const style = { viewTransitionName: `tile-${image.id}`, ...(moving ? { transform: `translateX(${moving.dx}px)` } : {}) } as CSSProperties;
           return (
             <li key={image.id} className={classes} data-testid="tile" style={style}>
               <button type="button" className="tile-select" aria-current={image.id === activeId ? 'true' : undefined}
