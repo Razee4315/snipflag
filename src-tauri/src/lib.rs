@@ -89,7 +89,15 @@ fn save_settings(window: WebviewWindow, app: AppHandle, storage: State<Storage>,
         let result = if next["launchAtLogin"] == true { autolaunch.enable() } else { autolaunch.disable() };
         result.map_err(|_| "Could not change the launch at login setting.")?;
     }
-    storage.write_settings(&next)?;
+    if let Err(error) = storage.write_settings(&next) {
+        // Nothing was saved: put the running shortcut and the login item back so they match the stored settings.
+        if next["shortcut"] != previous["shortcut"] { set_shortcut_status(&app, register_shortcut(&app, previous["shortcut"].as_str().unwrap_or_default()).err()); }
+        if next["launchAtLogin"] != previous["launchAtLogin"] {
+            let autolaunch = app.autolaunch();
+            let _ = if previous["launchAtLogin"] == true { autolaunch.enable() } else { autolaunch.disable() };
+        }
+        return Err(error);
+    }
     if next["retentionDays"] != previous["retentionDays"] { storage.record_cleanup(storage.prune(next["retentionDays"].as_u64().unwrap_or(0)))?; }
     Ok(next)
 }
