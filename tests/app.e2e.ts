@@ -586,6 +586,7 @@ test('a stroke keeps going when the pointer leaves the picture and follows the e
   await page.mouse.up();
   await expect(tile(page, 1)).toHaveAccessibleName(/1 mark$/);
   // The arrow reaches the right edge of the 400 px image instead of stopping where the pointer crossed it.
+  await expect(page.getByRole('status', { name: 'Saved on this computer' })).toBeVisible();
   const marks = await page.evaluate(async () => {
     const db = await new Promise<IDBDatabase>((resolve, reject) => { const r = indexedDB.open('snipflag-preview'); r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error); });
     const sessions = await new Promise<import('../src/model').Session[]>((resolve, reject) => { const r = db.transaction('sessions').objectStore('sessions').getAll(); r.onsuccess = () => resolve(r.result); r.onerror = () => reject(r.error); });
