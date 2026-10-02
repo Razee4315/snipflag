@@ -304,7 +304,7 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: 0.85; 
   transition: border-color 160ms var(--ease), background 160ms var(--ease), box-shadow 180ms var(--ease);
 }
 .field input:hover:not(:disabled), .field select:hover:not(:disabled), .description-editor > textarea:hover:not(:disabled), .caption-field input:hover:not(:disabled) { border-color: var(--border); }
-.field input:focus, .field select:focus, .description-editor > textarea:focus, .caption-field input:focus, .labels .filter:focus {
+.field input:focus, .field select:focus, .description-editor > textarea:focus, .caption-field input:focus, .labels .filter:focus, .step-note input:focus, .history-search:focus {
   outline: none; border-color: color-mix(in srgb, var(--primary) 55%, transparent); background: var(--surface);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);
 }
@@ -481,7 +481,6 @@ option { background: var(--surface); color: var(--text); }
 .step-dot { display: grid; place-items: center; flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; font-size: 11px; font-weight: 700; box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px var(--border); }
 .step-note input { flex: 1; min-width: 0; height: 32px; padding: 0 10px; border: 1px solid transparent; border-radius: 9px; background: var(--surface-2); font-size: 12.5px; transition: border-color 160ms var(--ease), background 160ms var(--ease), box-shadow 180ms var(--ease); }
 .step-note input:hover:not(:disabled) { border-color: var(--border); }
-.step-note input:focus { outline: none; border-color: color-mix(in srgb, var(--primary) 55%, transparent); background: var(--surface); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent); }
 /* Share bar: what to do with the marked-up screenshot. */
 .share { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 10px; background: var(--surface); border-top: 1px solid var(--border); }
 .share .button { min-height: 32px; font-size: 12.5px; }
@@ -637,7 +636,6 @@ option { background: var(--surface); color: var(--text); }
 .history-tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .history-search { flex: 1; min-width: 180px; height: 36px; padding: 0 12px; border: 1px solid transparent; border-radius: var(--radius); background: var(--surface-2); font-size: 12.5px; transition: border-color 160ms var(--ease), background 160ms var(--ease), box-shadow 180ms var(--ease); }
 .history-search:hover { border-color: var(--border); }
-.history-search:focus { outline: none; border-color: color-mix(in srgb, var(--primary) 55%, transparent); background: var(--surface); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent); }
 .segmented { display: flex; padding: 3px; border-radius: 11px; background: var(--surface-2); border: 1px solid var(--border); }
 .segmented button { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-size: 12px; font-weight: 550; cursor: pointer; transition: background 140ms, color 140ms; }
 .segmented button:hover { color: var(--text); }
