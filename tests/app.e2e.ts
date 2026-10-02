@@ -645,6 +645,42 @@ test('crop, line, nudge and duplicate change the image as expected', async ({ pa
   await expect(tile(page, 1)).toHaveAccessibleName(/2 marks$/);
 });
 
+test('nothing happens behind the user: dialogs block mark keys, a hidden panel is shown before sending, Undo restores a removal', async ({ page }) => {
+  await addImages(page, [white]);
+  await page.keyboard.press('r');
+  await drag(page, [0.2, 0.2], [0.6, 0.6]);
+  await page.keyboard.press('v');
+  const box = (await page.getByTestId('canvas').boundingBox())!;
+  await page.mouse.click(box.x + box.width * 0.4, box.y + box.height * 0.4);
+  await expect(page.getByRole('button', { name: 'Delete selected annotation (Delete)' })).toBeVisible();
+  // Delete pressed on a dialog's button must not remove the selected mark behind the dialog.
+  await page.getByRole('button', { name: 'History' }).click();
+  const history = page.getByRole('dialog', { name: 'History' });
+  await history.getByRole('button', { name: 'Close' }).focus();
+  await page.keyboard.press('Delete');
+  await page.keyboard.press('ArrowRight');
+  await history.getByRole('button', { name: 'Close' }).click();
+  await expect(history).toBeHidden();
+  await expect(tile(page, 1)).toHaveAccessibleName(/1 mark$/);
+  await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeEnabled();
+  // Ctrl+Enter with the issue panel hidden shows the panel instead of sending from it unseen.
+  const panel = page.getByRole('complementary', { name: 'Linear issue' });
+  await page.getByRole('button', { name: 'Hide issue panel' }).click();
+  await expect(panel).toBeHidden();
+  await page.keyboard.press('Control+Enter');
+  await expect(panel).toBeVisible();
+  await expect(page.getByRole('alert').filter({ hasText: 'desktop app' })).toHaveCount(0);
+  await page.evaluate(() => Promise.allSettled(document.getAnimations().map(a => a.finished)).then(() => undefined));
+  // Removing a screenshot is the newest change, so Undo puts it back with its mark and withdraws the offer.
+  await page.getByRole('button', { name: 'Remove screenshot 1' }).click();
+  await expect(page.getByTestId('tile')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Put back' })).toBeVisible();
+  await page.keyboard.press('Control+z');
+  await expect(page.getByTestId('tile')).toHaveCount(1);
+  await expect(tile(page, 1)).toHaveAccessibleName(/1 mark$/);
+  await expect(page.getByRole('button', { name: 'Put back' })).toHaveCount(0);
+});
+
 test('a missing title is reported at the title field and clears when filled in', async ({ page }) => {
   await addImages(page, [white]);
   const title = page.getByLabel('Title', { exact: true });
