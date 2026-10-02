@@ -40,7 +40,8 @@ describe('session store', () => {
   it('freezes a sent session and starts a new draft for new screenshots', () => {
     const a = image(); state().addImages([a]); state().patch({ title: 'Bug' });
     const sentId = state().session.id;
-    state().setIssue({ id: 'i', identifier: 'ENG-7', url: 'https://linear.app/x' });
+    // A sent session reaches the editor the way it does in the app: loaded with its issue.
+    state().hydrate({ ...state().session, issue: { id: 'i', identifier: 'ENG-7', url: 'https://linear.app/x' } });
     state().patch({ title: 'Changed' }); state().edit([mark()]); state().removeImage(a.id);
     expect(state().session.title).toBe('Bug');
     expect(state().session.images).toHaveLength(1);

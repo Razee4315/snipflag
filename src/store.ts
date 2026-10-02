@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { ensureImageReferences } from './mentions';
-import { estimateBytes, LIMITS, newSession, reorder, type Annotation, type AnnotationHistory, type CaptureImage, type IssueResult, type Session, type Tool } from './model';
+import { estimateBytes, LIMITS, newSession, reorder, type Annotation, type AnnotationHistory, type CaptureImage, type Session, type Tool } from './model';
 
 type History = AnnotationHistory;
 const snapshotSizes = new WeakMap<Annotation[], number>();
@@ -43,7 +43,7 @@ interface State {
   setBusy: (busy: boolean) => void; setSelection: (id: string | null) => void;
   /** Sets a step's note without an undo entry: notes are text about the image, not marks on it. */
   noteAnnotation: (id: string, note: string) => void;
-  updateAnnotation: (id: string, patch: Partial<Annotation>) => void; removeAnnotation: (id: string) => void; setIssue: (issue: IssueResult) => void;
+  updateAnnotation: (id: string, patch: Partial<Annotation>) => void; removeAnnotation: (id: string) => void;
   setSaveState: (state: SaveState, error?: string) => void; markPersisted: (sessionId: string, ids: string[]) => void;
 }
 const locked = (s: State) => s.busy || s.submissionLocked || !!s.session.issue;
@@ -136,7 +136,6 @@ export const useStore = create<State>((set, get) => ({
     const image = activeImage(get()); if (!image) return;
     get().edit(image.annotations.filter(a => a.id !== id)); set({ selection: null });
   },
-  setIssue: (issue) => set(s => ({ session: { ...s.session, issue, updatedAt: Date.now() }, busy: false })),
   setSaveState: (saveState, saveError = '') => set({ saveState, saveError }),
   markPersisted: (sessionId, ids) => { if (get().session.id === sessionId) set(s => ({ persisted: [...new Set([...s.persisted, ...ids])], durable: true })); },
 }));
