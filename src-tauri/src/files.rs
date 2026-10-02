@@ -1,4 +1,5 @@
 use serde_json::{json, Value};
+use sha2::{Digest, Sha256};
 use std::{borrow::Cow, sync::Mutex};
 use tauri::{AppHandle, Manager, WebviewWindow};
 use tauri_plugin_dialog::DialogExt;
@@ -51,14 +52,18 @@ fn shared_folder(app: &AppHandle) -> Result<std::path::PathBuf, String> {
 }
 /// Writes one new capture (already PNG-encoded) to Pictures/Snipflag and returns its path.
 pub fn save_capture(app: &AppHandle, bytes: &[u8]) -> Result<String, String> {
-    let path = shared_folder(app)?.join(shared_name(now(), 0));
+    let path = shared_folder(app)?.join(format!("snipflag-{}-1.png", now()));
     std::fs::write(&path, bytes).map_err(|_| "Could not save the capture. Check free disk space.")?;
     Ok(path.to_string_lossy().into_owned())
 }
 #[derive(serde::Deserialize)]
 pub struct SharedImage { #[serde(rename = "dataUrl")] data_url: String }
-/// File name for a shared copy: sortable, and free of spaces so it pastes cleanly into a terminal.
-pub fn shared_name(millis: u64, index: usize) -> String { format!("snipflag-{millis}-{}.png", index + 1) }
+/// File name for a shared copy, taken from its pixels: sharing the same picture again reuses the file instead of
+/// adding another. Free of spaces so it pastes cleanly into a terminal.
+pub fn shared_name(bytes: &[u8]) -> String {
+    let digest = Sha256::digest(bytes);
+    format!("snipflag-{}.png", digest[..8].iter().map(|b| format!("{b:02x}")).collect::<String>())
+}
 /// Saves flattened screenshots to Pictures/Snipflag so another app can open them by path. Only when the user asks;
 /// the folder and file names are chosen here, never by the page.
 #[tauri::command]
@@ -66,12 +71,12 @@ pub async fn share_images(window: WebviewWindow, app: AppHandle, images: Vec<Sha
     main_only(&window)?;
     if images.is_empty() || images.len() > MAX_IMAGES { return Err("Share between 1 and 10 screenshots.".into()); }
     let folder = shared_folder(&app)?;
-    let stamp = now();
     let mut paths = Vec::new();
-    for (index, image) in images.iter().enumerate() {
+    for image in &images {
         let (bytes, _, _) = decode_png(&image.data_url)?;
-        let path = folder.join(shared_name(stamp, index));
-        std::fs::write(&path, &bytes).map_err(|_| "Could not save the screenshot. Check free disk space.")?;
+        let path = folder.join(shared_name(&bytes));
+        // An unchanged screenshot is already there under this name.
+        if !path.exists() { std::fs::write(&path, &bytes).map_err(|_| "Could not save the screenshot. Check free disk space.")?; }
         paths.push(path.to_string_lossy().into_owned());
     }
     Ok(paths)
@@ -102,8 +107,11 @@ mod tests {
         assert_eq!(safe_name("Login bug.PNG"), "Login bug.PNG");
         assert_eq!(safe_name("C:\\x\\y"), "Cxy.png");
     }
-    #[test] fn shared_files_are_numbered_from_one_without_spaces() {
-        assert_eq!(shared_name(1700000000000, 0), "snipflag-1700000000000-1.png");
-        assert_eq!(shared_name(5, 9), "snipflag-5-10.png");
+    #[test] fn shared_files_are_named_by_content_without_spaces() {
+        let name = shared_name(b"same pixels");
+        assert_eq!(name, shared_name(b"same pixels"));
+        assert_ne!(name, shared_name(b"other pixels"));
+        assert_eq!(name.len(), "snipflag-.png".len() + 16);
+        assert!(name.starts_with("snipflag-") && name.ends_with(".png") && !name.contains(' '));
     }
 }
