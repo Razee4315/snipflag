@@ -120,7 +120,8 @@ export default function Editor({ image, zoom, onZoom, onScale, onCrop }: Props) 
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (isTyping(e.target) || textEdit) return;
+      // Keys pressed in a dialog never edit the screenshot behind it.
+      if (isTyping(e.target) || textEdit || document.querySelector('dialog[open]')) return;
       if (e.key === 'Shift') updateDrawing.current(true);
       if ((e.key === 'Delete' || e.key === 'Backspace') && selection && !locked) { e.preventDefault(); removeAnnotation(selection); }
       if (e.key === 'Escape') { setDraft(null); setCrop(null); start.current = null; setSelection(null); }
