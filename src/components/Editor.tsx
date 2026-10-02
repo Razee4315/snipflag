@@ -1,5 +1,5 @@
 import Konva from 'konva';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type RefObject } from 'react';
 import { Image as KonvaImage, Layer, Line, Rect, Shape, Stage, Transformer } from 'react-konva';
 import { isTyping } from '../desktop';
 import { bounds, duplicate, isMeaningful, snapAngle, snapBox, transform, translate, type Box, type Point } from '../geometry';
@@ -303,6 +303,14 @@ export default function Editor({ image, zoom, onZoom, onScale, onCrop }: Props) 
     );
   };
 
+  /** With the Select tool, Tab and Shift+Tab on the canvas step through the marks; past the last one focus moves on. */
+  const stepThroughMarks = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== 'Tab' || e.target !== e.currentTarget || tool !== 'select' || locked) return;
+    const at = ordered.findIndex(a => a.id === selection);
+    const next = e.shiftKey ? (at < 0 ? ordered.length : at) - 1 : at + 1;
+    if (next < 0 || next >= ordered.length) { setSelection(null); return; }
+    e.preventDefault(); setSelection(ordered[next].id);
+  };
   const stageWidth = Math.max(1, Math.round(image.width * scale)); const stageHeight = Math.max(1, Math.round(image.height * scale));
   const brushTool = !locked && isFreehand(tool);
   const brushSize = Math.max(6, (tool === 'highlight' ? highlightSize : stroke) * scale);
@@ -338,6 +346,7 @@ export default function Editor({ image, zoom, onZoom, onScale, onCrop }: Props) 
       onPointerUp={() => { if (pan.current) { pan.current = null; setGrab(space.current ? 'ready' : 'idle'); } }}
       onPointerCancel={() => { pan.current = null; setGrab(space.current ? 'ready' : 'idle'); }}>
       <div key={image.id} className="canvas-frame" style={{ width: stageWidth, height: stageHeight, cursor }} data-testid="canvas"
+        tabIndex={0} role="group" aria-label={`Screenshot with ${image.annotations.length} ${image.annotations.length === 1 ? 'mark' : 'marks'}. With the Select tool, Tab steps through them.`} onKeyDown={stepThroughMarks}
         onPointerMove={brushTool ? moveBrush : undefined} onPointerLeave={() => { if (brush.current) brush.current.style.opacity = '0'; }}>
         <Stage width={stageWidth} height={stageHeight} scaleX={scale} scaleY={scale}
           onPointerDown={onDown} onPointerMove={e => updateDrawing.current(e.evt.shiftKey, samples(e.evt))} onPointerUp={onUp} onPointerLeave={e => { textStart.current = null; if (!e.evt.buttons && (draftRef.current || cropRef.current)) onUp(); }}
