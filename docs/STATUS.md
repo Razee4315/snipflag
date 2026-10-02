@@ -1,5 +1,9 @@
 # Current state / handoff
 
+## End-to-end audit (owner request) — 2026-10-02, awaiting approval
+
+Audited `de97087` from source only; findings and a phased plan are in [AUDIT-2026-10-02.md](AUDIT-2026-10-02.md) (33 findings, no P0; missing features, cleanup and optimization lists). No application code changed, nothing built or run, no CI dispatched, nothing committed. Gains in the optimization list are estimates, not measurements. Next: the owner approves a phase (and answers the five decisions at the end of the audit) before any code is modified.
+
 ## v1.3.0 released as Latest — 2026-10-02
 
 The owner asked for a new release and, when told the release needs every platform, confirmed all platforms ("as it is actual release so each of them"). This is the one exception so far to the Windows-only build rule.
