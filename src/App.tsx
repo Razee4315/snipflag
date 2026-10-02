@@ -22,13 +22,13 @@ import { ease, smooth } from './motion';
 import { sharePrompt } from './share';
 import { play, primeSound, setSoundEnabled } from './sound';
 import { saveBeforeQuit } from './lifecycle';
+import { isTyping } from './desktop';
 import { rememberDetails, templatesOf } from './templates';
 
 const PANEL_KEY = 'snipflag-panel';
 /** A toast; `action` offers one follow-up such as Undo while it is on screen. */
 interface NoticeAction { label: string; run: () => void }
 type Notice = { kind: 'error' | 'info'; text: string; id: number; action?: NoticeAction } | null;
-const isTyping = (t: EventTarget | null) => t instanceof HTMLElement && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName));
 
 export default function App() {
   const session = useStore(s => s.session); const image = useStore(activeImage); const busy = useStore(s => s.busy);

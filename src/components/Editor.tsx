@@ -1,6 +1,7 @@
 import Konva from 'konva';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import { Image as KonvaImage, Layer, Line, Rect, Shape, Stage, Transformer } from 'react-konva';
+import { isTyping } from '../desktop';
 import { bounds, duplicate, isMeaningful, snapAngle, snapBox, transform, translate, type Box, type Point } from '../geometry';
 import { clampRect, isFreehand, isOutline, isSegment, nextStep, normalizeRect, stepSize, type Annotation, type CaptureImage } from '../model';
 import { drawAnnotation, FONT_FAMILY, LINE_HEIGHT, paintOrder, paintPixelation, pixelate } from '../render';
@@ -38,9 +39,6 @@ export function measureText(text: string, fontSize: number) {
   if (!measureCtx) return { width: fontSize * 8, height: lines.length * fontSize * LINE_HEIGHT };
   measureCtx.font = `bold ${fontSize}px ${FONT_FAMILY}`;
   return { width: Math.max(4, ...lines.map(l => measureCtx!.measureText(l).width)), height: lines.length * fontSize * LINE_HEIGHT };
-}
-function isTyping(target: EventTarget | null) {
-  return target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
 }
 
 export default function Editor({ image, zoom, onZoom, onScale, onCrop }: Props) {

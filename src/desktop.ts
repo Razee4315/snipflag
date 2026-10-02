@@ -3,6 +3,9 @@
  * panel, print, find bar, reload, history navigation, devtools shortcuts, autoscroll, or file-drop navigation.
  * Text fields keep their normal editing keys and cut/copy/paste menu.
  */
+/** Whether the keyboard is busy in a form control, so single-key and editing shortcuts must leave it alone. */
+export const isTyping = (t: EventTarget | null) => t instanceof HTMLElement && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName));
+/** Narrower than `isTyping`: only controls that hold text, which keep their editing keys and context menu. */
 const editable = (t: EventTarget | null) =>
   t instanceof HTMLElement && (t.isContentEditable || t instanceof HTMLTextAreaElement || (t instanceof HTMLInputElement && !['checkbox', 'radio', 'button', 'submit', 'range', 'color', 'file'].includes(t.type)));
 
