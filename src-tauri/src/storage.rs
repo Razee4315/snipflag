@@ -449,7 +449,9 @@ mod tests {
         let store = temp(); let mut img = image(4, 3); img["width"] = json!(5);
         assert!(store.save(&session(vec![img])).is_err());
         let dup = image(2, 2); assert!(store.save(&session(vec![dup.clone(), dup])).is_err());
-        assert!(store.save(&session((0..11).map(|_| image(1, 1)).collect())).is_err());
+        // Eleven fit since the screenshots-per-session setting can go up to 50; the fifty-first never does.
+        assert!(store.save(&session((0..11).map(|_| image(1, 1)).collect())).is_ok());
+        assert!(store.save(&session((0..MAX_IMAGES + 1).map(|_| image(1, 1)).collect())).is_err());
     }
     #[test] fn removed_images_are_deleted_and_sent_sessions_are_immutable() {
         let store = temp(); let mut s = session(vec![image(2, 2), image(2, 2)]);
