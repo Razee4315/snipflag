@@ -9,6 +9,7 @@ All notable changes to Snipflag are documented here. The format follows [Keep a 
 - Screenshots per session can be raised from 10 up to 50 in Settings → Capture, for long walkthroughs copied for an AI assistant. The 100 MB total per session is unchanged.
 - The filmstrip shows how many screenshots the session holds, keeps Capture and Add images at its right edge, scrolls with the mouse wheel and brings the chosen screenshot into view.
 - A short hint in the toolbar for Pixelate and Crop.
+- Page Up and Page Down move to the previous and next screenshot.
 
 ### Changed
 

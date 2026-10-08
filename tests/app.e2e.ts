@@ -593,6 +593,11 @@ test('a session holds 10 screenshots until the limit is raised in Settings', asy
     return { visible: box.x >= view.x && box.x + box.width <= buttons.x, pinned: buttons.x + buttons.width <= view.x + view.width };
   };
   await expect.poll(() => edges(12)).toEqual({ visible: true, pinned: true });
+  // Page Up and Page Down walk through the screenshots.
+  await page.keyboard.press('PageUp');
+  await expect(tile(page, 11)).toHaveAttribute('aria-current', 'true');
+  await page.keyboard.press('PageDown');
+  await expect(tile(page, 12)).toHaveAttribute('aria-current', 'true');
   // A mouse wheel moves along the strip.
   await tile(page, 12).hover();
   await page.mouse.wheel(0, -4000);

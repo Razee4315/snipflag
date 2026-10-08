@@ -382,6 +382,13 @@ export default function App() {
         e.preventDefault(); void (e.shiftKey ? shareForAi() : exportActive(true)); return;
       }
       if (mod || e.altKey) return;
+      // Page Up and Page Down walk through the screenshots; the filmstrip follows.
+      if (key === 'pageup' || key === 'pagedown') {
+        const s = useStore.getState(); const at = s.session.images.findIndex(i => i.id === s.activeId);
+        const next = at < 0 ? undefined : s.session.images[at + (key === 'pagedown' ? 1 : -1)];
+        if (next) { e.preventDefault(); s.select(next.id); }
+        return;
+      }
       const tool = TOOLS.find(t => t.key.toLowerCase() === key);
       if (tool && !isLocked(useStore.getState())) { e.preventDefault(); setTool(tool.tool); }
     };
