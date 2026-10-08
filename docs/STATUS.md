@@ -2,6 +2,26 @@
 
 Entries before the capture-speed work (2026-09-26 to 2026-09-28) are in [STATUS-archive.md](STATUS-archive.md). Read it only when that history is needed.
 
+## Solid controls, no bounce, 10 to 50 screenshots per session (owner request) — 2026-10-08, on a branch, not merged
+
+The owner asked for buttons that do not change size or move their neighbors when clicked, for "saved"/"copied" to be shown outside the button, for the bounce in the screenshot list and Settings to go, for a session limit they can raise from 10 to any number up to 50 (for work with a local AI assistant), and for other UI gaps to be fixed. Branch **`ui/solid-desktop-feel`** from `81a7786`; `main` is unchanged; version stays 1.4.0; no release, tag or asset change. Ask before merging.
+
+**Done** (`6e5629b`, `371c06a`, `46d3555`; details in CHANGELOG "Unreleased"):
+- **Buttons:** no `transform: scale` on press anywhere (a pressed control changes tone); Copy image, Copy for AI, Save image and Check for updates keep their labels; a working share button swaps its icon for a spinner of the same size and is not dimmed; progress and the result ("Copied to the clipboard", "Image saved", "Paths and notes copied") appear beside the share buttons for 4 s instead of as toasts (failures are still toasts). Red buttons kept the neutral hover background (white text on a light button); fixed.
+- **No bounce:** the overshoot easing (`--spring`) and the `rise`/`pop`/`tile-in`/`dialog-in`/`toast-in`/`canvas-in`/`reveal` keyframes are gone; what still animates is a 120 to 140 ms fade. `overscroll-behavior: none` on the page and every scroll area. Which of the two the owner saw as "bounce" is not known; both are removed.
+- **Cursor:** buttons use the arrow, links keep the hand. This is my reading of "should not feel like a website", not something the owner named.
+- **Toolbar:** the options row has one height for every tool (it collapsed for Pixelate and Crop and moved the screenshot), with a hint for those two tools. The one-row layout now depends on the editor's width (container query, 1000 px) instead of the window's, so it cannot re-wrap when the tool changes. At the default window size the options are now always on a second row.
+- **Filmstrip:** "n of limit" count, Capture/Add pinned at the right edge, vertical mouse wheel scrolls it, the chosen screenshot is scrolled into view, Page Up/Page Down move between screenshots.
+- **Session size:** setting `maxImages` (10 to 50, default 10) in Settings → Capture, validated in Rust `normalize_settings`. Rust `MAX_IMAGES` is now the ceiling of 50; the editor applies the chosen number when images are added, and images already in a session stay when it is lowered. The draft JSON limit went from 8 to 32 MiB (bounded undo history for 50 images). The 100 MB total per session is unchanged. Copy for AI flattens and saves five screenshots per request.
+
+**Verification (Windows only):** [Checks 37825195596](https://github.com/Razee4315/snipflag/actions/runs/37825195596) **passed** at `46d3555`: strict typecheck and production build, 66 unit tests, 35 browser tests; on Windows 38 Rust tests, all-target check and `cargo clippy -D warnings`. [Development installers 37825251150](https://github.com/Razee4315/snipflag/actions/runs/37825251150) **passed, Windows only**, same commit: [NSIS/MSI](https://github.com/Razee4315/snipflag/actions/runs/37825251150/artifacts/11571307141), version 1.4.0, unsigned. Earlier [Checks 37823832600](https://github.com/Razee4315/snipflag/actions/runs/37823832600) failed in one Rust test that still expected an eleventh image to be refused; the test now checks that 11 are accepted and 51 refused. The stylesheet was also looked at in a static mock with the real CSS (`.claude/ui-preview.html`, untracked): constant toolbar height across tools, the pinned filmstrip buttons at every scroll position, the status beside the share buttons.
+
+**Not verified:** nothing has run in the installed app. Open native gates are in TESTING.md "Solid controls and session size": whether the bounce the owner saw is gone in WebView2, the feel of pressed buttons and the arrow cursor, 50 screenshots in one session (time, memory, 100 MB total), Copy for AI in batches, and a Linear issue with more than 10 screenshots. macOS and Linux were not compiled.
+
+**Not changed:** README and the website still say "up to 10 screenshots"; they describe the released 1.4.0. Update them with the next release.
+
+Next: the owner installs the Windows artifact and reports on the feel; then merge and release on their word.
+
 ## v1.4.0 released as Latest, Windows only — 2026-10-02
 
 The owner asked for a release of the audit work, approved merging the branch, chose **Windows only** ("just for windows") and Latest. This is the first release without macOS/Linux builds.
