@@ -84,6 +84,7 @@ export default function Toolbar({ onDragWindow }: { onDragWindow?: (e: MouseEven
         ))}
       </div>
       <div className="tool-options">
+        {plain && <span className="tool-hint">{tool === 'crop' ? 'Drag over the part to keep. Undo brings the rest back.' : 'Drag over what to hide. It stays pixelated in every copy and upload.'}</span>}
         {!plain && (
           <div className="tool-group" role="radiogroup" aria-label={marker ? 'Highlighter color' : 'Color'} onKeyDown={rovingKeys}>
             {colors.map((c, i) => (

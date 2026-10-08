@@ -56,6 +56,8 @@ export interface Settings {
   saveOnCapture: boolean;
   /** Seconds to wait before the screen is frozen: 0, 3, 5 or 10. */
   captureDelay: number;
+  /** Most screenshots one session holds: 10 to 50. */
+  maxImages: number;
   /** Short synthesized cues for capture, success and failure. */
   sounds: boolean;
   /** Interface animations; the system reduced-motion preference always wins. */
@@ -72,12 +74,18 @@ export type Theme = 'system' | 'light' | 'dark' | 'paper' | 'blossom' | 'midnigh
 export interface Template { id: string; name: string; body: string }
 export type TeamDefaults = Pick<Session, 'projectId' | 'assigneeId' | 'labelIds' | 'priority'>;
 
-export const LIMITS = { images: 10, imageBytes: 20 * 1024 * 1024, sessionBytes: 100 * 1024 * 1024, pixels: 40_000_000, title: 250 };
+/** `images` is the default (and lowest) number of screenshots per session; `maxImages` the highest Settings allows. */
+export const LIMITS = { images: 10, maxImages: 50, imageBytes: 20 * 1024 * 1024, sessionBytes: 100 * 1024 * 1024, pixels: 40_000_000, title: 250 };
 export const PRIORITIES = [
   { value: 0, label: 'No priority' }, { value: 1, label: 'Urgent' }, { value: 2, label: 'High' }, { value: 3, label: 'Medium' }, { value: 4, label: 'Low' },
 ];
-export const defaults: Settings = { clientId: '', shortcut: 'CommandOrControl+Shift+Digit2', theme: 'system', retentionDays: 30, launchAtLogin: false, sounds: true, motion: true, autoUpdate: true, adjustSelection: false, magnifier: false, copyOnCapture: false, saveOnCapture: false, captureDelay: 0, teamMemory: {}, templates: null, teamDefaults: {} };
+export const defaults: Settings = { clientId: '', shortcut: 'CommandOrControl+Shift+Digit2', theme: 'system', retentionDays: 30, launchAtLogin: false, sounds: true, motion: true, autoUpdate: true, adjustSelection: false, magnifier: false, copyOnCapture: false, saveOnCapture: false, captureDelay: 0, maxImages: LIMITS.images, teamMemory: {}, templates: null, teamDefaults: {} };
 export const REDIRECT_URI = 'http://127.0.0.1:47839/callback';
+/** The screenshots-per-session setting as a whole number within its range; anything unreadable is the default. */
+export function imageLimit(value: unknown) {
+  const n = Math.round(Number(value));
+  return Number.isFinite(n) ? Math.min(LIMITS.maxImages, Math.max(LIMITS.images, n)) : LIMITS.images;
+}
 
 export function newSession(): Session {
   const now = Date.now();
@@ -92,7 +100,7 @@ export const FIELD_ERRORS = { title: 'Add an issue title.', team: 'Choose a Line
 export function validateSession(s: Session): string | null {
   if (s.issue) return 'This session has already been sent. Start a new session.';
   if (!s.images.length) return 'Add at least one screenshot.';
-  if (s.images.length > LIMITS.images) return 'A session can contain up to 10 images.';
+  if (s.images.length > LIMITS.maxImages) return `A session can contain up to ${LIMITS.maxImages} images.`;
   if (!s.title.trim()) return FIELD_ERRORS.title;
   if (s.title.trim().length > LIMITS.title) return 'Keep the title under 250 characters.';
   if (!s.teamId) return FIELD_ERRORS.team;

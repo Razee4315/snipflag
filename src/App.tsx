@@ -8,7 +8,7 @@ import StepNotes from './components/StepNotes';
 import type { PreparedReport } from './components/ReportPreview';
 import Toasts from './components/Toasts';
 import Toolbar, { TOOLS } from './components/Toolbar';
-import { defaults, FIELD_ERRORS, imageLabel, shortcutLabel, validateSession, type CaptureImage, type Settings } from './model';
+import { defaults, FIELD_ERRORS, imageLabel, LIMITS, shortcutLabel, validateSession, type CaptureImage, type Settings } from './model';
 import {
   appStatus, cancelLogin, clearHistory, deleteSession, desktop, editorWindow, errorText, exportPng, listSessions, loadSession,
   copyText, loadSettings, on, PREVIEW_MESSAGE, readClipboardImage, saveSettings, startCapture, submissionStatus, submitIssue, reconcileIssue, finishQuit, shareImages, type AppStatus, type RawImage,
@@ -36,6 +36,8 @@ const PANEL_KEY = 'snipflag-panel';
 /** The session that was open last on this device; only that one is restored at launch. */
 const LAST_SESSION_KEY = 'snipflag-last-session';
 const NOT_FOUND = 'Draft was not found.';
+/** Flattened copies written per request by Copy for AI, so a long session never holds every export in memory at once. */
+const SHARE_BATCH = 5;
 
 export default function App() {
   const session = useStore(s => s.session); const image = useStore(activeImage); const busy = useStore(s => s.busy);
@@ -59,9 +61,13 @@ export default function App() {
   const [flash, setFlash] = useState(0);
   /** From the capture request until its picture is in the session (or it is cancelled). */
   const [capturing, setCapturing] = useState(false);
-  /** The share action in progress; its button says so and the others wait. */
+  /** The share action in progress: its button shows a spinner in place of its icon. */
   const [sharing, setSharing] = useState<'copy' | 'save' | 'ai' | null>(null);
   const sharingNow = useRef(false);
+  /** What that action is doing, then what it did, shown beside the buttons so their labels never change. */
+  const [shareStatus, setShareStatus] = useState<{ text: string; detail?: string; busy: boolean } | null>(null);
+  const shareTimer = useRef(0);
+  useEffect(() => () => window.clearTimeout(shareTimer.current), []);
   // The issue panel can be tucked away for quick mark-up-and-share work; the choice is remembered on this device.
   const [panelOpen, setPanelOpen] = useState(() => { try { return localStorage.getItem(PANEL_KEY) !== 'closed'; } catch { return true; } });
   const showPanel = useCallback((open: boolean) => {
@@ -111,6 +117,7 @@ export default function App() {
     if (settings.motion) delete root.dataset.motion; else root.dataset.motion = 'off';
     setSoundEnabled(settings.sounds);
   }, [settings.theme, settings.motion, settings.sounds]);
+  useEffect(() => { useStore.getState().setImageLimit(settings.maxImages); }, [settings.maxImages]);
   // The living theme backdrops rest while the window is hidden or minimized.
   useEffect(() => {
     const rest = () => { if (document.hidden) document.documentElement.dataset.idle = 'true'; else delete document.documentElement.dataset.idle; };
@@ -158,7 +165,9 @@ export default function App() {
     // The shortcut also works from the tray: a refusal has to bring the editor forward, or nothing seems to happen.
     const refuse = (text: string) => { void editorWindow('show').catch(() => undefined); notify(text, 'error'); play('error'); };
     if (s.submissionLocked) { refuse('Check the previous submission or start a new session before capturing.'); return; }
-    if (!s.session.issue && s.session.images.length >= 10) { refuse('This session already has 10 screenshots. Start a new session to capture more.'); return; }
+    if (!s.session.issue && s.session.images.length >= s.imageLimit) {
+      refuse(`This session already has ${s.session.images.length} screenshots. Start a new session${s.imageLimit < LIMITS.maxImages ? `, or raise the limit in Settings (up to ${LIMITS.maxImages}),` : ''} to capture more.`); return;
+    }
     s.setBusy(true); setCapturing(true);
     try { await flush(); await startCapture(); } catch (e) { useStore.getState().setBusy(false); setCapturing(false); notify(errorText(e), 'error'); }
   }, [flush, notify]);
@@ -294,19 +303,28 @@ export default function App() {
     updateSettings(v => ({ ...v, teamMemory: { ...v.teamMemory, [connection.workspaceId]: teamId } })).catch(() => undefined);
   }, [connection, updateSettings]);
 
-  /** Runs one share action at a time and shows which one is working. */
-  const share = useCallback(async (kind: 'copy' | 'save' | 'ai', run: () => Promise<void>) => {
+  /**
+   * Runs one share action at a time. `run` reports what it is doing through `progress` and returns what it did (with an
+   * optional longer `detail`), or null when nothing happened. Both appear beside the buttons; a failure is a toast.
+   */
+  const share = useCallback(async (kind: 'copy' | 'save' | 'ai', working: string, run: (progress: (text: string) => void) => Promise<{ text: string; detail?: string } | null>) => {
     if (sharingNow.current) return;
-    sharingNow.current = true; setSharing(kind);
-    try { await run(); } catch (e) { notify(errorText(e), 'error'); }
+    sharingNow.current = true; setSharing(kind); window.clearTimeout(shareTimer.current);
+    const progress = (text: string) => setShareStatus({ text, busy: true });
+    progress(working);
+    try {
+      const done = await run(progress);
+      setShareStatus(done && { ...done, busy: false });
+      if (done) shareTimer.current = window.setTimeout(() => setShareStatus(null), 4000);
+    } catch (e) { setShareStatus(null); notify(errorText(e), 'error'); }
     finally { sharingNow.current = false; setSharing(null); }
   }, [notify]);
-  const exportActive = useCallback((clipboard: boolean) => share(clipboard ? 'copy' : 'save', async () => {
-    const s = useStore.getState(); const img = activeImage(s); if (!img) return;
+  const exportActive = useCallback((clipboard: boolean) => share(clipboard ? 'copy' : 'save', clipboard ? 'Copying…' : 'Saving…', async () => {
+    const s = useStore.getState(); const img = activeImage(s); if (!img) return null;
     const index = s.session.images.indexOf(img);
     const ok = await exportPng(await flatten(img), imageLabel(img, index), clipboard);
-    if (ok) notify(clipboard ? 'Image copied to the clipboard.' : 'Image saved.');
-  }), [notify, share]);
+    return ok ? { text: clipboard ? 'Copied to the clipboard' : 'Image saved' } : null;
+  }), [share]);
 
   // Zoom buttons glide to the new scale instead of jumping.
   const scaleNow = useRef(scale); scaleNow.current = scale;
@@ -329,14 +347,20 @@ export default function App() {
     } catch (e) { notify(errorText(e), 'error'); }
   }, [notify]);
   /** Saves every flattened screenshot to Pictures/Snipflag and copies their paths with the report text and step notes. */
-  const shareForAi = useCallback(() => share('ai', async () => {
-    const { session: s } = useStore.getState(); if (!s.images.length) return;
-    const images: { dataUrl: string }[] = [];
-    for (const img of s.images) images.push({ dataUrl: await flatten(img) });
-    const paths = await shareImages(images);
+  const shareForAi = useCallback(() => share('ai', 'Saving copies…', async progress => {
+    const { session: s } = useStore.getState(); const total = s.images.length; if (!total) return null;
+    const paths: string[] = [];
+    for (let first = 0; first < total; first += SHARE_BATCH) {
+      const batch: { dataUrl: string }[] = [];
+      for (const img of s.images.slice(first, first + SHARE_BATCH)) {
+        if (total > 1) progress(`Saving copy ${first + batch.length + 1} of ${total}…`);
+        batch.push({ dataUrl: await flatten(img) });
+      }
+      paths.push(...await shareImages(batch));
+    }
     await copyText(sharePrompt(s, paths));
-    notify(`${paths.length === 1 ? 'Screenshot' : `${paths.length} screenshots`} saved to Pictures/Snipflag. Paths and notes are on the clipboard.`);
-  }), [notify, share]);
+    return { text: 'Paths and notes copied', detail: `${paths.length === 1 ? 'Screenshot' : `${paths.length} screenshots`} saved to Pictures/Snipflag. Paths and notes are on the clipboard.` };
+  }), [share]);
 
   // Keyboard: tool keys, undo/redo, submit, paste.
   useEffect(() => {
@@ -427,10 +451,12 @@ export default function App() {
               </div>
             </div>
             <div className="share" role="group" aria-label="Share this screenshot" onMouseDown={dragWindow}>
-              <button type="button" className="button primary" disabled={!!sharing} onClick={() => void exportActive(true)}><Icon name="copy" size={16} /> {sharing === 'copy' ? 'Copying…' : 'Copy image'}</button>
-              <button type="button" className="button" disabled={!desktop || !!sharing} onClick={() => void shareForAi()}><Icon name="terminal" size={16} /> {sharing === 'ai' ? 'Saving copies…' : 'Copy for AI'}</button>
-              <button type="button" className="button" disabled={!!sharing} onClick={() => void exportActive(false)}><Icon name="save" size={16} /> {sharing === 'save' ? 'Saving…' : 'Save image'}</button>
-              <span className="share-hint small muted">{desktop ? 'Copy for AI saves the screenshots and copies their paths with your notes.' : 'Copy for AI works in the desktop app.'}</span>
+              {/* Labels and sizes are fixed: a working button swaps its icon for a spinner, and the words go beside the buttons. */}
+              <button type="button" className="button primary" aria-busy={sharing === 'copy'} onClick={() => void exportActive(true)}>{sharing === 'copy' ? <span className="spinner" aria-hidden="true" /> : <Icon name="copy" size={16} />} Copy image</button>
+              <button type="button" className="button" disabled={!desktop} aria-busy={sharing === 'ai'} onClick={() => void shareForAi()}>{sharing === 'ai' ? <span className="spinner" aria-hidden="true" /> : <Icon name="terminal" size={16} />} Copy for AI</button>
+              <button type="button" className="button" aria-busy={sharing === 'save'} onClick={() => void exportActive(false)}>{sharing === 'save' ? <span className="spinner" aria-hidden="true" /> : <Icon name="save" size={16} />} Save image</button>
+              <span className="share-status small" role="status" title={shareStatus?.detail}>{shareStatus && <>{!shareStatus.busy && <Icon name="check" size={14} />}<span>{shareStatus.text}</span></>}</span>
+              {!shareStatus && <span className="share-hint small muted">{desktop ? 'Copy for AI saves the screenshots and copies their paths with your notes.' : 'Copy for AI works in the desktop app.'}</span>}
               {!panelOpen && <button type="button" className="button share-linear" onClick={() => showPanel(true)}><Icon name="panel" size={16} /> Linear issue</button>}
             </div>
             {flash > 0 && <div key={flash} className="capture-flash" aria-hidden="true" />}

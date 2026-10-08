@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import { acceleratorFromEvent, REDIRECT_URI, shortcutLabel, type Connection, type Settings, type Template } from '../model';
+import { acceleratorFromEvent, imageLimit, LIMITS, REDIRECT_URI, shortcutLabel, type Connection, type Settings, type Template } from '../model';
 import { TEMPLATE_LIMITS, templatesOf, tidyTemplates } from '../templates';
 import { captureTiming, copyText, desktop, errorText, openAboutLink, openLinearSetup, type AboutLink, type AppStatus, type AvailableUpdate, type CaptureTiming } from '../native';
 import Dialog from './Dialog';
@@ -37,6 +37,9 @@ export default function SettingsDialog(p: Props) {
   const [error, setError] = useState(''); const [saved, setSaved] = useState('');
   const [recording, setRecording] = useState(false); const [confirmClear, setConfirmClear] = useState(false);
   const [added, setAdded] = useState('');
+  // The screenshots-per-session field holds whatever is typed; the setting follows once that is a number in range.
+  const [limitText, setLimitText] = useState(String(imageLimit(p.settings.maxImages)));
+  const limitValid = /^\d+$/.test(limitText.trim()) && imageLimit(limitText) === Number(limitText);
   const [updateState, setUpdateState] = useState<{ checking?: boolean; found?: AvailableUpdate | null; error?: string }>({});
   const [timing, setTiming] = useState<CaptureTiming | null>(null);
   useEffect(() => { captureTiming().then(setTiming).catch(() => undefined); }, []);
@@ -201,6 +204,18 @@ export default function SettingsDialog(p: Props) {
           </select>
           <small className="muted">Time to open a menu or tooltip. Snipflag hides, waits, then shows the selection screen.</small>
         </label>
+        <h3 className="subhead">Session size</h3>
+        <label className="field">
+          <span>Screenshots per session</span>
+          <input type="number" className="number-field" inputMode="numeric" min={LIMITS.images} max={LIMITS.maxImages} step={1} value={limitText} aria-invalid={limitValid ? undefined : true} aria-describedby="limit-help"
+            onChange={e => { setLimitText(e.target.value); if (/^\d+$/.test(e.target.value.trim()) && imageLimit(e.target.value) === Number(e.target.value)) setDraft({ ...draft, maxImages: Number(e.target.value) }); }}
+            onBlur={() => {
+              // A number outside the range lands on the nearest allowed one; anything else returns to the last valid value.
+              const next = /^\d+$/.test(limitText.trim()) ? imageLimit(limitText) : draft.maxImages;
+              setLimitText(String(next)); if (next !== draft.maxImages) setDraft({ ...draft, maxImages: next });
+            }} />
+          <small id="limit-help" className={limitValid ? 'muted' : 'error'}>From {LIMITS.images} to {LIMITS.maxImages}. Raise it for long walkthroughs you copy for an AI assistant. A session still holds at most 100 MB of images, and screenshots already in a session always stay.</small>
+        </label>
       </section>
 
       <section className="settings-section" role="tabpanel" aria-labelledby="settings-tab-Appearance" hidden={section !== 'Appearance'}><h3>Appearance</h3>
@@ -275,8 +290,8 @@ export default function SettingsDialog(p: Props) {
                 : <button type="button" className="button" disabled={updateState.checking} onClick={() => {
                     setUpdateState({ checking: true });
                     p.onCheckUpdate().then(found => setUpdateState({ found })).catch(e => setUpdateState({ error: errorText(e) }));
-                  }}>{updateState.checking ? 'Checking…' : 'Check for updates'}</button>}
-              <span className="small muted" role="status">{updateState.found === null ? 'Snipflag is up to date.' : ''}</span>
+                  }}>Check for updates</button>}
+              <span className="small muted" role="status">{updateState.checking ? <><span className="spinner" aria-hidden="true" /> Checking…</> : updateState.found === null ? 'Snipflag is up to date.' : ''}</span>
             </div>
             {updateState.error && <p className="error small" role="alert">{updateState.error}</p>}
           </>

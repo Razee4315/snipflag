@@ -1,5 +1,17 @@
 # Test and release gates
 
+## Solid controls and session size (branch `ui/solid-desktop-feel`, 2026-10-08)
+
+Automated coverage: unit tests for the screenshots-per-session range and for a raised, then lowered, limit in the store; Rust settings validation for `maxImages` (10 to 50, whole numbers); browser tests that the share buttons keep their boxes and labels after Save image, that the result appears beside them, that a pressed button has no transform, that the eleventh screenshot is refused until the limit is raised in Settings, that the limit persists, that the newest tile is scrolled clear of the pinned Capture/Add buttons, and that the mouse wheel moves along the filmstrip. The CSS was looked at in a static mock page with the real stylesheet (`.claude/ui-preview.html`, untracked), not in the app.
+
+Native gates (nothing below has been run in the installed app):
+- **No bounce** in WebView2 with a mouse, a precision touchpad and touch: filmstrip, issue panel, Settings and History stop at their edges; no control overshoots or slides in; themes still animate their backdrops.
+- **Buttons**: Copy image, Copy for AI and Save image keep their size while working; the spinner replaces the icon; the status beside them is readable at 920 px wide with the issue panel open (long text is cut with an ellipsis and has a tooltip); a cancelled Save shows nothing.
+- **Arrow cursor** on buttons feels right on Windows; links (Copy, Got it, Source code) keep the hand.
+- **Toolbar**: choosing Pixelate, Crop and Text does not move the screenshot at 920, 1280 and maximized widths, with five custom colors saved.
+- **Session size**: 50 screenshots in one session: capture refusal text at the limit, autosave time, memory, filmstrip scrolling, Copy for AI in batches of five (order of paths, progress count), and the 100 MB total. A Linear issue with more than 10 screenshots has not been created (needs authorized synthetic content).
+- Lowering the limit below the number already in a session keeps them and blocks adding more.
+
 ## Audit changes (branch `audit/core-flow-improvements`, 2026-10-02)
 
 Automated coverage: unit tests for the toast stack (replace a repeated message, keep offers to undo, lifetimes), for Undo across removals, crops and reorders, and for a sent session loaded through `hydrate`; Rust tests for salvaging valid settings when one is invalid, the History timestamp, content-named shared files, and a PNG with a signature but no readable header; browser tests for the Settings unsaved-changes prompt, Settings sections as tabs, mark keys blocked behind a dialog, Ctrl+Enter showing a hidden issue panel, Ctrl+Z restoring a removed screenshot and withdrawing its toast, and the text plate burned into the export and remembered after reload. `cargo clippy -D warnings` runs in Checks.

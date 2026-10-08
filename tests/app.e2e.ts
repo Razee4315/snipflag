@@ -538,6 +538,72 @@ test('themes preview at once, revert when not saved, and capture options persist
   }
 });
 
+test('share buttons keep their size and report beside them', async ({ page }) => {
+  await addImages(page, [white]);
+  const share = page.getByRole('group', { name: 'Share this screenshot' });
+  const names = ['Copy image', 'Copy for AI', 'Save image'];
+  const boxes = () => Promise.all(names.map(name => share.getByRole('button', { name, exact: true }).boundingBox()));
+  const before = await boxes();
+  const download = page.waitForEvent('download');
+  await share.getByRole('button', { name: 'Save image', exact: true }).click();
+  await download;
+  // The result is said beside the buttons; their labels and positions are the same as before the click.
+  await expect(share.getByRole('status')).toHaveText('Image saved');
+  for (const name of names) await expect(share.getByRole('button', { name, exact: true })).toBeVisible();
+  expect(await boxes()).toEqual(before);
+  // Pressing a button changes its tone only: no element in the app scales when pressed.
+  const save = (await share.getByRole('button', { name: 'Save image', exact: true }).boundingBox())!;
+  await page.mouse.move(save.x + save.width / 2, save.y + save.height / 2);
+  await page.mouse.down();
+  expect(await share.getByRole('button', { name: 'Save image', exact: true }).evaluate(el => getComputedStyle(el).transform)).toBe('none');
+  await page.mouse.move(0, 0);
+  await page.mouse.up();
+});
+
+test('a session holds 10 screenshots until the limit is raised in Settings', async ({ page }) => {
+  const extra = (count: number, from: number) => Array.from({ length: count }, (_, i) => ({ ...blue, name: `extra-${from + i}.png` }));
+  const strip = page.getByRole('navigation');
+  const add = strip.getByRole('button', { name: 'Add images' });
+  await addImages(page, [white, ...extra(9, 1)]);
+  await expect(strip.getByText('10 of 10', { exact: true })).toBeVisible();
+  await expect(add).toBeDisabled();
+
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Settings' });
+  await dialog.getByRole('tab', { name: 'Capture', exact: true }).click();
+  const limit = dialog.getByLabel('Screenshots per session');
+  await expect(limit).toHaveValue('10');
+  // A number outside 10 to 50 lands on the nearest allowed one.
+  await limit.fill('80');
+  await limit.blur();
+  await expect(limit).toHaveValue('50');
+  await limit.fill('12');
+  await dialog.getByRole('button', { name: 'Save settings' }).click();
+  await expect(dialog.getByText('Settings saved.', { exact: true })).toBeVisible();
+  await page.keyboard.press('Escape');
+
+  await expect(strip.getByText('10 of 12', { exact: true })).toBeVisible();
+  await expect(add).toBeEnabled();
+  await page.getByLabel('Add images', { exact: true }).setInputFiles(extra(2, 10));
+  await expect(page.getByTestId('tile')).toHaveCount(12);
+  await expect(add).toBeDisabled();
+  // The newest screenshot is scrolled into view, clear of the Capture and Add buttons that stay at the right edge.
+  const edges = async (n: number) => {
+    const view = (await strip.boundingBox())!; const box = (await tile(page, n).boundingBox())!; const buttons = (await add.boundingBox())!;
+    return { visible: box.x >= view.x && box.x + box.width <= buttons.x, pinned: buttons.x + buttons.width <= view.x + view.width };
+  };
+  await expect.poll(() => edges(12)).toEqual({ visible: true, pinned: true });
+  // A mouse wheel moves along the strip.
+  await tile(page, 12).hover();
+  await page.mouse.wheel(0, -4000);
+  await expect.poll(() => edges(1)).toEqual({ visible: true, pinned: true });
+
+  await expect(page.getByRole('status', { name: 'Saved on this computer' })).toBeVisible();
+  await page.reload();
+  await expect(page.getByTestId('tile')).toHaveCount(12);
+  await expect(strip.getByText('12 of 12', { exact: true })).toBeVisible();
+});
+
 test('the issue panel tucks away and step notes travel with the report', async ({ page }, testInfo) => {
   await addImages(page, [white]);
   const panel = page.getByRole('complementary', { name: 'Linear issue' });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { acceleratorFromEvent, adjustRect, clampRect, newSession, normalizeRect, reorder, shortcutLabel, toFramePixels, validateSession } from './model';
+import { acceleratorFromEvent, adjustRect, clampRect, imageLimit, newSession, normalizeRect, reorder, shortcutLabel, toFramePixels, validateSession } from './model';
 
 describe('model', () => {
   it('reorders without mutating and ignores out-of-range moves', () => {
@@ -19,6 +19,12 @@ describe('model', () => {
     expect(validateSession(s)).toBeNull();
     s.issue = { id: 'x', identifier: 'ENG-1', url: 'https://linear.app/x' };
     expect(validateSession(s)).toMatch(/already been sent/);
+  });
+  it('keeps the screenshots-per-session setting within 10 to 50', () => {
+    expect(imageLimit(25)).toBe(25); expect(imageLimit('30')).toBe(30);
+    expect(imageLimit(3)).toBe(10); expect(imageLimit(500)).toBe(50);
+    // Settings saved before the option existed, or anything unreadable, mean the default.
+    expect(imageLimit(undefined)).toBe(10); expect(imageLimit('many')).toBe(10);
   });
   it('normalizes and clamps rectangles to the image', () => {
     expect(normalizeRect(10, 10, 2, 4)).toEqual({ x: 2, y: 4, width: 8, height: 6 });

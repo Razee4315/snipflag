@@ -69,7 +69,7 @@ pub fn shared_name(bytes: &[u8]) -> String {
 #[tauri::command]
 pub async fn share_images(window: WebviewWindow, app: AppHandle, images: Vec<SharedImage>) -> Result<Vec<String>, String> {
     main_only(&window)?;
-    if images.is_empty() || images.len() > MAX_IMAGES { return Err("Share between 1 and 10 screenshots.".into()); }
+    if images.is_empty() || images.len() > MAX_IMAGES { return Err("Share between 1 and 50 screenshots.".into()); }
     let folder = shared_folder(&app)?;
     let mut paths = Vec::new();
     for image in &images {

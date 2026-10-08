@@ -6,7 +6,8 @@ use std::{collections::HashSet, io::Cursor, path::{Path, PathBuf}, sync::{atomic
 use tauri::{AppHandle, Manager, State, WebviewWindow};
 use uuid::Uuid;
 
-pub const MAX_IMAGES: usize = 10;
+/// The most screenshots any session may hold. The editor applies the user's own limit (10 to 50, `maxImages`).
+pub const MAX_IMAGES: usize = 50;
 pub const MAX_IMAGE_BYTES: usize = 20 * 1024 * 1024;
 pub const MAX_SESSION_BYTES: usize = 100 * 1024 * 1024;
 pub const MAX_PIXELS: u64 = 40_000_000;
@@ -68,7 +69,7 @@ fn write_atomic(path: &Path, bytes: &[u8]) -> Result<(), String> {
 
 pub fn default_settings() -> Value {
     // Empty means use this build's public client. Never persist a build default as a user override.
-    json!({"clientId": "", "shortcut": "CommandOrControl+Shift+Digit2", "theme": "system", "retentionDays": 30, "launchAtLogin": false, "sounds": true, "motion": true, "teamMemory": {}, "templates": null, "teamDefaults": {}, "autoUpdate": true, "adjustSelection": false, "magnifier": false, "copyOnCapture": false, "saveOnCapture": false, "captureDelay": 0})
+    json!({"clientId": "", "shortcut": "CommandOrControl+Shift+Digit2", "theme": "system", "retentionDays": 30, "launchAtLogin": false, "sounds": true, "motion": true, "teamMemory": {}, "templates": null, "teamDefaults": {}, "autoUpdate": true, "adjustSelection": false, "magnifier": false, "copyOnCapture": false, "saveOnCapture": false, "captureDelay": 0, "maxImages": 10})
 }
 /// Returns a complete, validated settings object. Unknown keys are dropped.
 pub fn normalize_settings(input: &Value) -> Result<Value, String> {
@@ -102,6 +103,10 @@ pub fn normalize_settings(input: &Value) -> Result<Value, String> {
     if let Some(v) = input.get("captureDelay") {
         let v = v.as_u64().filter(|d| [0, 3, 5, 10].contains(d)).ok_or("The capture delay must be 0, 3, 5 or 10 seconds.")?;
         out["captureDelay"] = json!(v);
+    }
+    if let Some(v) = input.get("maxImages") {
+        let v = v.as_u64().filter(|n| (10..=MAX_IMAGES as u64).contains(n)).ok_or("Screenshots per session must be between 10 and 50.")?;
+        out["maxImages"] = json!(v);
     }
     if let Some(v) = input.get("teamMemory") {
         let map = v.as_object().ok_or("Invalid team memory.")?;
@@ -185,7 +190,7 @@ impl Storage {
         if self.deleting(&session_id)? { return Err("This draft is being deleted. Retry deletion in History.".into()); }
         if session["schemaVersion"] != 1 { return Err("Unsupported draft format.".into()); }
         let images = session["images"].as_array().ok_or("Missing image list.")?;
-        if images.len() > MAX_IMAGES { return Err("A session can contain up to 10 images.".into()); }
+        if images.len() > MAX_IMAGES { return Err("A session can contain up to 50 images.".into()); }
         for field in ["title", "description"] { if session[field].as_str().unwrap_or("").len() > MAX_TEXT { return Err("Draft text is too long.".into()); } }
         // The History thumbnail is a small PNG data URL made by the editor from the flattened first screenshot.
         if let Some(preview) = session.get("preview").filter(|p| !p.is_null()) {
@@ -231,7 +236,8 @@ impl Storage {
             data["images"][index]["dataUrl"] = json!("");
         }
         let text = serde_json::to_string(&data).map_err(|_| "Cannot encode draft.")?;
-        if text.len() > 8 * 1024 * 1024 { return Err("Annotation data exceeds the draft limit.".into()); }
+        // Room for the bounded undo history of every image in the largest session.
+        if text.len() > 32 * 1024 * 1024 { return Err("Annotation data exceeds the draft limit.".into()); }
         self.db.lock().map_err(|_| "Database unavailable.")?
             .execute("INSERT INTO sessions(id,updated,data) VALUES(?1,?2,?3) ON CONFLICT(id) DO UPDATE SET updated=excluded.updated,data=excluded.data", params![session_id, now(), text])
             .map_err(|_| "Could not save draft.")?;
@@ -566,6 +572,9 @@ mod tests {
         assert_eq!(normalize_settings(&json!({"saveOnCapture":true})).unwrap()["saveOnCapture"], json!(true));
         assert_eq!(capture["captureDelay"], json!(3));
         assert!(normalize_settings(&json!({"captureDelay":4})).is_err());
+        assert_eq!(capture["maxImages"], json!(10));
+        assert_eq!(normalize_settings(&json!({"maxImages":50})).unwrap()["maxImages"], json!(50));
+        for invalid in [json!(9), json!(51), json!(12.5), json!("20")] { assert!(normalize_settings(&json!({"maxImages": invalid})).is_err()); }
         assert!(normalize_settings(&json!({"magnifier":"yes"})).is_err());
         assert!(normalize_settings(&json!({"teamMemory":{"../x":"y"}})).is_err());
         let team = "00000000-0000-4000-8000-000000000001"; let label = "00000000-0000-4000-8000-000000000002";

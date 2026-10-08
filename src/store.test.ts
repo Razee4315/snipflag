@@ -7,7 +7,7 @@ const mark = (): Annotation => ({ id: crypto.randomUUID(), kind: 'rectangle', x:
 const state = () => useStore.getState();
 
 describe('session store', () => {
-  beforeEach(() => state().reset());
+  beforeEach(() => { state().reset(); state().setImageLimit(10); });
 
   it('keeps independent annotation histories per image', () => {
     const a = image(); const b = image();
@@ -36,6 +36,16 @@ describe('session store', () => {
     state().addImages(Array.from({ length: 9 }, image));
     expect(() => state().addImages([image(), image()])).toThrow(/up to 10/);
     expect(state().session.images).toHaveLength(9);
+  });
+  it('holds more screenshots once the limit is raised and keeps them when it is lowered', () => {
+    state().setImageLimit(12);
+    state().addImages(Array.from({ length: 12 }, image));
+    expect(() => state().addImages([image()])).toThrow(/up to 12/);
+    state().setImageLimit(10);
+    expect(state().session.images).toHaveLength(12);
+    expect(() => state().addImages([image()])).toThrow(/up to 10/);
+    // The setting never leaves its range.
+    state().setImageLimit(400); expect(state().imageLimit).toBe(50);
   });
   it('freezes a sent session and starts a new draft for new screenshots', () => {
     const a = image(); state().addImages([a]); state().patch({ title: 'Bug' });

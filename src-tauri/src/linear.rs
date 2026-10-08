@@ -213,7 +213,7 @@ pub async fn submit_issue(window: WebviewWindow, app: AppHandle, session: Value,
     let team_id = id(session["teamId"].as_str().filter(|s| !s.is_empty()).ok_or("Choose a Linear team.")?)?;
     let title = session["title"].as_str().map(str::trim).filter(|s| !s.is_empty() && s.chars().count() <= 250).ok_or("Enter a title under 250 characters.")?.to_string();
     let images = session["images"].as_array().ok_or("Missing screenshots.")?.clone();
-    if images.is_empty() || images.len() > MAX_IMAGES { return Err("Add between 1 and 10 screenshots.".into()); }
+    if images.is_empty() || images.len() > MAX_IMAGES { return Err("Add between 1 and 50 screenshots.".into()); }
     if images.len() != exports.len() { return Err("Every screenshot must be exported before sending.".into()); }
     let image_references = crate::mentions::references(&session, &images)?;
     crate::mentions::validate(session["description"].as_str().unwrap_or(""), &image_references, &images)?;

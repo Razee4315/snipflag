@@ -2,6 +2,26 @@
 
 All notable changes to Snipflag are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Screenshots per session can be raised from 10 up to 50 in Settings → Capture, for long walkthroughs copied for an AI assistant. The 100 MB total per session is unchanged.
+- The filmstrip shows how many screenshots the session holds, keeps Capture and Add images at its right edge, scrolls with the mouse wheel and brings the chosen screenshot into view.
+- A short hint in the toolbar for Pixelate and Crop.
+
+### Changed
+
+- Buttons keep one size: pressing changes their tone instead of shrinking them, and Copy image, Copy for AI, Save image and Check for updates keep their labels. What they are doing and what they did is shown beside them.
+- No bounce: overshooting and sliding animations are replaced by short fades, and scrolling stops at the edge of a list.
+- Buttons use the arrow cursor; only links keep the hand.
+- The toolbar no longer changes height when another tool is chosen, so the screenshot stays where it is. The options have their own row unless the window is wide enough for every tool's options.
+- Copy for AI saves the copies five at a time and counts them while it works.
+
+### Fixed
+
+- Red Delete buttons lost their color under the pointer.
+
 ## [1.4.0] - 2026-10-02
 
 Work from the 2026-10-02 audit ([docs/AUDIT-2026-10-02.md](docs/AUDIT-2026-10-02.md)). Released for Windows only; macOS and Linux stay on 1.3.0.

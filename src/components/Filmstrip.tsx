@@ -1,4 +1,4 @@
-import { useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type WheelEvent as ReactWheelEvent } from 'react';
 import { imageLabel, LIMITS } from '../model';
 import { smooth } from '../motion';
 import { isLocked, useStore } from '../store';
@@ -17,13 +17,26 @@ const DRAG_START = 6;
  */
 export default function Filmstrip({ onCapture, onAdd, onRemove, canCapture }: Props) {
   const images = useStore(s => s.session.images); const activeId = useStore(s => s.activeId); const locked = useStore(isLocked);
-  const references = useStore(s => s.session.imageReferences);
+  const references = useStore(s => s.session.imageReferences); const limit = useStore(s => s.imageLimit);
   const { select, moveImage } = useStore.getState();
-  const strip = useRef<HTMLOListElement>(null);
+  const strip = useRef<HTMLOListElement>(null); const scroller = useRef<HTMLElement>(null);
   /** Set when a drag ends on a tile, so the click that follows the release does not also select it. */
   const dragged = useRef(false);
   const [drag, setDrag] = useState<{ from: number; to: number; dx: number } | null>(null);
-  const full = images.length >= LIMITS.images;
+  const full = images.length >= limit;
+  const fullTitle = full ? `This session is full${limit < LIMITS.maxImages ? '. Raise the limit in Settings → Capture' : ''}` : undefined;
+  // The chosen screenshot is always in view: a new capture at the end of a long strip, or one picked with the keyboard.
+  useEffect(() => {
+    const view = scroller.current; const tile = view?.querySelector<HTMLElement>('.tile.active');
+    if (!view || !tile) return;
+    const edge = view.getBoundingClientRect(); const box = tile.getBoundingClientRect();
+    // The Capture and Add buttons stay over the right end of the strip.
+    const end = edge.right - (view.querySelector<HTMLElement>('.tile.add')?.getBoundingClientRect().width ?? 0) - 10;
+    if (box.left < edge.left + 10) view.scrollLeft -= edge.left + 10 - box.left;
+    else if (box.right > end) view.scrollLeft += box.right - end;
+  }, [activeId, images.length]);
+  /** A mouse wheel moves along the strip; it has nowhere to go up or down. */
+  const wheel = (e: ReactWheelEvent) => { if (!e.ctrlKey && !e.metaKey && Math.abs(e.deltaY) > Math.abs(e.deltaX)) e.currentTarget.scrollLeft += e.deltaY; };
   const move = (from: number, to: number) => { if (to !== from && to >= 0 && to < images.length) smooth(() => moveImage(from, to)); };
 
   const press = (from: number) => (e: ReactPointerEvent) => {
@@ -54,7 +67,7 @@ export default function Filmstrip({ onCapture, onAdd, onRemove, canCapture }: Pr
     return drag.to === images.length - 1 && among === images.length - 2 ? 'drop-after' : '';
   };
   return (
-    <nav className="filmstrip" aria-label={`${images.length} ${images.length === 1 ? 'image' : 'images'} · one issue`}>
+    <nav className="filmstrip" ref={scroller} onWheel={wheel} aria-label={`${images.length} ${images.length === 1 ? 'image' : 'images'} · one issue`}>
       <ol ref={strip}>
         {images.map((image, index) => {
           const label = imageLabel(image, index); const marks = image.annotations.length;
@@ -80,8 +93,9 @@ export default function Filmstrip({ onCapture, onAdd, onRemove, canCapture }: Pr
           );
         })}
         <li className="tile add">
-          {canCapture && <button type="button" className="add-button" disabled={full || locked} onClick={onCapture} title={full ? 'This session is full' : undefined}><Icon name="camera" /> <span>Capture</span></button>}
-          <button type="button" className="add-button" disabled={full || locked} onClick={onAdd} title={full ? 'This session is full' : undefined}><Icon name="image" /> <span>Add images</span></button>
+          {canCapture && <button type="button" className="add-button" disabled={full || locked} onClick={onCapture} title={fullTitle}><Icon name="camera" /> <span>Capture</span></button>}
+          <button type="button" className="add-button" disabled={full || locked} onClick={onAdd} title={fullTitle}><Icon name="image" /> <span>Add images</span></button>
+          <span className="tile-count" title="Screenshots in this session, and the most it holds">{images.length} of {Math.max(limit, images.length)}</span>
         </li>
       </ol>
     </nav>

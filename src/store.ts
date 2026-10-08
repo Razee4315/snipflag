@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { normalizeHex } from './color';
 import { ensureImageReferences } from './mentions';
-import { estimateBytes, LIMITS, newSession, reorder, type Annotation, type AnnotationHistory, type CaptureImage, type Session, type Tool } from './model';
+import { estimateBytes, imageLimit, LIMITS, newSession, reorder, type Annotation, type AnnotationHistory, type CaptureImage, type Session, type Tool } from './model';
 
 type History = AnnotationHistory;
 const snapshotSizes = new WeakMap<Annotation[], number>();
@@ -43,6 +43,8 @@ interface State {
   session: Session; activeId: string; tool: Tool; color: string; stroke: number; fontSize: number; highlightColor: string; highlightSize: number;
   /** New text marks get a plate behind them. */
   textBackdrop: boolean;
+  /** Most screenshots a session accepts, from Settings (10 to 50). Screenshots already in a session always stay. */
+  imageLimit: number; setImageLimit: (limit: number) => void;
   histories: Record<string, History>; busy: boolean; selection: string | null; saveState: SaveState; saveError: string;
   /** Counts mark edits, undos and redos in this session. */
   edits: number;
@@ -95,7 +97,8 @@ function saveStyle({ color, stroke, fontSize, highlightColor, highlightSize, tex
 export const useStore = create<State>((set, get) => ({
   session: newSession(), activeId: '', tool: 'arrow', ...loadStyle(),
   histories: {}, busy: false, selection: null, saveState: 'idle', saveError: '', persisted: [], durable: false, submissionLocked: false,
-  edits: 0, structure: [],
+  edits: 0, structure: [], imageLimit: LIMITS.images,
+  setImageLimit: (limit) => set({ imageLimit: imageLimit(limit) }),
   hydrate: (session) => {
     const histories = Object.fromEntries(session.images.map(i => [i.id, boundedHistory(session.annotationHistories?.[i.id] ?? { past: [], future: [] })]));
     set({ session: { ...session, annotationHistories: histories, ...(!session.issue ? { imageReferences: ensureImageReferences(session.images, session.imageReferences) } : {}) }, submissionLocked: !!session.submissionLocked, selection: null, activeId: session.images[0]?.id ?? '', histories, persisted: session.images.map(i => i.id), durable: true, saveState: 'saved', saveError: '', edits: 0, structure: [] });
@@ -108,7 +111,7 @@ export const useStore = create<State>((set, get) => ({
     if (!images.length) return;
     // A sent session is immutable; new screenshots start a fresh draft.
     const fresh = !!s.session.issue; const session = fresh ? newSession() : s.session;
-    if (session.images.length + images.length > LIMITS.images) throw new Error(`A session holds up to ${LIMITS.images} images. Remove one or start a new session.`);
+    if (session.images.length + images.length > s.imageLimit) throw new Error(`A session holds up to ${s.imageLimit} images. Remove one or start a new session${s.imageLimit < LIMITS.maxImages ? `, or raise the limit in Settings (up to ${LIMITS.maxImages})` : ''}.`);
     const total = [...session.images, ...images].reduce((sum, i) => sum + estimateBytes(i.dataUrl), 0);
     if (total > LIMITS.sessionBytes) throw new Error('This session would exceed the 100 MB image limit.');
     set({
@@ -170,7 +173,7 @@ export const useStore = create<State>((set, get) => ({
     return true;
   },
   restoreImage: (removed, index, history = { past: [], future: [] }) => {
-    const s = get(); if (locked(s) || s.session.images.length >= LIMITS.images) return;
+    const s = get(); if (locked(s) || s.session.images.length >= s.imageLimit) return;
     // The removed file may already be cleaned up, so the copy is saved again under a fresh ID.
     const image = { ...removed, id: crypto.randomUUID() };
     const images = [...s.session.images]; images.splice(Math.max(0, Math.min(index, images.length)), 0, image);
