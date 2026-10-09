@@ -6,11 +6,11 @@ Entries before the capture-speed work (2026-09-26 to 2026-09-28) are in [STATUS-
 
 The owner asked for both observations from the first Mac run to be acted on. No version, tag or release changed.
 
-- **Signature:** `bundle.macOS.signingIdentity` is `"-"` (`5403a45`), so the whole app bundle is signed ad hoc under `io.github.razee4315.snipflag`, with sealed resources. Development installers now fails a macOS build whose bundle is not signed that way.
+- **Signature:** `bundle.macOS.signingIdentity` is `"-"` (`5403a45`, merged in pull request #2), so the whole app bundle is signed ad hoc under `io.github.razee4315.snipflag`, with sealed resources. Development installers now fails a macOS build whose bundle is not signed that way.
 - **Fresh clone:** CONTRIBUTING says to build the frontend once before the Rust tests.
 - **Verification:** [Development installers 37942239067](https://github.com/Razee4315/snipflag/actions/runs/37942239067) **passed all four targets** at `5403a45` with `platforms=all`, the signature check included on both macOS targets. Artifacts kept until 2026-10-16: [macOS Apple Silicon](https://github.com/Razee4315/snipflag/actions/runs/37942239067/artifacts/11622821042), [macOS Intel](https://github.com/Razee4315/snipflag/actions/runs/37942239067/artifacts/11622911389). [Checks 37942285943](https://github.com/Razee4315/snipflag/actions/runs/37942285943) **passed** on the pull request (frontend; Rust on **Windows only**).
 
-**Not verified:** nothing with this signature has been opened on a Mac: launch, the Screen Recording prompt, capture, and whether the grant survives a rebuild are all open. An ad hoc signature has no stable identity across builds, so macOS may still ask again after each update. Not a Developer ID signature and not notarized. Use these artifacts, not the ones in the entry below, for the Mac walk-through.
+**Not verified:** nothing with this signature has been opened on a Mac: launch, the Screen Recording prompt, capture, and whether the grant survives a rebuild are all open. An ad hoc signature has no stable identity across builds, so macOS may still ask again after each update. The bundler also turned on the hardened runtime (`flags=0x10002(adhoc,runtime)`), which the linker-signed build did not have; nothing has been run under it. Not a Developer ID signature and not notarized. Use these artifacts, not the ones in the entry below, for the Mac walk-through.
 
 ## All-platform checks and installers at `18a8570`, for a walk-through on a Mac — 2026-10-09 (no release)
 
