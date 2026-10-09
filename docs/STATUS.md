@@ -2,6 +2,25 @@
 
 Entries before the capture-speed work (2026-09-26 to 2026-09-28) are in [STATUS-archive.md](STATUS-archive.md). Read it only when that history is needed.
 
+## 1.4.0 compiled and run on a Mac for the first time — 2026-10-09 (contributor, no release)
+
+A contributor with a Mac (AleenaTahir1) built `main` at `81a7786` **locally** and ran it. This is outside the Actions-only rule, which is about the owner's computer; CONTRIBUTING allows contributors to run the tooling on their own machine. No code, version, tag, release or workflow changed: this entry and a matching one in TESTING.md are the whole change.
+
+Machine: MacBook Pro (MacBookPro18,3, Apple M1 Pro), macOS 26.5.1 (25F80), built-in Retina display, 1512 × 982 points at 2x. Rust 1.99.0, Node 24.21.0.
+
+- **First macOS compile of 1.4.0.** `npm ci`, `npm test` (64 passed), `npm run tauri -- icon public/icon.svg`, `cargo test --locked` (38 passed), `npm run tauri -- build --bundles app -- --locked`: all succeeded for `aarch64-apple-darwin`, no source fixes needed. The audit branch had not been compiled for macOS before (see below). Intel was not built.
+- **The build has no built-in Linear connection and no updater key** (`SNIPFLAG_LINEAR_CLIENT_ID` and `SNIPFLAG_UPDATER_PUBKEY` are repository variables a fork cannot read), so it is the custom-client-only kind.
+- **Launch:** the app started and stayed up, with no output on stderr; the main window was on screen at 1271 × 756 points; `snipflag.sqlite` and the `images` folder were created in Application Support.
+- **Capture:** the contributor, at the Mac, reports taking a screenshot with it and that the app works. That is the first native capture on macOS on record. No detail was recorded with it: which permission prompts appeared, what the overlay looked like, the tray, the shortcut, or whether the picture was annotated or sent.
+
+**Not verified:** every item of the macOS line in TESTING.md "Manual native gates" except a first launch and one capture on Apple Silicon and a Retina display. In particular permission deny and revoke, the menu bar item, Cmd shortcuts, the frameless window's controls, Linear sign-in and submission (not possible with this build), the updater, Intel, and a notarized launch.
+
+Two things seen on the way, neither changed:
+- `cargo test` fails with "proc macro panicked" in a fresh clone until the frontend has been built once, because `frontendDist` (`../dist`) does not exist yet. CI builds the frontend first, so it never sees this.
+- The local bundle carries only the linker's ad hoc signature: `codesign` reports no sealed resources and an identifier of the form `snipflag-<hash>`. macOS ties the Screen Recording grant to the signature, so a rebuilt copy may ask again. Whether the published `.dmg` should be signed ad hoc as a whole bundle (`bundle.macOS.signingIdentity: "-"`) is an owner decision and would need its own runtime check; nothing was changed.
+
+Next, if the owner wants macOS back in a release: run Checks with `all_platforms` and Development installers with `platforms=all` at the release commit (that gives a build with the Linear connection), and have the Mac gates in TESTING.md walked through on it.
+
 ## v1.4.0 released as Latest, Windows only — 2026-10-02
 
 The owner asked for a release of the audit work, approved merging the branch, chose **Windows only** ("just for windows") and Latest. This is the first release without macOS/Linux builds.
