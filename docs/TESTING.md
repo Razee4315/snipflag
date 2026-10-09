@@ -105,6 +105,9 @@ Windows: 100/125/150/200% scaling; mixed-DPI dual monitors; monitor left of orig
 
 macOS: Apple Silicon + Intel, permission grant/deny/revoke, Retina, menu bar, Cmd shortcuts, notarized launch.
 
+Recorded macOS runs:
+- 2026-10-09, `81a7786` (1.4.0), local contributor build without a built-in Linear connection, macOS 26.5.1 (25F80), MacBook Pro M1 Pro, built-in Retina display. **Done:** launch (main window shown, store created) and one capture, as reported by the person at the Mac. **Open:** everything else on the line above: permission deny and revoke, menu bar, Cmd shortcuts, Intel, notarized launch; and the frameless window's controls, tray restoration and the `snipframe` image in WKWebView, which were not looked at one by one. Details in STATUS.md.
+
 Linux: GNOME Wayland, KDE Wayland, X11; portals; global shortcut availability; tray presence; locked/unavailable secret service; AppImage/deb launch. Record compositor-specific limits honestly.
 
 Linear: OAuth state mismatch, timeout, refresh, revoked access, empty teams, pagination, team switch clearing optional fields, partial upload, 429, expired upload URL, response lost after issue creation, restart reconciliation, repeated submit.
