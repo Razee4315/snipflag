@@ -79,6 +79,20 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: npm run tauri -- build --target ${{ matrix.target }} --bundles ${{ matrix.bundles }} $UPDATER_ARGS -- --locked
+      - name: Verify the macOS bundle signature
+        if: runner.os == 'macOS'
+        shell: bash
+        # Ad hoc over the whole bundle (bundle.macOS.signingIdentity "-"): sealed resources and the app's own identifier.
+        # The linker's signature alone has neither. This proves the packaging, not that macOS keeps a permission grant.
+        run: |
+          app="src-tauri/target/${{ matrix.target }}/release/bundle/macos/Snipflag.app"
+          codesign --verify --deep --strict --verbose=2 "$app"
+          info="$(codesign -d --verbose=4 "$app" 2>&1)"
+          echo "$info"
+          grep -q '^Signature=adhoc' <<< "$info"
+          grep -q '^Identifier=io\.github\.razee4315\.snipflag$' <<< "$info"
+          grep -q '^Sealed Resources version=' <<< "$info"
+          if grep -q 'linker-signed' <<< "$info"; then echo 'Only the linker signature is present.' >&2; exit 1; fi
       - uses: actions/upload-artifact@v4
         with:
           name: snipflag-development-unsigned-${{ matrix.target }}
