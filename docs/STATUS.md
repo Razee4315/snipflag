@@ -2,6 +2,18 @@
 
 Entries before the capture-speed work (2026-09-26 to 2026-09-28) are in [STATUS-archive.md](STATUS-archive.md). Read it only when that history is needed.
 
+## All-platform checks and installers at `18a8570`, for a walk-through on a Mac — 2026-10-09 (no release)
+
+The owner asked for all platforms, to get a Mac build with the built-in Linear connection. No code, version, tag or release changed; `18a8570` is `81a7786` plus the documentation entry below.
+
+- [Checks 37939902853](https://github.com/Razee4315/snipflag/actions/runs/37939902853) **passed on all platforms** with `all_platforms` (frontend; Rust tests and all-target checks on Windows, macOS, Linux).
+- [Development installers 37939908796](https://github.com/Razee4315/snipflag/actions/runs/37939908796) **passed all four targets** with `platforms=all`, version 1.4.0, artifacts kept until 2026-10-16: [macOS Apple Silicon](https://github.com/Razee4315/snipflag/actions/runs/37939908796/artifacts/11621672127), [macOS Intel](https://github.com/Razee4315/snipflag/actions/runs/37939908796/artifacts/11621522892), [Windows](https://github.com/Razee4315/snipflag/actions/runs/37939908796/artifacts/11621542456), [Linux](https://github.com/Razee4315/snipflag/actions/runs/37939908796/artifacts/11620683038).
+- The owner said the same day that the Mac run recorded below was himself, at the contributor's Mac.
+
+**Not verified:** nothing from these runs has been opened on a Mac. They show that 1.4.0 compiles and packages for macOS with the Linear connection built in, not that it works there. Linear sign-in and submission, the updater, and every open item of the macOS line in TESTING.md "Manual native gates" are still open. There is no Intel Mac to run the Intel build on. The two observations below (`cargo test` in a fresh clone, the linker-only signature) are unchanged.
+
+Next: the Apple Silicon artifact is walked through on the Mac against the macOS line in TESTING.md, and the result recorded there with the OS version. macOS and Linux downloads stay on v1.3.0 until a newer Mac build is published.
+
 ## 1.4.0 compiled and run on a Mac for the first time — 2026-10-09 (contributor, no release)
 
 A contributor with a Mac (AleenaTahir1) built `main` at `81a7786` **locally** and ran it. This is outside the Actions-only rule, which is about the owner's computer; CONTRIBUTING allows contributors to run the tooling on their own machine. No code, version, tag, release or workflow changed: this entry and a matching one in TESTING.md are the whole change.
