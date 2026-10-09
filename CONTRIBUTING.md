@@ -43,6 +43,7 @@ npm run dev                 # browser preview at http://127.0.0.1:1420 (no captu
 npm test                    # unit tests
 npx playwright install chromium && npm run test:e2e   # browser tests
 npm run tauri -- icon public/icon.svg                  # generate platform icons once
+npm run build               # once before the Rust tests: they need the built frontend (dist/) to exist
 cargo test --manifest-path src-tauri/Cargo.toml        # Rust tests
 npm run tauri dev           # full desktop app
 ```

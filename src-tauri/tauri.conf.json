@@ -27,7 +27,7 @@
     "shortDescription": "Screenshots to clear Linear issues",
     "longDescription": "Snipflag captures and annotates one or more screenshots and sends them to Linear as a single issue.",
     "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
-    "macOS": { "minimumSystemVersion": "12.0" },
+    "macOS": { "minimumSystemVersion": "12.0", "signingIdentity": "-" },
     "windows": { "nsis": { "installerIcon": "icons/icon.ico" } }
   },
   "plugins": {
